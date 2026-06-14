@@ -3,15 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
   Activity,
   BarChart3,
   BookOpen,
@@ -28,8 +19,17 @@ export default function Dashboard() {
   const router = useRouter();
 
   const [checking, setChecking] = useState(true);
+  const [userId, setUserId] = useState("");
   const [userEmail, setUserEmail] = useState("");
+
   const [showBrokerModal, setShowBrokerModal] = useState(false);
+  const [selectedBroker, setSelectedBroker] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [serverName, setServerName] = useState("");
+  const [brokerMessage, setBrokerMessage] = useState("");
+  const [savingBroker, setSavingBroker] = useState(false);
+
+  const [connectedBroker, setConnectedBroker] = useState<any>(null);
 
   useEffect(() => {
     async function checkUser() {
@@ -40,7 +40,21 @@ export default function Dashboard() {
         return;
       }
 
+      setUserId(data.session.user.id);
       setUserEmail(data.session.user.email || "");
+
+      const { data: brokerData } = await supabase
+        .from("brokers")
+        .select("*")
+        .eq("user_id", data.session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (brokerData) {
+        setConnectedBroker(brokerData);
+      }
+
       setChecking(false);
     }
 
@@ -52,6 +66,42 @@ export default function Dashboard() {
     router.replace("/login");
   }
 
+  async function saveBroker() {
+    setBrokerMessage("");
+
+    if (!selectedBroker || !accountNumber || !serverName) {
+      setBrokerMessage("Please fill all broker details.");
+      return;
+    }
+
+    setSavingBroker(true);
+
+    const { data, error } = await supabase
+      .from("brokers")
+      .insert({
+        user_id: userId,
+        broker_name: selectedBroker,
+        account_number: accountNumber,
+        server_name: serverName,
+      })
+      .select()
+      .single();
+
+    setSavingBroker(false);
+
+    if (error) {
+      setBrokerMessage(error.message);
+      return;
+    }
+
+    setConnectedBroker(data);
+    setBrokerMessage("Broker account saved successfully.");
+    setShowBrokerModal(false);
+    setSelectedBroker("");
+    setAccountNumber("");
+    setServerName("");
+  }
+
   if (checking) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black text-white">
@@ -59,16 +109,6 @@ export default function Dashboard() {
       </main>
     );
   }
-
-  const equityData = [
-    { day: "Mon", balance: 1000 },
-    { day: "Tue", balance: 1040 },
-    { day: "Wed", balance: 1015 },
-    { day: "Thu", balance: 1080 },
-    { day: "Fri", balance: 1125 },
-    { day: "Sat", balance: 1110 },
-    { day: "Sun", balance: 1180 },
-  ];
 
   const stats = [
     ["Account Balance", "$0.00", "+0.00%", Wallet],
@@ -148,69 +188,35 @@ export default function Dashboard() {
             </button>
           </div>
 
+          {connectedBroker && (
+            <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+              <p className="text-sm text-emerald-400">Connected Broker</p>
+              <h3 className="mt-1 text-xl font-bold">
+                {connectedBroker.broker_name}
+              </h3>
+              <p className="mt-1 text-sm text-zinc-400">
+                Account: {connectedBroker.account_number}
+              </p>
+              <p className="text-sm text-zinc-400">
+                Server: {connectedBroker.server_name}
+              </p>
+            </div>
+          )}
+
           <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
-            {stats.map(([label, value, change, Icon]) => (
+            {stats.map(([label, value, change, Icon]: any) => (
               <div
-                key={label as string}
+                key={label}
                 className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6"
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-zinc-500">{label as string}</p>
+                  <p className="text-sm text-zinc-500">{label}</p>
                   <Icon size={20} className="text-emerald-400" />
                 </div>
-                <p className="mt-4 text-3xl font-bold">{value as string}</p>
-                <p className="mt-2 text-sm text-emerald-400">
-                  {change as string}
-                </p>
+                <p className="mt-4 text-3xl font-bold">{value}</p>
+                <p className="mt-2 text-sm text-emerald-400">{change}</p>
               </div>
             ))}
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6 lg:col-span-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Equity Curve</h3>
-                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
-                  Demo data
-                </span>
-              </div>
-
-              <div className="mt-6 h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={equityData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                    <XAxis dataKey="day" stroke="#71717a" />
-                    <YAxis stroke="#71717a" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#09090b",
-                        border: "1px solid #27272a",
-                        borderRadius: "12px",
-                        color: "#fff",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="balance"
-                      stroke="#10b981"
-                      fill="#10b981"
-                      strokeWidth={3}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-              <h3 className="text-lg font-semibold">Risk Metrics</h3>
-              <div className="mt-6 space-y-5">
-                <Metric title="Max Drawdown" value="0%" />
-                <Metric title="Average Win" value="$0.00" green />
-                <Metric title="Average Loss" value="$0.00" red />
-                <Metric title="Risk Reward" value="0.00" />
-                <Metric title="Profit Factor" value="0.00" />
-              </div>
-            </div>
           </div>
 
           <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
@@ -247,12 +253,12 @@ export default function Dashboard() {
 
       {showBrokerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6">
-          <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold">Connect Broker</h2>
                 <p className="mt-1 text-sm text-zinc-500">
-                  Select your broker to continue.
+                  Select broker and add MT5 account details.
                 </p>
               </div>
 
@@ -264,42 +270,58 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="mt-6">
-              <button className="w-full rounded-2xl border border-zinc-800 bg-black p-5 text-left transition hover:border-emerald-500">
+            <div className="mt-6 space-y-4">
+              <button
+                onClick={() => setSelectedBroker("XM")}
+                className={`w-full rounded-2xl border p-5 text-left transition ${
+                  selectedBroker === "XM"
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-zinc-800 bg-black hover:border-emerald-500"
+                }`}
+              >
                 <h3 className="text-lg font-bold">XM</h3>
                 <p className="mt-1 text-sm text-zinc-500">
                   Connect your XM MT5 trading account.
                 </p>
               </button>
+
+              {selectedBroker && (
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="MT5 Login ID / Account Number"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 outline-none focus:border-emerald-500"
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="Server Name e.g. XMGlobal-MT5"
+                    value={serverName}
+                    onChange={(e) => setServerName(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 outline-none focus:border-emerald-500"
+                  />
+
+                  {brokerMessage && (
+                    <p className="rounded-xl border border-zinc-800 bg-black p-3 text-sm text-zinc-300">
+                      {brokerMessage}
+                    </p>
+                  )}
+
+                  <button
+                    onClick={saveBroker}
+                    disabled={savingBroker}
+                    className="w-full rounded-xl bg-emerald-500 py-3 font-semibold text-black hover:bg-emerald-400 disabled:opacity-60"
+                  >
+                    {savingBroker ? "Saving..." : "Save Broker Account"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
     </main>
-  );
-}
-
-function Metric({
-  title,
-  value,
-  green,
-  red,
-}: {
-  title: string;
-  value: string;
-  green?: boolean;
-  red?: boolean;
-}) {
-  return (
-    <div>
-      <p className="text-sm text-zinc-500">{title}</p>
-      <p
-        className={`mt-1 text-2xl font-bold ${
-          green ? "text-emerald-400" : red ? "text-red-400" : "text-white"
-        }`}
-      >
-        {value}
-      </p>
-    </div>
   );
 }
