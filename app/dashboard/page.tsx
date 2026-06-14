@@ -34,6 +34,9 @@ type Trade = {
   open_price: number;
   close_price: number;
   profit: number;
+  notes?: string | null;
+  mistake?: string | null;
+  emotion?: string | null;
   open_time: string | null;
   close_time: string | null;
   created_at: string;
@@ -62,6 +65,9 @@ export default function Dashboard() {
   const [openPrice, setOpenPrice] = useState("");
   const [closePrice, setClosePrice] = useState("");
   const [profit, setProfit] = useState("");
+  const [notes, setNotes] = useState("");
+  const [mistake, setMistake] = useState("");
+  const [emotion, setEmotion] = useState("");
   const [tradeMessage, setTradeMessage] = useState("");
   const [savingTrade, setSavingTrade] = useState(false);
 
@@ -153,14 +159,7 @@ export default function Dashboard() {
   async function saveManualTrade() {
     setTradeMessage("");
 
-    if (
-      !tradeSymbol ||
-      !tradeType ||
-      !tradeLot ||
-      !openPrice ||
-      !closePrice ||
-      !profit
-    ) {
+    if (!tradeSymbol || !tradeType || !tradeLot || !openPrice || !closePrice || !profit) {
       setTradeMessage("Please fill all trade details.");
       return;
     }
@@ -177,6 +176,9 @@ export default function Dashboard() {
         open_price: Number(openPrice),
         close_price: Number(closePrice),
         profit: Number(profit),
+        notes,
+        mistake,
+        emotion,
         open_time: new Date().toISOString(),
         close_time: new Date().toISOString(),
       })
@@ -192,17 +194,20 @@ export default function Dashboard() {
 
     setTrades((prev) => [data as Trade, ...prev]);
     setShowTradeModal(false);
+
     setTradeSymbol("");
     setTradeType("Buy");
     setTradeLot("");
     setOpenPrice("");
     setClosePrice("");
     setProfit("");
+    setNotes("");
+    setMistake("");
+    setEmotion("");
   }
 
   async function deleteTrade(id: string) {
     const confirmDelete = window.confirm("Are you sure you want to delete this trade?");
-
     if (!confirmDelete) return;
 
     const { error } = await supabase.from("trades").delete().eq("id", id);
@@ -223,8 +228,7 @@ export default function Dashboard() {
     return trades.filter((trade) => Number(trade.profit) > 0).length;
   }, [trades]);
 
-  const winRate =
-    trades.length > 0 ? Math.round((winTrades / trades.length) * 100) : 0;
+  const winRate = trades.length > 0 ? Math.round((winTrades / trades.length) * 100) : 0;
 
   const todayProfit = useMemo(() => {
     const today = new Date().toDateString();
@@ -301,9 +305,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-3xl font-bold">Dashboard</h2>
-              <p className="mt-1 text-zinc-400">
-                Manual and MT5 analytics dashboard.
-              </p>
+              <p className="mt-1 text-zinc-400">Manual and MT5 analytics dashboard.</p>
             </div>
 
             <div className="flex gap-3">
@@ -327,33 +329,24 @@ export default function Dashboard() {
           {connectedBroker && (
             <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
               <p className="text-sm text-emerald-400">Connected Broker</p>
-              <h3 className="mt-1 text-xl font-bold">
-                {connectedBroker.broker_name}
-              </h3>
+              <h3 className="mt-1 text-xl font-bold">{connectedBroker.broker_name}</h3>
               <p className="mt-1 text-sm text-zinc-400">
                 Account: {connectedBroker.account_number}
               </p>
-              <p className="text-sm text-zinc-400">
-                Server: {connectedBroker.server_name}
-              </p>
+              <p className="text-sm text-zinc-400">Server: {connectedBroker.server_name}</p>
             </div>
           )}
 
           <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
             {stats.map(([label, value, change, Icon]: any) => (
-              <div
-                key={label}
-                className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6"
-              >
+              <div key={label} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-zinc-500">{label}</p>
                   <Icon size={20} className="text-emerald-400" />
                 </div>
                 <p
                   className={`mt-4 text-3xl font-bold ${
-                    Number(String(value).replace("$", "")) < 0
-                      ? "text-red-400"
-                      : "text-white"
+                    Number(String(value).replace("$", "")) < 0 ? "text-red-400" : "text-white"
                   }`}
                 >
                   {value}
@@ -366,8 +359,8 @@ export default function Dashboard() {
           <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
             <h3 className="text-lg font-semibold">Recent Trades</h3>
 
-            <div className="mt-6 overflow-hidden rounded-xl border border-zinc-800">
-              <table className="w-full text-left text-sm">
+            <div className="mt-6 overflow-x-auto rounded-xl border border-zinc-800">
+              <table className="w-full min-w-[1100px] text-left text-sm">
                 <thead className="bg-zinc-900 text-zinc-400">
                   <tr>
                     <th className="p-4">Symbol</th>
@@ -376,6 +369,9 @@ export default function Dashboard() {
                     <th className="p-4">Open</th>
                     <th className="p-4">Close</th>
                     <th className="p-4">P&L</th>
+                    <th className="p-4">Emotion</th>
+                    <th className="p-4">Mistake</th>
+                    <th className="p-4">Notes</th>
                     <th className="p-4">Action</th>
                   </tr>
                 </thead>
@@ -383,7 +379,7 @@ export default function Dashboard() {
                 <tbody>
                   {trades.length === 0 && (
                     <tr className="border-t border-zinc-800">
-                      <td className="p-4 text-zinc-500" colSpan={7}>
+                      <td className="p-4 text-zinc-500" colSpan={10}>
                         No trades added yet.
                       </td>
                     </tr>
@@ -398,13 +394,14 @@ export default function Dashboard() {
                       <td className="p-4 text-zinc-400">{trade.close_price}</td>
                       <td
                         className={`p-4 ${
-                          Number(trade.profit) >= 0
-                            ? "text-emerald-400"
-                            : "text-red-400"
+                          Number(trade.profit) >= 0 ? "text-emerald-400" : "text-red-400"
                         }`}
                       >
                         ${Number(trade.profit).toFixed(2)}
                       </td>
+                      <td className="p-4 text-zinc-400">{trade.emotion || "-"}</td>
+                      <td className="p-4 text-zinc-400">{trade.mistake || "-"}</td>
+                      <td className="max-w-[220px] p-4 text-zinc-400">{trade.notes || "-"}</td>
                       <td className="p-4">
                         <button
                           onClick={() => deleteTrade(trade.id)}
@@ -424,13 +421,11 @@ export default function Dashboard() {
 
       {showTradeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6">
-          <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold">Add Manual Trade</h2>
-                <p className="mt-1 text-sm text-zinc-500">
-                  Add your trade manually.
-                </p>
+                <p className="mt-1 text-sm text-zinc-500">Add your trade manually.</p>
               </div>
 
               <button
@@ -489,6 +484,35 @@ export default function Dashboard() {
                 value={profit}
                 onChange={(e) => setProfit(e.target.value)}
                 className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 outline-none focus:border-emerald-500"
+              />
+
+              <select
+                value={emotion}
+                onChange={(e) => setEmotion(e.target.value)}
+                className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 outline-none focus:border-emerald-500"
+              >
+                <option value="">Select Emotion</option>
+                <option value="Calm">Calm</option>
+                <option value="Confident">Confident</option>
+                <option value="Fear">Fear</option>
+                <option value="Greed">Greed</option>
+                <option value="FOMO">FOMO</option>
+                <option value="Revenge">Revenge</option>
+              </select>
+
+              <input
+                type="text"
+                placeholder="Mistake e.g. FOMO, Overtrade, Early Exit"
+                value={mistake}
+                onChange={(e) => setMistake(e.target.value)}
+                className="w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 outline-none focus:border-emerald-500"
+              />
+
+              <textarea
+                placeholder="Trade Notes / Lesson learned"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="min-h-24 w-full rounded-xl border border-zinc-800 bg-black px-4 py-3 outline-none focus:border-emerald-500"
               />
 
               {tradeMessage && (
