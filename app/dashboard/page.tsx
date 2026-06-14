@@ -18,7 +18,6 @@ import {
   Link2,
   LogOut,
   Settings,
-  TrendingDown,
   TrendingUp,
   Wallet,
 } from "lucide-react";
@@ -31,14 +30,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function checkUser() {
-      const { data } = await supabase.auth.getUser();
+      const { data } = await supabase.auth.getSession();
 
-      if (!data.user) {
-        router.push("/login");
+      if (!data.session?.user) {
+        router.replace("/login");
         return;
       }
 
-      setUserEmail(data.user.email || "");
+      setUserEmail(data.session.user.email || "");
       setChecking(false);
     }
 
@@ -47,7 +46,7 @@ export default function Dashboard() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.replace("/login");
   }
 
   if (checking) {
@@ -173,12 +172,6 @@ export default function Dashboard() {
               <div className="mt-6 h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={equityData}>
-                    <defs>
-                      <linearGradient id="equity" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
                     <XAxis dataKey="day" stroke="#71717a" />
                     <YAxis stroke="#71717a" />
@@ -194,7 +187,7 @@ export default function Dashboard() {
                       type="monotone"
                       dataKey="balance"
                       stroke="#10b981"
-                      fill="url(#equity)"
+                      fill="#10b981"
                       strokeWidth={3}
                     />
                   </AreaChart>

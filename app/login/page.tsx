@@ -15,9 +15,15 @@ export default function LoginPage() {
 
   async function handleLogin() {
     setMessage("");
+
+    if (!email || !password) {
+      setMessage("Please enter email and password.");
+      return;
+    }
+
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -29,7 +35,10 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    if (data.session) {
+      router.replace("/dashboard");
+      router.refresh();
+    }
   }
 
   return (
@@ -70,7 +79,7 @@ export default function LoginPage() {
         </div>
 
         <p className="mt-6 text-center text-sm text-zinc-400">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-emerald-400">
             Create account
           </Link>
