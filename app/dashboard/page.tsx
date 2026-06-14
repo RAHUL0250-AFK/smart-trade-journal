@@ -97,9 +97,7 @@ export default function Dashboard() {
       .limit(1)
       .maybeSingle();
 
-    if (data) {
-      setConnectedBroker(data as Broker);
-    }
+    if (data) setConnectedBroker(data as Broker);
   }
 
   async function loadTrades(currentUserId: string) {
@@ -155,7 +153,14 @@ export default function Dashboard() {
   async function saveManualTrade() {
     setTradeMessage("");
 
-    if (!tradeSymbol || !tradeType || !tradeLot || !openPrice || !closePrice || !profit) {
+    if (
+      !tradeSymbol ||
+      !tradeType ||
+      !tradeLot ||
+      !openPrice ||
+      !closePrice ||
+      !profit
+    ) {
       setTradeMessage("Please fill all trade details.");
       return;
     }
@@ -195,6 +200,21 @@ export default function Dashboard() {
     setProfit("");
   }
 
+  async function deleteTrade(id: string) {
+    const confirmDelete = window.confirm("Are you sure you want to delete this trade?");
+
+    if (!confirmDelete) return;
+
+    const { error } = await supabase.from("trades").delete().eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setTrades((prev) => prev.filter((trade) => trade.id !== id));
+  }
+
   const totalProfit = useMemo(() => {
     return trades.reduce((sum, trade) => sum + Number(trade.profit || 0), 0);
   }, [trades]);
@@ -203,7 +223,8 @@ export default function Dashboard() {
     return trades.filter((trade) => Number(trade.profit) > 0).length;
   }, [trades]);
 
-  const winRate = trades.length > 0 ? Math.round((winTrades / trades.length) * 100) : 0;
+  const winRate =
+    trades.length > 0 ? Math.round((winTrades / trades.length) * 100) : 0;
 
   const todayProfit = useMemo(() => {
     const today = new Date().toDateString();
@@ -355,13 +376,14 @@ export default function Dashboard() {
                     <th className="p-4">Open</th>
                     <th className="p-4">Close</th>
                     <th className="p-4">P&L</th>
+                    <th className="p-4">Action</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {trades.length === 0 && (
                     <tr className="border-t border-zinc-800">
-                      <td className="p-4 text-zinc-500" colSpan={6}>
+                      <td className="p-4 text-zinc-500" colSpan={7}>
                         No trades added yet.
                       </td>
                     </tr>
@@ -382,6 +404,14 @@ export default function Dashboard() {
                         }`}
                       >
                         ${Number(trade.profit).toFixed(2)}
+                      </td>
+                      <td className="p-4">
+                        <button
+                          onClick={() => deleteTrade(trade.id)}
+                          className="rounded-lg border border-red-500/40 px-3 py-1 text-xs text-red-400 hover:bg-red-500/10"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}
