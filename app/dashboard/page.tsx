@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Area,
   AreaChart,
@@ -14,13 +16,48 @@ import {
   BarChart3,
   BookOpen,
   Link2,
+  LogOut,
   Settings,
   TrendingDown,
   TrendingUp,
   Wallet,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function Dashboard() {
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    async function checkUser() {
+      const { data } = await supabase.auth.getUser();
+
+      if (!data.user) {
+        router.push("/login");
+        return;
+      }
+
+      setUserEmail(data.user.email || "");
+      setChecking(false);
+    }
+
+    checkUser();
+  }, [router]);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
+
+  if (checking) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-black text-white">
+        Checking login...
+      </main>
+    );
+  }
+
   const equityData = [
     { day: "Mon", balance: 1000 },
     { day: "Tue", balance: 1040 },
@@ -54,7 +91,9 @@ export default function Dashboard() {
             JOURNAL
           </h1>
 
-          <nav className="mt-10 space-y-2 text-sm text-zinc-400">
+          <p className="mt-6 break-all text-xs text-zinc-500">{userEmail}</p>
+
+          <nav className="mt-8 space-y-2 text-sm text-zinc-400">
             <div className="flex items-center gap-3 rounded-lg bg-emerald-500/10 px-4 py-3 text-emerald-400">
               <BarChart3 size={18} />
               Dashboard
@@ -80,6 +119,14 @@ export default function Dashboard() {
               Settings
             </div>
           </nav>
+
+          <button
+            onClick={handleLogout}
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 py-3 text-sm text-zinc-300 hover:border-red-500 hover:text-red-400"
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
         </aside>
 
         <section className="flex-1 p-8">
@@ -92,7 +139,7 @@ export default function Dashboard() {
             </div>
 
             <button className="rounded-full bg-emerald-500 px-5 py-3 font-semibold text-black hover:bg-emerald-400">
-              Connect MT5
+              Connect Broker
             </button>
           </div>
 
@@ -128,16 +175,8 @@ export default function Dashboard() {
                   <AreaChart data={equityData}>
                     <defs>
                       <linearGradient id="equity" x1="0" y1="0" x2="0" y2="1">
-                        <stop
-                          offset="5%"
-                          stopColor="#10b981"
-                          stopOpacity={0.35}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#10b981"
-                          stopOpacity={0}
-                        />
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
@@ -165,7 +204,6 @@ export default function Dashboard() {
 
             <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
               <h3 className="text-lg font-semibold">Risk Metrics</h3>
-
               <div className="mt-6 space-y-5">
                 <Metric title="Max Drawdown" value="0%" />
                 <Metric title="Average Win" value="$0.00" green />
@@ -176,45 +214,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-              <h3 className="text-lg font-semibold">Best Trade</h3>
-              <div className="mt-6 flex items-center gap-3">
-                <TrendingUp className="text-emerald-400" />
-                <div>
-                  <p className="font-bold">No trade yet</p>
-                  <p className="text-sm text-zinc-500">Will update after sync</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-              <h3 className="text-lg font-semibold">Worst Trade</h3>
-              <div className="mt-6 flex items-center gap-3">
-                <TrendingDown className="text-red-400" />
-                <div>
-                  <p className="font-bold">No trade yet</p>
-                  <p className="text-sm text-zinc-500">Will update after sync</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-              <h3 className="text-lg font-semibold">MT5 Account</h3>
-              <p className="mt-6 text-zinc-500">No account connected</p>
-              <button className="mt-5 w-full rounded-xl bg-emerald-500 py-3 font-semibold text-black">
-                Add MT5 Account
-              </button>
-            </div>
-          </div>
-
           <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Recent Trades</h3>
-              <button className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-300">
-                View All
-              </button>
-            </div>
+            <h3 className="text-lg font-semibold">Recent Trades</h3>
 
             <div className="mt-6 overflow-hidden rounded-xl border border-zinc-800">
               <table className="w-full text-left text-sm">
