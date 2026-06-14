@@ -20,13 +20,16 @@ import {
   Settings,
   TrendingUp,
   Wallet,
+  X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function Dashboard() {
   const router = useRouter();
+
   const [checking, setChecking] = useState(true);
   const [userEmail, setUserEmail] = useState("");
+  const [showBrokerModal, setShowBrokerModal] = useState(false);
 
   useEffect(() => {
     async function checkUser() {
@@ -137,7 +140,10 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <button className="rounded-full bg-emerald-500 px-5 py-3 font-semibold text-black hover:bg-emerald-400">
+            <button
+              onClick={() => setShowBrokerModal(true)}
+              className="rounded-full bg-emerald-500 px-5 py-3 font-semibold text-black hover:bg-emerald-400"
+            >
               Connect Broker
             </button>
           </div>
@@ -238,6 +244,37 @@ export default function Dashboard() {
           </div>
         </section>
       </div>
+
+      {showBrokerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">Connect Broker</h2>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Select your broker to continue.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowBrokerModal(false)}
+                className="rounded-full border border-zinc-800 p-2 text-zinc-400 hover:border-red-500 hover:text-red-400"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mt-6">
+              <button className="w-full rounded-2xl border border-zinc-800 bg-black p-5 text-left transition hover:border-emerald-500">
+                <h3 className="text-lg font-bold">XM</h3>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Connect your XM MT5 trading account.
+                </p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
