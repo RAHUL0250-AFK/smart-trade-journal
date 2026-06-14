@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-black text-white">
@@ -6,9 +8,22 @@ export default function Home() {
           <h1 className="text-xl font-bold tracking-wide">
             SMART TRADE JOURNAL
           </h1>
-          <button className="rounded-full border border-zinc-700 px-5 py-2 text-sm text-zinc-300">
-            Connect MT5
-          </button>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="rounded-full border border-zinc-700 px-5 py-2 text-sm text-zinc-300 hover:border-zinc-500"
+            >
+              Login
+            </Link>
+
+            <Link
+              href="/signup"
+              className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-black hover:bg-emerald-400"
+            >
+              Sign Up
+            </Link>
+          </div>
         </nav>
 
         <div className="flex flex-1 flex-col items-center justify-center text-center">
@@ -17,7 +32,11 @@ export default function Home() {
           </p>
 
           <h2 className="max-w-4xl text-5xl font-bold leading-tight md:text-7xl">
-            Track every trade. Analyze every mistake. Grow like a pro.
+            Track every trade.
+            <br />
+            Analyze every mistake.
+            <br />
+            Grow like a pro.
           </h2>
 
           <p className="mt-6 max-w-2xl text-lg text-zinc-400">
@@ -27,12 +46,19 @@ export default function Home() {
           </p>
 
           <div className="mt-10 flex gap-4">
-            <button className="rounded-full bg-emerald-500 px-7 py-3 font-semibold text-black">
+            <Link
+              href="/signup"
+              className="rounded-full bg-emerald-500 px-7 py-3 font-semibold text-black hover:bg-emerald-400"
+            >
               Get Started
-            </button>
-            <button className="rounded-full border border-zinc-700 px-7 py-3 font-semibold text-zinc-300">
-              View Dashboard
-            </button>
+            </Link>
+
+            <Link
+              href="/login"
+              className="rounded-full border border-zinc-700 px-7 py-3 font-semibold text-zinc-300 hover:border-zinc-500"
+            >
+              Login
+            </Link>
           </div>
 
           <div className="mt-16 grid w-full max-w-5xl grid-cols-1 gap-4 md:grid-cols-4">
