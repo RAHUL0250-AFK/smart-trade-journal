@@ -177,16 +177,33 @@ function showSuccess(message) {
 
 async function redirectIfLoggedIn() {
   try {
-    const { data, error } = await supabaseClient.auth.getUser();
+    const { data: sessionData } = await supabaseClient.auth.getSession();
 
-    if (error || !data.user) {
+    if (!sessionData.session) {
+      return;
+    }
+
+    const { data: refreshData, error: refreshError } =
+      await supabaseClient.auth.refreshSession();
+
+    if (refreshError || !refreshData.session) {
+      await supabaseClient.auth.signOut({ scope: "local" });
+      return;
+    }
+
+    const { data: userData, error: userError } =
+      await supabaseClient.auth.getUser();
+
+    if (userError || !userData.user) {
       await supabaseClient.auth.signOut({ scope: "local" });
       return;
     }
 
     location.href = "index.html";
   } catch (err) {
-    await supabaseClient.auth.signOut({ scope: "local" });
+    try {
+      await supabaseClient.auth.signOut({ scope: "local" });
+    } catch (e) {}
   }
 }
 
