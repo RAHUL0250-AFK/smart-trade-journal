@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Journal | Smart Trade Journal</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+  --bg:#08090d;
+  --sidebar:#0c0d11;
+  --panel:#101116;
+  --panel2:#14161b;
+  --border:#20232b;
+  --text:#f4f5f7;
+  --muted:#7d818c;
+  --green:#20d080;
+  --red:#ff4e58;
+  --purple:#8357ff;
+  --yellow:#ffc928;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+  width:240px;
+  position:fixed;
+  left:0;
+  top:0;
+  bottom:0;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  z-index:30;
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:17px;
+  font-weight:800;
+  padding-bottom:22px;
+}
+
+.logo-box{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:linear-gradient(135deg,#693cff,#a75cff);
+  font-size:12px;
+}
+
+.logo span{
+  color:#ff4c91;
+}
+
+.nav{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.nav a{
+  color:#80848f;
+  text-decoration:none;
+  border-radius:9px;
+  padding:11px 12px;
+  font-size:13px;
+}
+
+.nav a:hover{
+  background:#17191f;
+  color:#fff;
+}
+
+.nav a.active{
+  background:#1a1c22;
+  border:1px solid #2a2d34;
+  color:#fff;
+}
+
+/* ANALYTICS DROPDOWN */
+
+.analytics-menu{
+  width:100%;
+}
+
+.analytics-toggle{
+  width:100%;
+  border:none;
+  background:#191b21;
+  color:#fff;
+  border-radius:9px;
+  padding:11px 12px;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  cursor:pointer;
+  text-align:left;
+  font-family:inherit;
+}
+
+.analytics-arrow{
+  transition:transform .25s ease;
+}
+
+.analytics-menu.open .analytics-arrow{
+  transform:rotate(180deg);
+}
+
+.analytics-submenu{
+  margin-left:14px;
+  overflow:hidden;
+  max-height:260px;
+  opacity:1;
+  transform:translateY(0);
+  margin-top:5px;
+  margin-bottom:8px;
+  transition:
+    max-height .3s ease,
+    opacity .22s ease,
+    transform .22s ease;
+}
+
+.analytics-menu:not(.open) .analytics-submenu{
+  max-height:0;
+  opacity:0;
+  transform:translateY(-7px);
+  margin-top:0;
+  margin-bottom:0;
+}
+
+.analytics-submenu a{
+  display:block;
+  color:#80848f;
+  text-decoration:none;
+  border-radius:8px;
+  padding:9px 12px;
+  margin-bottom:4px;
+  font-size:12px;
+}
+
+.analytics-submenu a:hover{
+  background:#17191f;
+  color:#fff;
+}
+
+.giveaway{
+  margin-top:20px;
+  background:#1d1608;
+  border:1px solid #563e00;
+  border-radius:12px;
+  padding:13px;
+  font-size:11px;
+}
+
+.giveaway strong{
+  color:#ffd142;
+}
+
+.bottom{
+  margin-top:auto;
+}
+
+.bottom a{
+  display:block;
+  color:#7d818c;
+  text-decoration:none;
+  padding:10px 8px;
+  font-size:13px;
+}
+
+/* MAIN */
+
+.main{
+  margin-left:240px;
+  width:calc(100% - 240px);
+}
+
+.topbar{
+  height:60px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:15px;
+  padding:0 26px;
+  background:#090a0e;
+  position:sticky;
+  top:0;
+  z-index:20;
+}
+
+.account{
+  background:#111319;
+  border:1px solid #20232a;
+  border-radius:10px;
+  padding:9px 14px;
+  font-size:12px;
+}
+
+.connected{
+  color:var(--green);
+}
+
+.profile{
+  background:#12141a;
+  border:1px solid #23262e;
+  border-radius:10px;
+  padding:8px 14px;
+  min-width:150px;
+}
+
+.profile strong{
+  display:block;
+  font-size:12px;
+}
+
+.profile small{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.content{
+  padding:24px 28px;
+  max-width:1600px;
+  margin:auto;
+}
+
+/* PAGE HEADER */
+
+.page-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  margin-bottom:22px;
+}
+
+.page-head h1{
+  font-size:28px;
+  margin-bottom:7px;
+}
+
+.page-head p{
+  color:var(--muted);
+  font-size:14px;
+}
+
+.new-entry{
+  border:none;
+  background:linear-gradient(90deg,#7651ff,#b04ef0);
+  color:#fff;
+  border-radius:10px;
+  padding:12px 20px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+/* VIEW TOGGLE */
+
+.view-toggle{
+  display:inline-flex;
+  background:#0f1014;
+  border:1px solid #191c22;
+  border-radius:10px;
+  padding:4px;
+  margin-bottom:22px;
+}
+
+.view-btn{
+  border:none;
+  background:transparent;
+  color:#7d818c;
+  padding:9px 15px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:12px;
+}
+
+.view-btn.active{
+  background:#16181e;
+  color:#fff;
+}
+
+/* STATS */
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+  margin-bottom:24px;
+}
+
+.stat{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:17px;
+  display:flex;
+  align-items:center;
+  gap:13px;
+}
+
+.stat-icon{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  font-size:17px;
+}
+
+.green-bg{
+  background:#0b2f20;
+  color:var(--green);
+}
+
+.purple-bg{
+  background:#21183e;
+  color:var(--purple);
+}
+
+.red-bg{
+  background:#351418;
+  color:var(--red);
+}
+
+.stat small{
+  display:block;
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.5px;
+  margin-bottom:6px;
+}
+
+.stat strong{
+  font-size:18px;
+}
+
+.green{
+  color:var(--green);
+}
+
+.red{
+  color:var(--red);
+}
+
+/* CALENDAR CARD */
+
+.calendar-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+}
+
+.calendar-head{
+  padding:18px;
+  border-bottom:1px solid #1d2026;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.calendar-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.calendar-icon{
+  width:34px;
+  height:34px;
+  border-radius:9px;
+  display:grid;
+  place-items:center;
+  background:#241847;
+  color:#9468ff;
+}
+
+.calendar-head h2{
+  font-size:17px;
+}
+
+.month-controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.month-btn{
+  border:1px solid #22252d;
+  background:#0e1015;
+  color:#fff;
+  border-radius:9px;
+  min-width:36px;
+  height:34px;
+  cursor:pointer;
+}
+
+.today-btn{
+  padding:0 14px;
+  width:auto;
+}
+
+/* CALENDAR */
+
+.calendar-wrap{
+  padding:14px 16px 18px;
+}
+
+.calendar{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:5px;
+}
+
+.weekday{
+  color:#777c88;
+  text-align:center;
+  font-size:11px;
+  padding:10px 4px;
+}
+
+.day{
+  min-height:150px;
+  background:#0d0f13;
+  border:1px solid transparent;
+  border-radius:10px;
+  padding:12px;
+  font-size:12px;
+  position:relative;
+  cursor:pointer;
+}
+
+.day:hover{
+  background:#111319;
+}
+
+.day.blank{
+  background:transparent;
+  cursor:default;
+}
+
+.day.today{
+  border:2px solid var(--purple);
+}
+
+.day.profit-day{
+  background:#0c3525;
+  border-color:#17563c;
+}
+
+.day-num{
+  text-align:center;
+  font-weight:700;
+}
+
+.day-data{
+  position:absolute;
+  left:0;
+  right:0;
+  top:52px;
+  text-align:center;
+}
+
+.day-data strong{
+  display:block;
+  color:var(--green);
+  font-size:12px;
+  margin-bottom:3px;
+}
+
+.day-data small{
+  color:#6f9987;
+  font-size:10px;
+}
+
+.legend{
+  border-top:1px solid #1d2026;
+  padding:16px;
+  display:flex;
+  justify-content:center;
+  gap:28px;
+  color:#757a85;
+  font-size:11px;
+}
+
+.legend span{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.legend-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+}
+
+.legend-profit{
+  background:#14894f;
+}
+
+.legend-loss{
+  background:#9a3a40;
+}
+
+.legend-journal{
+  width:12px;
+  height:12px;
+  border-radius:4px;
+  border:2px solid var(--purple);
+}
+
+/* DAY VIEW */
+
+.day-view{
+  display:none;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:22px;
+}
+
+.day-view.show{
+  display:block;
+}
+
+.day-view-title{
+  font-size:18px;
+  margin-bottom:16px;
+}
+
+.day-summary{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.day-box{
+  background:#14161b;
+  border:1px solid #22252c;
+  border-radius:10px;
+  padding:15px;
+}
+
+.day-box small{
+  display:block;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+.day-box strong{
+  font-size:17px;
+}
+
+.no-journal{
+  min-height:170px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  color:var(--muted);
+}
+
+/* MODAL */
+
+.modal-bg{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+}
+
+.modal-bg.show{
+  display:flex;
+}
+
+.modal{
+  width:500px;
+  max-width:calc(100% - 30px);
+  background:#111319;
+  border:1px solid #292c34;
+  border-radius:16px;
+  padding:22px;
+}
+
+.modal-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.modal-head h2{
+  font-size:20px;
+}
+
+.close-btn{
+  border:none;
+  background:transparent;
+  color:#8a8f99;
+  font-size:22px;
+  cursor:pointer;
+}
+
+.form-group{
+  margin-bottom:15px;
+}
+
+.form-group label{
+  display:block;
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea{
+  width:100%;
+  border:1px solid #282b33;
+  background:#17191f;
+  color:#fff;
+  border-radius:9px;
+  padding:12px;
+  outline:none;
+}
+
+.form-group textarea{
+  min-height:110px;
+  resize:vertical;
+}
+
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:20px;
+}
+
+.cancel-btn{
+  border:1px solid #2b2e36;
+  background:#181a20;
+  color:#fff;
+  border-radius:9px;
+  padding:11px 16px;
+  cursor:pointer;
+}
+
+.save-btn{
+  border:none;
+  background:var(--purple);
+  color:#fff;
+  border-radius:9px;
+  padding:11px 16px;
+  cursor:pointer;
+}
+
+/* HELP */
+
+.help{
+  position:fixed;
+  right:22px;
+  bottom:20px;
+  width:50px;
+  height:50px;
+  border:none;
+  border-radius:50%;
+  background:var(--purple);
+  color:#fff;
+  font-size:22px;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1100px){
+  .stats{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .day{
+    min-height:110px;
+  }
+}
+
+@media(max-width:760px){
+
+  .sidebar{
+    display:none;
+  }
+
+  .main{
+    margin-left:0;
+    width:100%;
+  }
+
+  .content{
+    padding:16px;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .page-head{
+    flex-direction:column;
+  }
+
+  .calendar{
+    min-width:900px;
+  }
+
+  .calendar-wrap{
+    overflow-x:auto;
+  }
+
+  .day-summary{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+
+  <div class="logo">
+    <div class="logo-box">ST</div>
+    Smart Trade <span>Journal</span>
+  </div>
+
+  <nav class="nav">
+
+    <a href="index.html">▦ Dashboard</a>
+
+    <div class="analytics-menu open" id="analyticsMenu">
+
+      <button class="analytics-toggle" id="analyticsToggle">
+        <span>▥ Analytics</span>
+        <span class="analytics-arrow">⌄</span>
+      </button>
+
+      <div class="analytics-submenu">
+
+        <a href="analytics.html">▥ Performance</a>
+        <a href="reports.html">⇩ Reports</a>
+        <a href="strategies.html">▤ Strategies</a>
+        <a href="trade-replay.html">▷ Trade Replay</a>
+        <a href="share-cards.html">⌘ Share Cards</a>
+
+      </div>
+
+    </div>
+
+    <a href="trade-history.html">↗ Trade History</a>
+
+    <a href="journal.html" class="active">
+      ✎ Journal
+    </a>
+
+    <a href="#">✦ Smart Journal AI</a>
+    <a href="#">♨ Hot Topics</a>
+    <a href="#">♕ Leaderboard</a>
+
+  </nav>
+
+
+  <div class="giveaway">
+    🎁 <strong>Giveaway</strong><br>
+    Win rewards every month
+  </div>
+
+
+  <div class="bottom">
+    <a href="#">▣ Broker Hub</a>
+    <a href="#">⚙ Settings</a>
+    <a href="#">↪ Logout</a>
+  </div>
+
+</aside>
+
+
+<main class="main">
+
+<header class="topbar">
+
+  <div class="account">
+    ● XM #430381517
+    <span class="connected">Connected</span>
+  </div>
+
+  <div>☼</div>
+
+  <div class="profile">
+    <strong>Rahul Kumawat</strong>
+    <small>Trader</small>
+  </div>
+
+</header>
+
+
+<div class="content">
+
+
+<section class="page-head">
+
+  <div>
+    <h1>Trading Journal</h1>
+    <p>Document your thoughts and track your progress</p>
+  </div>
+
+  <button class="new-entry" id="openEntry">
+    ＋ &nbsp; New Entry
+  </button>
+
+</section>
+
+
+<div class="view-toggle">
+
+  <button class="view-btn active" id="calendarTab">
+    ▣ Calendar
+  </button>
+
+  <button class="view-btn" id="dayTab">
+    ▥ Day View
+  </button>
+
+</div>
+
+
+<section class="stats">
+
+  <div class="stat">
+
+    <div class="stat-icon green-bg">$</div>
+
+    <div>
+      <small>MONTH P&amp;L</small>
+      <strong class="green">$30.22</strong>
+    </div>
+
+  </div>
+
+
+  <div class="stat">
+
+    <div class="stat-icon purple-bg">▥</div>
+
+    <div>
+      <small>TOTAL TRADES</small>
+      <strong>8</strong>
+    </div>
+
+  </div>
+
+
+  <div class="stat">
+
+    <div class="stat-icon green-bg">↗</div>
+
+    <div>
+      <small>WINNING DAYS</small>
+      <strong class="green">2</strong>
+    </div>
+
+  </div>
+
+
+  <div class="stat">
+
+    <div class="stat-icon red-bg">↘</div>
+
+    <div>
+      <small>LOSING DAYS</small>
+      <strong class="red">0</strong>
+    </div>
+
+  </div>
+
+</section>
+
+
+<section class="calendar-card" id="calendarView">
+
+  <div class="calendar-head">
+
+    <div class="calendar-title">
+
+      <div class="calendar-icon">▣</div>
+
+      <h2 id="monthTitle">October 2026</h2>
+
+    </div>
+
+
+    <div class="month-controls">
+
+      <button class="month-btn" id="prevMonth">
+        ‹
+      </button>
+
+      <button class="month-btn today-btn" id="todayMonth">
+        Today
+      </button>
+
+      <button class="month-btn" id="nextMonth">
+        ›
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div class="calendar-wrap">
+
+    <div class="calendar" id="calendar">
+
+      <div class="weekday">Sun</div>
+      <div class="weekday">Mon</div>
+      <div class="weekday">Tue</div>
+      <div class="weekday">Wed</div>
+      <div class="weekday">Thu</div>
+      <div class="weekday">Fri</div>
+      <div class="weekday">Sat</div>
+
+    </div>
+
+  </div>
+
+
+  <div class="legend">
+
+    <span>
+      <i class="legend-dot legend-profit"></i>
+      Profit
+    </span>
+
+    <span>
+      <i class="legend-dot legend-loss"></i>
+      Loss
+    </span>
+
+    <span>
+      <i class="legend-journal"></i>
+      Has journal
+    </span>
+
+  </div>
+
+</section>
+
+
+<section class="day-view" id="dayView">
+
+  <h2 class="day-view-title">
+    October 2, 2026
+  </h2>
+
+  <div class="day-summary">
+
+    <div class="day-box">
+      <small>P&amp;L</small>
+      <strong class="green">+$20.07</strong>
+    </div>
+
+    <div class="day-box">
+      <small>Trades</small>
+      <strong>5</strong>
+    </div>
+
+    <div class="day-box">
+      <small>Win Rate</small>
+      <strong>60%</strong>
+    </div>
+
+  </div>
+
+  <div class="no-journal">
+    <div>
+      <h3>No journal entry yet</h3>
+      <p style="margin-top:7px;">
+        Click New Entry to document your trading day.
+      </p>
+    </div>
+  </div>
+
+</section>
+
+</div>
+
+</main>
+
+</div>
+
+
+<button class="help">?</button>
+
+
+<!-- NEW ENTRY MODAL -->
+
+<div class="modal-bg" id="entryModal">
+
+<div class="modal">
+
+  <div class="modal-head">
+
+    <h2>New Journal Entry</h2>
+
+    <button class="close-btn" id="closeEntry">
+      ×
+    </button>
+
+  </div>
+
+
+  <div class="form-group">
+
+    <label>Date</label>
+
+    <input
+      type="date"
+      value="2026-10-04"
+    >
+
+  </div>
+
+
+  <div class="form-group">
+
+    <label>Mood</label>
+
+    <select>
+
+      <option>Confident</option>
+      <option>Calm</option>
+      <option>Focused</option>
+      <option>Neutral</option>
+      <option>Frustrated</option>
+
+    </select>
+
+  </div>
+
+
+  <div class="form-group">
+
+    <label>What went well?</label>
+
+    <textarea
+      placeholder="Write what worked well today..."
+    ></textarea>
+
+  </div>
+
+
+  <div class="form-group">
+
+    <label>What can improve?</label>
+
+    <textarea
+      placeholder="Write mistakes or improvements..."
+    ></textarea>
+
+  </div>
+
+
+  <div class="modal-actions">
+
+    <button class="cancel-btn" id="cancelEntry">
+      Cancel
+    </button>
+
+    <button class="save-btn" id="saveEntry">
+      Save Entry
+    </button>
+
+  </div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* ANALYTICS DROPDOWN */
+
+const analyticsMenu =
+document.getElementById("analyticsMenu");
+
+const analyticsToggle =
+document.getElementById("analyticsToggle");
+
+analyticsToggle.addEventListener(
+"click",
+() => {
+
+  analyticsMenu.classList.toggle("open");
+
+});
+
+
+/* CALENDAR */
+
+const calendar =
+document.getElementById("calendar");
+
+const monthTitle =
+document.getElementById("monthTitle");
+
+let month = 9;
+let year = 2026;
+
+const tradeDays = {
+  "2026-10-01":{
+    pnl:"$10.15",
+    trades:"3 trades"
+  },
+
+  "2026-10-02":{
+    pnl:"$20.07",
+    trades:"5 trades"
+  }
+};
+
+
+function renderCalendar(){
+
+  calendar.innerHTML = `
+    <div class="weekday">Sun</div>
+    <div class="weekday">Mon</div>
+    <div class="weekday">Tue</div>
+    <div class="weekday">Wed</div>
+    <div class="weekday">Thu</div>
+    <div class="weekday">Fri</div>
+    <div class="weekday">Sat</div>
+  `;
+
+  const first =
+  new Date(year,month,1);
+
+  const totalDays =
+  new Date(year,month+1,0).getDate();
+
+  const monthName =
+  first.toLocaleDateString(
+    "en-US",
+    {
+      month:"long",
+      year:"numeric"
+    }
+  );
+
+  monthTitle.textContent =
+  monthName;
+
+
+  for(let i=0;i<first.getDay();i++){
+
+    const blank =
+    document.createElement("div");
+
+    blank.className =
+    "day blank";
+
+    calendar.appendChild(blank);
+
+  }
+
+
+  for(let day=1;day<=totalDays;day++){
+
+    const date =
+    new Date(year,month,day);
+
+    const key =
+    `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+
+    const box =
+    document.createElement("div");
+
+    box.className =
+    "day";
+
+    if(
+      year === 2026 &&
+      month === 9 &&
+      day === 4
+    ){
+      box.classList.add("today");
+    }
+
+    if(tradeDays[key]){
+      box.classList.add("profit-day");
+    }
+
+    box.innerHTML = `
+      <div class="day-num">${day}</div>
+    `;
+
+    if(tradeDays[key]){
+
+      box.innerHTML += `
+        <div class="day-data">
+          <strong>
+            ${tradeDays[key].pnl}
+          </strong>
+
+          <small>
+            ${tradeDays[key].trades}
+          </small>
+        </div>
+      `;
+
+    }
+
+    box.addEventListener(
+    "click",
+    () => {
+
+      calendarTab.classList.remove("active");
+
+      dayTab.classList.add("active");
+
+      calendarView.style.display =
+      "none";
+
+      dayView.classList.add("show");
+
+    });
+
+    calendar.appendChild(box);
+
+  }
+
+}
+
+
+renderCalendar();
+
+
+document
+.getElementById("prevMonth")
+.addEventListener(
+"click",
+() => {
+
+  month--;
+
+  if(month < 0){
+    month = 11;
+    year--;
+  }
+
+  renderCalendar();
+
+});
+
+
+document
+.getElementById("nextMonth")
+.addEventListener(
+"click",
+() => {
+
+  month++;
+
+  if(month > 11){
+    month = 0;
+    year++;
+  }
+
+  renderCalendar();
+
+});
+
+
+document
+.getElementById("todayMonth")
+.addEventListener(
+"click",
+() => {
+
+  month = 9;
+  year = 2026;
+
+  renderCalendar();
+
+});
+
+
+/* CALENDAR / DAY VIEW */
+
+const calendarTab =
+document.getElementById("calendarTab");
+
+const dayTab =
+document.getElementById("dayTab");
+
+const calendarView =
+document.getElementById("calendarView");
+
+const dayView =
+document.getElementById("dayView");
+
+
+calendarTab.addEventListener(
+"click",
+() => {
+
+  calendarTab.classList.add("active");
+
+  dayTab.classList.remove("active");
+
+  calendarView.style.display =
+  "block";
+
+  dayView.classList.remove("show");
+
+});
+
+
+dayTab.addEventListener(
+"click",
+() => {
+
+  dayTab.classList.add("active");
+
+  calendarTab.classList.remove("active");
+
+  calendarView.style.display =
+  "none";
+
+  dayView.classList.add("show");
+
+});
+
+
+/* NEW ENTRY */
+
+const entryModal =
+document.getElementById("entryModal");
+
+const openEntry =
+document.getElementById("openEntry");
+
+const closeEntry =
+document.getElementById("closeEntry");
+
+const cancelEntry =
+document.getElementById("cancelEntry");
+
+const saveEntry =
+document.getElementById("saveEntry");
+
+
+openEntry.addEventListener(
+"click",
+() => {
+
+  entryModal.classList.add("show");
+
+});
+
+
+closeEntry.addEventListener(
+"click",
+() => {
+
+  entryModal.classList.remove("show");
+
+});
+
+
+cancelEntry.addEventListener(
+"click",
+() => {
+
+  entryModal.classList.remove("show");
+
+});
+
+
+saveEntry.addEventListener(
+"click",
+() => {
+
+  entryModal.classList.remove("show");
+
+  alert("Journal entry saved in demo mode.");
+
+});
+
+
+entryModal.addEventListener(
+"click",
+event => {
+
+  if(event.target === entryModal){
+
+    entryModal.classList.remove("show");
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>
