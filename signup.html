@@ -220,10 +220,22 @@ form.addEventListener("submit", async e => {
   }
 
   if (data.session) {
-    showSuccess("Account created. Opening dashboard...");
-    setTimeout(() => location.href = "index.html", 600);
+    // Confirm Email is OFF: Supabase signs the new user in immediately.
+    // We clear that session so the user must log in manually.
+    try {
+      await supabaseClient.auth.signOut({ scope: "local" });
+    } catch (e) {}
+
+    showSuccess("Account created successfully. Opening login...");
+    setTimeout(() => {
+      location.href = "login.html?signup=success";
+    }, 700);
   } else {
-    showSuccess("Account created. Check your email, confirm your address, then return to the login page and sign in.");
+    // If email confirmation is enabled again in the future.
+    showSuccess("Account created. Please confirm your email, then sign in.");
+    setTimeout(() => {
+      location.href = "login.html?signup=pending";
+    }, 1200);
   }
 });
 </script>
