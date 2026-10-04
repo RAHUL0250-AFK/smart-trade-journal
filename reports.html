@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports | Smart Trade Journal</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#08090d;
+  --sidebar:#0c0d11;
+  --panel:#101116;
+  --panel2:#14161b;
+  --border:#20232b;
+  --text:#f4f5f7;
+  --muted:#7e828d;
+  --green:#20c981;
+  --red:#ff4e55;
+  --purple:#8357ff;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+  width:240px;
+  position:fixed;
+  left:0;
+  top:0;
+  bottom:0;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:800;
+  font-size:17px;
+  padding-bottom:22px;
+}
+
+.logo-box{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:linear-gradient(135deg,#693cff,#a75cff);
+  font-size:12px;
+}
+
+.logo span{
+  color:#ff4c91;
+}
+
+.nav,
+.subnav{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.nav a,
+.subnav a{
+  color:#818590;
+  text-decoration:none;
+  border-radius:9px;
+  padding:11px 12px;
+  font-size:13px;
+}
+
+.nav a:hover,
+.subnav a:hover{
+  color:#fff;
+  background:#17191f;
+}
+
+.nav a.active{
+  color:#fff;
+  background:#191b21;
+}
+
+.subnav{
+  margin-left:14px;
+  margin-top:5px;
+  margin-bottom:8px;
+}
+
+.subnav a{
+  padding:9px 12px;
+  font-size:12px;
+}
+
+.subnav a.active{
+  color:#fff;
+  background:#1a1c22;
+  border:1px solid #2a2d34;
+}
+
+.giveaway{
+  margin-top:20px;
+  background:#1d1608;
+  border:1px solid #563e00;
+  border-radius:12px;
+  padding:13px;
+  font-size:11px;
+}
+
+.giveaway strong{
+  color:#ffd142;
+}
+
+.bottom{
+  margin-top:auto;
+}
+
+.bottom a{
+  display:block;
+  color:#7d818c;
+  text-decoration:none;
+  padding:10px 8px;
+  font-size:13px;
+}
+
+/* MAIN */
+
+.main{
+  margin-left:240px;
+  width:calc(100% - 240px);
+}
+
+.topbar{
+  height:60px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:15px;
+  padding:0 26px;
+  background:#090a0e;
+}
+
+.account{
+  background:#111319;
+  border:1px solid #20232a;
+  border-radius:10px;
+  padding:9px 14px;
+  font-size:12px;
+}
+
+.connected{
+  color:var(--green);
+}
+
+.profile{
+  background:#12141a;
+  border:1px solid #23262e;
+  border-radius:10px;
+  padding:8px 14px;
+  min-width:150px;
+}
+
+.profile strong{
+  display:block;
+  font-size:12px;
+}
+
+.profile small{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.content{
+  max-width:1600px;
+  margin:auto;
+  padding:28px;
+}
+
+/* HEADER */
+
+.page-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:28px;
+  gap:20px;
+}
+
+.page-head h1{
+  font-size:30px;
+  margin-bottom:7px;
+}
+
+.page-head p{
+  color:var(--muted);
+  font-size:14px;
+}
+
+.right-tools{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:14px;
+}
+
+.tabs{
+  display:flex;
+  background:#101116;
+  border:1px solid #191b21;
+  border-radius:11px;
+  overflow:hidden;
+}
+
+.tabs button{
+  border:none;
+  background:transparent;
+  color:#ddd;
+  padding:12px 24px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.tabs button.active{
+  background:#14161b;
+}
+
+.tool-row{
+  display:flex;
+  gap:10px;
+}
+
+.filter,
+.export{
+  border:none;
+  border-radius:10px;
+  padding:11px 16px;
+  font-size:13px;
+}
+
+.filter{
+  background:#111319;
+  color:#fff;
+  min-width:150px;
+}
+
+.export{
+  background:var(--purple);
+  color:#fff;
+  font-weight:700;
+}
+
+/* CARDS */
+
+.grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-bottom:18px;
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px;
+}
+
+.card-toolbar{
+  display:flex;
+  align-items:center;
+  margin-bottom:18px;
+}
+
+.select-title{
+  background:#15171d;
+  border:1px solid #20232a;
+  color:#f2f3f5;
+  border-radius:9px;
+  padding:10px 13px;
+  font-size:13px;
+}
+
+/* CUMULATIVE CHART */
+
+.chart{
+  width:100%;
+  height:300px;
+}
+
+.chart text{
+  fill:#797f8c;
+  font-size:11px;
+}
+
+.gridline{
+  stroke:#191c22;
+  stroke-dasharray:4;
+}
+
+.axis{
+  stroke:#4a4e59;
+}
+
+.pnl-line{
+  fill:none;
+  stroke:#16c98b;
+  stroke-width:3;
+}
+
+.pnl-area{
+  fill:url(#greenGradient);
+}
+
+/* BAR CHART */
+
+.hour-chart{
+  height:300px;
+  display:flex;
+  align-items:center;
+}
+
+.hour-bars{
+  height:240px;
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border-bottom:1px solid #424650;
+  position:relative;
+  padding:0 10px;
+}
+
+.zero{
+  position:absolute;
+  left:0;
+  right:0;
+  top:50%;
+  border-top:1px solid #494d57;
+}
+
+.hour-col{
+  height:100%;
+  flex:1;
+  position:relative;
+  display:flex;
+  justify-content:center;
+}
+
+.bar{
+  position:absolute;
+  width:72%;
+  border-radius:4px;
+}
+
+.bar.pos{
+  bottom:50%;
+  background:#15bd87;
+}
+
+.bar.neg{
+  top:50%;
+  background:#f14a4f;
+}
+
+.hour-label{
+  position:absolute;
+  bottom:-22px;
+  color:#787d88;
+  font-size:10px;
+}
+
+/* METRICS */
+
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+
+.metric{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px;
+  min-height:96px;
+}
+
+.metric small{
+  color:#7b808a;
+  font-size:12px;
+}
+
+.metric strong{
+  display:block;
+  margin-top:10px;
+  font-size:23px;
+}
+
+.green{
+  color:var(--green);
+}
+
+.red{
+  color:var(--red);
+}
+
+@media(max-width:1100px){
+  .grid2{
+    grid-template-columns:1fr;
+  }
+  .metrics{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:780px){
+  .sidebar{
+    display:none;
+  }
+
+  .main{
+    margin-left:0;
+    width:100%;
+  }
+
+  .page-head{
+    flex-direction:column;
+  }
+
+  .right-tools{
+    align-items:flex-start;
+  }
+
+  .metrics{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+
+  <div class="logo">
+    <div class="logo-box">ST</div>
+    Smart Trade <span>Journal</span>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">▦ Dashboard</a>
+    <a href="analytics.html" class="active">▥ Analytics</a>
+  </nav>
+
+  <div class="subnav">
+    <a href="analytics.html">▥ Performance</a>
+    <a href="reports.html" class="active">⇩ Reports</a>
+    <a href="#">▤ Strategies</a>
+    <a href="#">▷ Trade Replay</a>
+    <a href="#">⌘ Share Cards</a>
+  </div>
+
+  <nav class="nav">
+    <a href="trade-history.html">↗ Trade History</a>
+    <a href="#">✎ Journal</a>
+    <a href="#">✦ Smart Journal AI</a>
+    <a href="#">♨ Hot Topics</a>
+    <a href="#">♕ Leaderboard</a>
+  </nav>
+
+  <div class="giveaway">
+    🎁 <strong>Giveaway</strong><br>
+    Win rewards every month
+  </div>
+
+  <div class="bottom">
+    <a href="#">▣ Broker Hub</a>
+    <a href="#">⚙ Settings</a>
+    <a href="#">↪ Logout</a>
+  </div>
+
+</aside>
+
+<main class="main">
+
+<header class="topbar">
+  <div class="account">● XM #430381517 <span class="connected">Connected</span></div>
+  <div>☼</div>
+
+  <div class="profile">
+    <strong>Rahul Kumawat</strong>
+    <small>Trader</small>
+  </div>
+</header>
+
+<div class="content">
+
+<section class="page-head">
+
+  <div>
+    <h1>Reports</h1>
+    <p>Advanced analytics and customizable reports</p>
+  </div>
+
+  <div class="right-tools">
+
+    <div class="tabs">
+      <button class="active">Summary</button>
+      <button>Days</button>
+      <button>Trades</button>
+      <button>Advanced</button>
+    </div>
+
+    <div class="tool-row">
+      <button class="filter">▣ &nbsp; All Time &nbsp;⌄</button>
+      <button class="export">⇩ Export PDF</button>
+    </div>
+
+  </div>
+
+</section>
+
+
+<section class="grid2">
+
+<div class="card">
+
+  <div class="card-toolbar">
+    <div class="select-title">▥ &nbsp; Net P&amp;L – Cumulative &nbsp;⌄</div>
+  </div>
+
+  <svg class="chart" viewBox="0 0 700 300" preserveAspectRatio="none">
+
+    <defs>
+      <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#19c98c" stop-opacity=".28"/>
+        <stop offset="100%" stop-color="#19c98c" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+
+    <line class="gridline" x1="55" y1="20" x2="680" y2="20"/>
+    <line class="gridline" x1="55" y1="90" x2="680" y2="90"/>
+    <line class="gridline" x1="55" y1="160" x2="680" y2="160"/>
+    <line class="gridline" x1="55" y1="230" x2="680" y2="230"/>
+
+    <line class="axis" x1="55" y1="20" x2="55" y2="260"/>
+    <line class="axis" x1="55" y1="260" x2="680" y2="260"/>
+
+    <path class="pnl-area"
+    d="
+    M55 190
+    L65 175 L75 200 L85 215 L95 180
+    L105 140 L115 170 L125 150 L135 190
+    L145 175 L155 185 L165 210 L175 180
+    L185 140 L195 120 L205 130 L215 122
+    L225 145 L235 150 L245 170 L255 155
+    L265 175 L275 160 L285 195 L295 200
+    L305 170 L315 160 L325 130 L335 140
+    L345 175 L355 160 L365 165 L375 150
+    L385 170 L395 160 L405 155 L415 205
+    L425 215 L435 200 L445 175 L455 150
+    L465 120 L475 95 L485 115 L495 85
+    L505 100 L515 75 L525 60 L535 80
+    L545 70 L555 45 L565 72 L575 58
+    L585 50 L595 68 L605 55 L615 77
+    L625 57 L635 62 L645 45 L655 75
+    L665 62 L675 42
+    L675 260 L55 260 Z"/>
+
+    <polyline class="pnl-line"
+    points="
+    55,190 65,175 75,200 85,215 95,180
+    105,140 115,170 125,150 135,190
+    145,175 155,185 165,210 175,180
+    185,140 195,120 205,130 215,122
+    225,145 235,150 245,170 255,155
+    265,175 275,160 285,195 295,200
+    305,170 315,160 325,130 335,140
+    345,175 355,160 365,165 375,150
+    385,170 395,160 405,155 415,205
+    425,215 435,200 445,175 455,150
+    465,120 475,95 485,115 495,85
+    505,100 515,75 525,60 535,80
+    545,70 555,45 565,72 575,58
+    585,50 595,68 605,55 615,77
+    625,57 635,62 645,45 655,75
+    665,62 675,42"/>
+
+    <text x="15" y="25">$140</text>
+    <text x="20" y="95">$105</text>
+    <text x="26" y="165">$70</text>
+    <text x="26" y="235">$35</text>
+    <text x="35" y="265">$0</text>
+
+    <text x="52" y="282">Oct 2</text>
+    <text x="115" y="282">Sep 28</text>
+    <text x="190" y="282">Sep 22</text>
+    <text x="260" y="282">Aug 3</text>
+    <text x="325" y="282">Jul 30</text>
+    <text x="390" y="282">Jul 22</text>
+    <text x="455" y="282">Jul 15</text>
+    <text x="520" y="282">Jul 8</text>
+    <text x="590" y="282">Jul 2</text>
+    <text x="650" y="282">Jun 24</text>
+
+  </svg>
+
+</div>
+
+
+<div class="card">
+
+  <div class="card-toolbar">
+    <div class="select-title">▥ &nbsp; P&amp;L by Hour of Day &nbsp;⌄</div>
+  </div>
+
+  <div class="hour-chart">
+
+    <div class="hour-bars">
+
+      <div class="zero"></div>
+
+      <div class="hour-col">
+        <div class="bar neg" style="height:2%"></div>
+        <span class="hour-label">7:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar pos" style="height:6%"></div>
+        <span class="hour-label">8:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar pos" style="height:14%"></div>
+        <span class="hour-label">9:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar pos" style="height:10%"></div>
+        <span class="hour-label">11:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar neg" style="height:12%"></div>
+        <span class="hour-label">12:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar neg" style="height:20%"></div>
+        <span class="hour-label">13:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar neg" style="height:8%"></div>
+        <span class="hour-label">14:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar neg" style="height:7%"></div>
+        <span class="hour-label">16:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar pos" style="height:63%"></div>
+        <span class="hour-label">17:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar pos" style="height:5%"></div>
+        <span class="hour-label">18:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar pos" style="height:74%"></div>
+        <span class="hour-label">19:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar pos" style="height:18%"></div>
+        <span class="hour-label">20:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar neg" style="height:3%"></div>
+        <span class="hour-label">21:00</span>
+      </div>
+
+      <div class="hour-col">
+        <div class="bar pos" style="height:23%"></div>
+        <span class="hour-label">22:00</span>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+</section>
+
+
+<section class="metrics">
+
+<div class="metric">
+  <small>$ &nbsp; Net P&amp;L</small>
+  <strong class="green">$118.72</strong>
+</div>
+
+<div class="metric">
+  <small>% &nbsp; Win %</small>
+  <strong>55.9%</strong>
+</div>
+
+<div class="metric">
+  <small>◎ &nbsp; Profit Factor</small>
+  <strong>1.37</strong>
+</div>
+
+<div class="metric">
+  <small>⌁ &nbsp; Total Trades</small>
+  <strong>136</strong>
+</div>
+
+<div class="metric">
+  <small>↗ &nbsp; Avg Win</small>
+  <strong class="green">$5.84</strong>
+</div>
+
+<div class="metric">
+  <small>↘ &nbsp; Avg Loss</small>
+  <strong class="red">$5.41</strong>
+</div>
+
+<div class="metric">
+  <small>♙ &nbsp; W/L Ratio</small>
+  <strong>1.08</strong>
+</div>
+
+<div class="metric">
+  <small>◷ &nbsp; Avg Hold Time</small>
+  <strong>37m</strong>
+</div>
+
+</section>
+
+</div>
+</main>
+</div>
+
+</body>
+</html>
