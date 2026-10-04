@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings | Smart Trade Journal</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08090d;--sidebar:#0c0d11;--panel:#101116;--panel2:#14161b;
+  --border:#20232b;--text:#f4f5f7;--muted:#7d818c;--green:#20d080;
+  --red:#ff4e58;--purple:#8357ff;--purple2:#a14cff;--blue:#4aa3ff
+}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:240px;position:fixed;left:0;top:0;bottom:0;background:var(--sidebar);
+  border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column;z-index:30
+}
+.logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;padding-bottom:22px}
+.logo-box{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:linear-gradient(135deg,#693cff,#a75cff);font-size:12px}
+.logo span{color:#ff4c91}
+.nav{display:flex;flex-direction:column;gap:5px}
+.nav a{color:#80848f;text-decoration:none;border-radius:9px;padding:11px 12px;font-size:13px}
+.nav a:hover{background:#17191f;color:#fff}
+.nav a.active{background:#1a1c22;border:1px solid #2a2d34;color:#fff}
+.analytics-menu{width:100%}
+.analytics-toggle{
+  width:100%;border:none;background:transparent;color:#80848f;border-radius:9px;padding:11px 12px;
+  font-size:13px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;font-family:inherit
+}
+.analytics-toggle:hover,.analytics-toggle.active{background:#17191f;color:#fff}
+.analytics-arrow{transition:transform .25s ease}
+.analytics-menu.open .analytics-arrow{transform:rotate(180deg)}
+.analytics-submenu{
+  margin-left:14px;overflow:hidden;max-height:0;opacity:0;transform:translateY(-7px);
+  transition:max-height .3s ease,opacity .22s ease,transform .22s ease
+}
+.analytics-menu.open .analytics-submenu{max-height:260px;opacity:1;transform:translateY(0);margin-top:5px;margin-bottom:8px}
+.analytics-submenu a{display:block;color:#80848f;text-decoration:none;border-radius:8px;padding:9px 12px;margin-bottom:4px;font-size:12px}
+.analytics-submenu a:hover{background:#17191f;color:#fff}
+.bottom{margin-top:auto}
+.bottom a{display:block;color:#7d818c;text-decoration:none;padding:10px 8px;font-size:13px}
+.bottom a.active{background:#1a1c22;border:1px solid #2a2d34;color:#fff;border-radius:9px}
+
+.main{margin-left:240px;width:calc(100% - 240px)}
+.topbar{
+  height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;
+  gap:15px;padding:0 26px;background:#090a0e;position:sticky;top:0;z-index:20
+}
+.account{background:#111319;border:1px solid #20232a;border-radius:10px;padding:9px 14px;font-size:12px}
+.connected{color:var(--green)}
+.profile-box{background:#12141a;border:1px solid #23262e;border-radius:10px;padding:8px 14px;min-width:150px}
+.profile-box strong{display:block;font-size:12px}
+.profile-box small{color:var(--muted);font-size:10px}
+
+.content{padding:28px 28px;max-width:1180px;margin:auto}
+.heading{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.heading-icon{
+  width:36px;height:36px;border-radius:10px;background:#231747;color:#9065ff;
+  display:grid;place-items:center;font-size:18px
+}
+.heading h1{font-size:27px;margin-bottom:5px}
+.heading p{color:var(--muted);font-size:13px}
+
+.settings-layout{display:grid;grid-template-columns:270px 1fr;gap:20px;align-items:start}
+.settings-nav{
+  background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:7px
+}
+.settings-tab{
+  width:100%;border:none;background:transparent;color:#848894;border-radius:9px;padding:12px 13px;
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:13px;text-align:left
+}
+.settings-tab:hover{background:#17191f;color:#fff}
+.settings-tab.active{background:#211a37;color:#a781ff}
+.settings-tab span:first-child{display:flex;align-items:center;gap:10px}
+
+.panel{
+  background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;display:none
+}
+.panel.active{display:block}
+.panel-title{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.panel-icon{
+  width:38px;height:38px;border-radius:10px;background:#221744;color:#9065ff;
+  display:grid;place-items:center;font-size:18px
+}
+.panel-title h2{font-size:18px;margin-bottom:4px}
+.panel-title p{color:var(--muted);font-size:12px}
+
+.user-row{display:flex;align-items:center;gap:14px;padding:2px 0 20px;border-bottom:1px solid #1f2229;margin-bottom:20px}
+.avatar-wrap{position:relative}
+.avatar{
+  width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,#7047ff,#a24bff);
+  display:grid;place-items:center;font-size:24px;font-weight:700
+}
+.camera{
+  position:absolute;right:-2px;bottom:0;width:23px;height:23px;border-radius:50%;
+  background:#17191f;border:2px solid var(--panel);display:grid;place-items:center;font-size:11px
+}
+.user-meta strong{display:block;font-size:15px;margin-bottom:6px}
+.user-meta small{color:var(--muted);font-size:12px}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 16px}
+.form-group label{display:block;font-size:12px;font-weight:700;margin-bottom:8px}
+.form-group input,.form-group select{
+  width:100%;border:1px solid #20232a;background:#111319;color:#fff;border-radius:10px;
+  padding:12px 13px;outline:none
+}
+.form-group input:focus,.form-group select:focus{border-color:#5f49a8}
+.form-group input[disabled]{color:#777b85}
+.actions{display:flex;justify-content:flex-end;margin-top:20px}
+.save-btn{
+  border:none;background:linear-gradient(90deg,#7750ff,#b04df0);color:white;
+  border-radius:10px;padding:11px 17px;font-weight:700;cursor:pointer
+}
+
+.plan-card{
+  border:1px solid #2b2f37;background:#13151a;border-radius:12px;padding:18px;margin-bottom:14px
+}
+.plan-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.plan-name{font-size:18px;font-weight:700}
+.badge{font-size:10px;padding:5px 8px;border-radius:999px;background:#173326;color:#5fe39c}
+.plan-card p{color:var(--muted);font-size:12px;line-height:1.6}
+.plan-price{font-size:25px;font-weight:800;margin:14px 0 5px}
+.plan-price small{font-size:11px;color:var(--muted);font-weight:400}
+.plan-btn{
+  margin-top:14px;border:1px solid #4a3a7b;background:#211938;color:#fff;border-radius:9px;
+  padding:10px 14px;cursor:pointer
+}
+
+.notify-row{
+  display:flex;align-items:center;justify-content:space-between;padding:17px 0;border-bottom:1px solid #20232a;gap:20px
+}
+.notify-row:last-child{border-bottom:none}
+.notify-copy strong{display:block;font-size:13px;margin-bottom:5px}
+.notify-copy span{color:var(--muted);font-size:11px;line-height:1.5}
+.switch{position:relative;width:44px;height:24px;flex:none}
+.switch input{display:none}
+.slider{position:absolute;inset:0;background:#242730;border-radius:999px;cursor:pointer;transition:.2s}
+.slider:before{
+  content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s
+}
+.switch input:checked + .slider{background:#7d51ff}
+.switch input:checked + .slider:before{transform:translateX(20px)}
+
+.toast{
+  position:fixed;right:25px;bottom:25px;background:#15181d;border:1px solid #2c3139;
+  border-radius:10px;padding:12px 15px;color:#fff;font-size:12px;opacity:0;pointer-events:none;
+  transform:translateY(10px);transition:.25s
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+.help{
+  position:fixed;right:22px;bottom:20px;width:50px;height:50px;border:none;border-radius:50%;
+  background:var(--purple);color:#fff;font-size:22px
+}
+
+@media(max-width:900px){
+  .settings-layout{grid-template-columns:1fr}
+  .settings-nav{display:flex;gap:6px;overflow:auto}
+  .settings-tab{min-width:150px}
+}
+@media(max-width:760px){
+  .sidebar{display:none}.main{margin-left:0;width:100%}.content{padding:18px}.form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-box">ST</div>
+    Smart Trade <span>Journal</span>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">▦ Dashboard</a>
+
+    <div class="analytics-menu" id="analyticsMenu">
+      <button class="analytics-toggle" id="analyticsToggle">
+        <span>▥ Analytics</span>
+        <span class="analytics-arrow">⌄</span>
+      </button>
+      <div class="analytics-submenu">
+        <a href="analytics.html">▥ Performance</a>
+        <a href="reports.html">⇩ Reports</a>
+        <a href="strategies.html">▤ Strategies</a>
+        <a href="trade-replay.html">▷ Trade Replay</a>
+        <a href="share-cards.html">⌘ Share Cards</a>
+      </div>
+    </div>
+
+    <a href="trade-history.html">↗ Trade History</a>
+    <a href="journal.html">✎ Journal</a>
+    <a href="#">✦ Smart Journal AI</a>
+    <a href="#">♨ Hot Topics</a>
+    <a href="#">♕ Leaderboard</a>
+  </nav>
+
+  <div class="bottom">
+    <a href="broker-hub.html">▣ Broker Hub</a>
+    <a class="active" href="settings.html">⚙ Settings</a>
+    <a href="#">↪ Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="account">● XM ••••381517 <span class="connected">Connected</span></div>
+    <div>☼</div>
+    <div class="profile-box">
+      <strong>Smart Trader</strong>
+      <small>Trader</small>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="heading">
+      <div class="heading-icon">⚙</div>
+      <div>
+        <h1>Settings</h1>
+        <p>Manage your account and preferences</p>
+      </div>
+    </div>
+
+    <div class="settings-layout">
+      <div class="settings-nav">
+        <button class="settings-tab active" data-tab="profile">
+          <span>♙ Profile</span><span>›</span>
+        </button>
+        <button class="settings-tab" data-tab="subscription">
+          <span>▣ Subscription</span><span>›</span>
+        </button>
+        <button class="settings-tab" data-tab="notifications">
+          <span>♧ Notifications</span><span>›</span>
+        </button>
+      </div>
+
+      <section class="panel active" id="profile">
+        <div class="panel-title">
+          <div class="panel-icon">♙</div>
+          <div>
+            <h2>Profile Settings</h2>
+            <p>Update your personal information</p>
+          </div>
+        </div>
+
+        <div class="user-row">
+          <div class="avatar-wrap">
+            <div class="avatar">R</div>
+            <div class="camera">⌁</div>
+          </div>
+          <div class="user-meta">
+            <strong>your@email.com</strong>
+            <small>Paid User</small>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" value="Smart Trader">
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" value="your@email.com" disabled>
+          </div>
+
+          <div class="form-group">
+            <label>Timezone</label>
+            <select>
+              <option>Asia/Kolkata</option>
+              <option>UTC</option>
+              <option>Europe/London</option>
+              <option>America/New_York</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Default Currency</label>
+            <select>
+              <option>USD</option>
+              <option>INR</option>
+              <option>EUR</option>
+              <option>GBP</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="save-btn" id="saveProfile">Save Changes</button>
+        </div>
+      </section>
+
+      <section class="panel" id="subscription">
+        <div class="panel-title">
+          <div class="panel-icon">▣</div>
+          <div>
+            <h2>Subscription</h2>
+            <p>Manage your current plan</p>
+          </div>
+        </div>
+
+        <div class="plan-card">
+          <div class="plan-top">
+            <div class="plan-name">Testing Plan</div>
+            <div class="badge">Active</div>
+          </div>
+          <p>Free access while Smart Trade Journal is in development and testing.</p>
+          <div class="plan-price">₹0 <small>/ month</small></div>
+          <button class="plan-btn" id="planBtn">Plan Details</button>
+        </div>
+
+        <div class="plan-card">
+          <div class="plan-top">
+            <div class="plan-name">Pro Plan</div>
+          </div>
+          <p>Future paid plan with automated broker sync, advanced analytics and AI journal tools.</p>
+          <div class="plan-price">Coming Soon</div>
+        </div>
+      </section>
+
+      <section class="panel" id="notifications">
+        <div class="panel-title">
+          <div class="panel-icon">♧</div>
+          <div>
+            <h2>Notifications</h2>
+            <p>Choose the updates you want to receive</p>
+          </div>
+        </div>
+
+        <div class="notify-row">
+          <div class="notify-copy">
+            <strong>Trade sync alerts</strong>
+            <span>Notify me when new broker trades are synced.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="notify-row">
+          <div class="notify-copy">
+            <strong>Daily trading summary</strong>
+            <span>Receive a summary of daily P&amp;L and trade performance.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="notify-row">
+          <div class="notify-copy">
+            <strong>Product updates</strong>
+            <span>Receive updates when new Smart Trade Journal features are released.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button class="save-btn" id="saveNotifications">Save Changes</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+</div>
+
+<button class="help">?</button>
+<div class="toast" id="toast">Saved successfully</div>
+
+<script>
+const analyticsMenu = document.getElementById("analyticsMenu");
+const analyticsToggle = document.getElementById("analyticsToggle");
+analyticsToggle.addEventListener("click", () => {
+  analyticsMenu.classList.toggle("open");
+  analyticsToggle.classList.toggle("active", analyticsMenu.classList.contains("open"));
+});
+
+const tabs = document.querySelectorAll(".settings-tab");
+const panels = document.querySelectorAll(".panel");
+
+tabs.forEach(tab => {
+  tab.addEventListener("click", () => {
+    const target = tab.dataset.tab;
+
+    tabs.forEach(t => t.classList.remove("active"));
+    panels.forEach(p => p.classList.remove("active"));
+
+    tab.classList.add("active");
+    document.getElementById(target).classList.add("active");
+  });
+});
+
+const toast = document.getElementById("toast");
+function showToast(message){
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+document.getElementById("saveProfile").addEventListener("click", () => {
+  showToast("Profile settings saved in demo mode.");
+});
+
+document.getElementById("saveNotifications").addEventListener("click", () => {
+  showToast("Notification settings saved in demo mode.");
+});
+
+document.getElementById("planBtn").addEventListener("click", () => {
+  showToast("Testing plan is active.");
+});
+</script>
+</body>
+</html>
