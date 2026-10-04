@@ -175,8 +175,49 @@ function showSuccess(message) {
   errorBox.style.display = "none";
 }
 
+async function handleEmailVerificationThenLogin() {
+  const hashParams = new URLSearchParams(window.location.hash.slice(1));
+  const queryParams = new URLSearchParams(window.location.search);
+
+  const authType =
+    hashParams.get("type") ||
+    queryParams.get("type");
+
+  const isSignupVerification = authType === "signup";
+
+  if (!isSignupVerification) {
+    return false;
+  }
+
+  // Supabase may establish a session when the confirmation link is opened.
+  // We intentionally clear that session so the user must sign in manually.
+  await new Promise(resolve => setTimeout(resolve, 250));
+
+  try {
+    await supabaseClient.auth.signOut({ scope: "local" });
+  } catch (e) {}
+
+  // Remove auth tokens/details from the address bar.
+  window.history.replaceState({}, document.title, "login.html?verified=1");
+
+  showSuccess("Email verified successfully. Please sign in with your email and password.");
+  return true;
+}
+
 async function redirectIfLoggedIn() {
   try {
+    const verifiedCallbackHandled = await handleEmailVerificationThenLogin();
+
+    if (verifiedCallbackHandled) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("verified") === "1") {
+      showSuccess("Email verified successfully. Please sign in with your email and password.");
+      return;
+    }
+
     const { data: sessionData } = await supabaseClient.auth.getSession();
 
     if (!sessionData.session) {
@@ -199,6 +240,8 @@ async function redirectIfLoggedIn() {
       return;
     }
 
+    // Normal case: an already signed-in user opening login.html
+    // is returned to the dashboard.
     location.href = "index.html";
   } catch (err) {
     try {
