@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategies | Smart Trade Journal</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+  --bg:#08090d;
+  --sidebar:#0c0d11;
+  --panel:#101116;
+  --border:#20232b;
+  --text:#f3f4f6;
+  --muted:#7c808b;
+  --purple:#8357ff;
+  --green:#20d080;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+  width:240px;
+  position:fixed;
+  left:0;
+  top:0;
+  bottom:0;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:17px;
+  font-weight:800;
+  padding-bottom:22px;
+}
+
+.logo-box{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:linear-gradient(135deg,#693cff,#a75cff);
+  font-size:12px;
+}
+
+.logo span{
+  color:#ff4c91;
+}
+
+.nav,
+.subnav{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.nav a,
+.subnav a{
+  color:#80848f;
+  text-decoration:none;
+  border-radius:9px;
+  padding:11px 12px;
+  font-size:13px;
+}
+
+.nav a:hover,
+.subnav a:hover{
+  background:#17191f;
+  color:#fff;
+}
+
+.nav a.active{
+  background:#191b21;
+  color:#fff;
+}
+
+.subnav{
+  margin-left:14px;
+  margin-top:5px;
+  margin-bottom:8px;
+}
+
+.subnav a{
+  font-size:12px;
+  padding:9px 12px;
+}
+
+.subnav a.active{
+  background:#1a1c22;
+  border:1px solid #2a2d34;
+  color:#fff;
+}
+
+.giveaway{
+  margin-top:20px;
+  background:#1d1608;
+  border:1px solid #563e00;
+  border-radius:12px;
+  padding:13px;
+  font-size:11px;
+}
+
+.giveaway strong{
+  color:#ffd142;
+}
+
+.bottom{
+  margin-top:auto;
+}
+
+.bottom a{
+  display:block;
+  text-decoration:none;
+  color:#7d818c;
+  padding:10px 8px;
+  font-size:13px;
+}
+
+/* MAIN */
+
+.main{
+  margin-left:240px;
+  width:calc(100% - 240px);
+}
+
+.topbar{
+  height:60px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:15px;
+  padding:0 26px;
+  background:#090a0e;
+}
+
+.account{
+  background:#111319;
+  border:1px solid #20232a;
+  border-radius:10px;
+  padding:9px 14px;
+  font-size:12px;
+}
+
+.connected{
+  color:var(--green);
+}
+
+.profile{
+  background:#12141a;
+  border:1px solid #23262e;
+  border-radius:10px;
+  padding:8px 14px;
+  min-width:150px;
+}
+
+.profile strong{
+  display:block;
+  font-size:12px;
+}
+
+.profile small{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.content{
+  padding:28px;
+  max-width:1600px;
+  margin:auto;
+}
+
+/* PAGE HEAD */
+
+.page-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:24px;
+}
+
+.page-head h1{
+  font-size:30px;
+  margin-bottom:7px;
+}
+
+.page-head p{
+  color:var(--muted);
+  font-size:14px;
+}
+
+.create-btn{
+  background:var(--purple);
+  color:#fff;
+  border:none;
+  padding:12px 18px;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.create-btn:hover{
+  opacity:.9;
+}
+
+/* EMPTY CARD */
+
+.empty-card{
+  background:#101116;
+  border:1px solid var(--border);
+  border-radius:14px;
+  min-height:245px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+.empty-icon{
+  width:54px;
+  height:54px;
+  margin:0 auto 16px;
+  background:#14161c;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:25px;
+  color:#898d97;
+}
+
+.empty-card h3{
+  font-size:15px;
+  margin-bottom:12px;
+}
+
+.empty-card p{
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:20px;
+}
+
+/* MODAL */
+
+.modal-bg{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.72);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+}
+
+.modal-bg.show{
+  display:flex;
+}
+
+.modal{
+  width:440px;
+  max-width:calc(100% - 30px);
+  background:#111217;
+  border:1px solid #282a32;
+  border-radius:16px;
+  padding:22px;
+}
+
+.modal-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.modal h2{
+  font-size:20px;
+}
+
+.close{
+  background:transparent;
+  border:none;
+  color:#888d98;
+  font-size:22px;
+  cursor:pointer;
+}
+
+.form-group{
+  margin-bottom:16px;
+}
+
+.form-group label{
+  display:block;
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+.form-group input,
+.form-group textarea{
+  width:100%;
+  border:1px solid #252832;
+  background:#17191f;
+  color:#fff;
+  border-radius:9px;
+  padding:12px;
+  outline:none;
+}
+
+.form-group textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:20px;
+}
+
+.cancel{
+  background:#191b20;
+  border:1px solid #292c33;
+  color:#fff;
+  padding:11px 16px;
+  border-radius:9px;
+  cursor:pointer;
+}
+
+.save{
+  background:var(--purple);
+  color:#fff;
+  border:none;
+  padding:11px 16px;
+  border-radius:9px;
+  cursor:pointer;
+}
+
+@media(max-width:780px){
+
+  .sidebar{
+    display:none;
+  }
+
+  .main{
+    margin-left:0;
+    width:100%;
+  }
+
+  .content{
+    padding:16px;
+  }
+
+  .page-head{
+    align-items:flex-start;
+    gap:20px;
+    flex-direction:column;
+  }
+
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+
+  <div class="logo">
+    <div class="logo-box">ST</div>
+    Smart Trade <span>Journal</span>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">▦ Dashboard</a>
+    <a href="analytics.html" class="active">▥ Analytics</a>
+  </nav>
+
+  <div class="subnav">
+    <a href="analytics.html">▥ Performance</a>
+    <a href="reports.html">⇩ Reports</a>
+    <a href="strategies.html" class="active">▤ Strategies</a>
+    <a href="#">▷ Trade Replay</a>
+    <a href="#">⌘ Share Cards</a>
+  </div>
+
+  <nav class="nav">
+    <a href="trade-history.html">↗ Trade History</a>
+    <a href="#">✎ Journal</a>
+    <a href="#">✦ Smart Journal AI</a>
+    <a href="#">♨ Hot Topics</a>
+    <a href="#">♕ Leaderboard</a>
+  </nav>
+
+  <div class="giveaway">
+    🎁 <strong>Giveaway</strong><br>
+    Win rewards every month
+  </div>
+
+  <div class="bottom">
+    <a href="#">▣ Broker Hub</a>
+    <a href="#">⚙ Settings</a>
+    <a href="#">↪ Logout</a>
+  </div>
+
+</aside>
+
+
+<main class="main">
+
+<header class="topbar">
+
+  <div class="account">
+    ● XM #430381517
+    <span class="connected">Connected</span>
+  </div>
+
+  <div>☼</div>
+
+  <div class="profile">
+    <strong>Rahul Kumawat</strong>
+    <small>Trader</small>
+  </div>
+
+</header>
+
+
+<div class="content">
+
+<section class="page-head">
+
+  <div>
+    <h1>Strategies</h1>
+    <p>Track and compare your trading strategy performance</p>
+  </div>
+
+  <button class="create-btn open-modal">
+    + &nbsp; Create Strategy
+  </button>
+
+</section>
+
+
+<section class="empty-card">
+
+  <div>
+
+    <div class="empty-icon">
+      ◎
+    </div>
+
+    <h3>No strategies yet</h3>
+
+    <p>
+      Create your first trading strategy to track performance
+    </p>
+
+    <button class="create-btn open-modal">
+      Create Strategy
+    </button>
+
+  </div>
+
+</section>
+
+</div>
+</main>
+</div>
+
+
+<!-- CREATE STRATEGY MODAL -->
+
+<div class="modal-bg" id="strategyModal">
+
+  <div class="modal">
+
+    <div class="modal-head">
+      <h2>Create Strategy</h2>
+      <button class="close" id="closeModal">×</button>
+    </div>
+
+    <div class="form-group">
+      <label>Strategy Name</label>
+      <input
+        type="text"
+        placeholder="e.g. London Breakout"
+      >
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <textarea
+        placeholder="Describe your trading strategy..."
+      ></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Default Risk %</label>
+      <input
+        type="number"
+        placeholder="1"
+        min="0"
+        step="0.1"
+      >
+    </div>
+
+    <div class="modal-actions">
+
+      <button class="cancel" id="cancelModal">
+        Cancel
+      </button>
+
+      <button class="save">
+        Create Strategy
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+const modal =
+document.getElementById("strategyModal");
+
+const openButtons =
+document.querySelectorAll(".open-modal");
+
+const closeModal =
+document.getElementById("closeModal");
+
+const cancelModal =
+document.getElementById("cancelModal");
+
+openButtons.forEach(button => {
+
+  button.addEventListener("click", () => {
+
+    modal.classList.add("show");
+
+  });
+
+});
+
+closeModal.addEventListener("click", () => {
+
+  modal.classList.remove("show");
+
+});
+
+cancelModal.addEventListener("click", () => {
+
+  modal.classList.remove("show");
+
+});
+
+modal.addEventListener("click", event => {
+
+  if(event.target === modal){
+
+    modal.classList.remove("show");
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>
