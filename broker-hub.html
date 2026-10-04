@@ -321,7 +321,7 @@ window.stjAuthReady = (async () => {
 
 <main class="main">
   <header class="topbar">
-    <div class="account">● XM ••••381517 <span class="connected">Connected</span></div>
+    <div class="account" id="topBrokerStatus">● No broker account saved</div>
     <div>☼</div>
     <div class="profile">
       <strong>Smart Trader</strong>
@@ -343,37 +343,37 @@ window.stjAuthReady = (async () => {
         </div>
         <div class="connected-count">
           <small>Connected</small>
-          <strong>1</strong>
+          <strong id="connectedCount">0</strong>
         </div>
       </div>
 
       <div class="summary-grid">
         <div class="metric green">
           <small>↗ Balance</small>
-          <strong class="green-text">$61.23</strong>
+          <strong class="green-text" id="summaryBalance">—</strong>
         </div>
         <div class="metric blue">
           <small>⚡ Equity</small>
-          <strong class="blue-text">$61.23</strong>
+          <strong class="blue-text" id="summaryEquity">—</strong>
         </div>
         <div class="metric purple">
           <small>◉ Unrealized</small>
-          <strong class="green-text">+$0.00</strong>
+          <strong class="green-text" id="summaryUnrealized">—</strong>
         </div>
         <div class="metric">
           <small>▣ Brokers</small>
-          <strong>1</strong>
+          <strong id="brokerCount">0</strong>
         </div>
       </div>
     </section>
 
-    <section class="account-card">
+    <section class="account-card" id="brokerAccountCard" style="display:none">
       <div class="account-head">
         <div class="broker-id">
           <div class="broker-icon">📈</div>
           <div>
-            <strong>XM <span class="live">≋ Live</span></strong>
-            <small>XM Global Limited ••••381517</small>
+            <strong><span id="cardBrokerName">Broker</span> <span class="live">≋ Saved</span></strong>
+            <small id="cardAccountMeta">Account details</small>
           </div>
         </div>
         <div class="ok">⊙</div>
@@ -381,21 +381,20 @@ window.stjAuthReady = (async () => {
 
       <div class="balance-row">
         <div>
-          <small>Balance</small>
-          <strong>$61.23</strong>
+          <small>MT5 Account</small>
+          <strong id="cardAccountId">—</strong>
         </div>
         <div>
-          <small>Equity</small>
-          <strong>$61.23</strong>
+          <small>Server</small>
+          <strong id="cardServer" style="font-size:13px">—</strong>
         </div>
       </div>
 
-      <div class="last-sync">Last sync: demo mode</div>
+      <div class="last-sync" id="lastSyncText">Account details saved for this user. MT5 trade sync is not active yet.</div>
 
-      <div class="actions">
-        <button class="btn" id="syncBtn">↻ Sync</button>
-        <button class="btn" id="updatePasswordBtn">🔑 Update Password</button>
-        <button class="btn danger" id="disconnectBtn">↗ Disconnect</button>
+      <div class="actions" style="grid-template-columns:1fr 1fr">
+        <button class="btn" id="syncBtn">↻ Sync Status</button>
+        <button class="btn danger" id="disconnectBtn">↗ Remove</button>
       </div>
     </section>
 
@@ -426,35 +425,30 @@ window.stjAuthReady = (async () => {
     </div>
 
     <div class="notice">
-      Prototype only: this form does not connect to MetaTrader yet. Do not enter your real trading password into this demo page.
+      This step saves only your broker name, MT5 account ID and server to your own Supabase account. We do not ask for or store your MT5 password here.
     </div>
 
     <div class="form-group">
       <label>Broker</label>
-      <select>
-        <option>XM</option>
-        <option>Other MT5 Broker</option>
+      <select id="brokerName">
+        <option value="XM">XM</option>
+        <option value="Other MT5 Broker">Other MT5 Broker</option>
       </select>
     </div>
 
     <div class="form-group">
       <label>MT5 Account ID</label>
-      <input type="text" placeholder="Enter MT5 account ID">
+      <input id="mt5AccountId" type="text" inputmode="numeric" autocomplete="off" placeholder="Enter MT5 account ID">
     </div>
 
     <div class="form-group">
       <label>Broker Server</label>
-      <input type="text" placeholder="Example: XMGlobal-MT5 18">
-    </div>
-
-    <div class="form-group">
-      <label>MT5 Password</label>
-      <input type="password" placeholder="Demo UI only — do not enter real password">
+      <input id="brokerServer" type="text" autocomplete="off" placeholder="Example: XMGlobal-MT5 18">
     </div>
 
     <div class="modal-actions">
       <button class="cancel" id="cancelModal">Cancel</button>
-      <button class="connect-btn" id="demoConnect">Connect</button>
+      <button class="connect-btn" id="demoConnect">Save Account</button>
     </div>
   </div>
 </div>
@@ -471,47 +465,177 @@ const connectModal = document.getElementById("connectModal");
 const connectCard = document.getElementById("connectCard");
 const closeModal = document.getElementById("closeModal");
 const cancelModal = document.getElementById("cancelModal");
-const demoConnect = document.getElementById("demoConnect");
+const saveAccountBtn = document.getElementById("demoConnect");
+const brokerNameInput = document.getElementById("brokerName");
+const accountIdInput = document.getElementById("mt5AccountId");
+const serverInput = document.getElementById("brokerServer");
 
-connectCard.addEventListener("click", () => connectModal.classList.add("show"));
+let currentBrokerAccount = null;
+
+function maskAccountId(value) {
+  const id = String(value || "");
+  if (!id) return "";
+  if (id.length <= 4) return "••••" + id;
+  return "••••" + id.slice(-6);
+}
+
+function setBrokerUI(account, total = 0) {
+  const card = document.getElementById("brokerAccountCard");
+  const top = document.getElementById("topBrokerStatus");
+
+  document.getElementById("connectedCount").textContent = String(total);
+  document.getElementById("brokerCount").textContent = String(total);
+
+  document.getElementById("summaryBalance").textContent = "—";
+  document.getElementById("summaryEquity").textContent = "—";
+  document.getElementById("summaryUnrealized").textContent = "—";
+
+  if (!account) {
+    currentBrokerAccount = null;
+    card.style.display = "none";
+    top.textContent = "● No broker account saved";
+    return;
+  }
+
+  currentBrokerAccount = account;
+  card.style.display = "block";
+
+  const broker = account.broker_name || "MT5 Broker";
+  const masked = maskAccountId(account.account_id);
+
+  document.getElementById("cardBrokerName").textContent = broker;
+  document.getElementById("cardAccountMeta").textContent =
+    masked + " • " + (account.server || "Server not set");
+  document.getElementById("cardAccountId").textContent = masked;
+  document.getElementById("cardServer").textContent = account.server || "—";
+
+  top.innerHTML =
+    "● " + broker + " " + masked + ' <span class="connected">Saved</span>';
+}
+
+async function getLoggedInUser() {
+  if (window.stjAuthReady) {
+    const ok = await window.stjAuthReady;
+    if (!ok) return null;
+  }
+
+  const { data, error } = await window.stjSupabase.auth.getUser();
+  if (error || !data.user) return null;
+  return data.user;
+}
+
+async function loadBrokerAccounts() {
+  try {
+    const user = await getLoggedInUser();
+    if (!user) return;
+
+    const { data, error } = await window.stjSupabase
+      .from("broker_accounts")
+      .select("id,user_id,broker_name,account_id,server,status,created_at,updated_at")
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+
+    const accounts = data || [];
+    setBrokerUI(accounts[0] || null, accounts.length);
+  } catch (error) {
+    console.error("Broker load error:", error);
+    alert("Could not load broker account: " + (error.message || "Unknown error"));
+  }
+}
+
+connectCard.addEventListener("click", () => {
+  accountIdInput.value = "";
+  serverInput.value = "";
+  connectModal.classList.add("show");
+});
+
 closeModal.addEventListener("click", () => connectModal.classList.remove("show"));
 cancelModal.addEventListener("click", () => connectModal.classList.remove("show"));
+
 connectModal.addEventListener("click", e => {
   if (e.target === connectModal) connectModal.classList.remove("show");
 });
-demoConnect.addEventListener("click", () => {
-  connectModal.classList.remove("show");
-  alert("Demo only. Real MT5 connection will be added later.");
+
+saveAccountBtn.addEventListener("click", async () => {
+  const brokerName = brokerNameInput.value.trim();
+  const accountId = accountIdInput.value.trim();
+  const server = serverInput.value.trim();
+
+  if (!brokerName || !accountId || !server) {
+    alert("Broker, MT5 Account ID and Server are required.");
+    return;
+  }
+
+  if (!/^\d+$/.test(accountId)) {
+    alert("MT5 Account ID should contain numbers only.");
+    return;
+  }
+
+  saveAccountBtn.disabled = true;
+  saveAccountBtn.textContent = "Saving...";
+
+  try {
+    const user = await getLoggedInUser();
+    if (!user) throw new Error("Please sign in again.");
+
+    const { error } = await window.stjSupabase
+      .from("broker_accounts")
+      .insert({
+        user_id: user.id,
+        broker_name: brokerName,
+        account_id: accountId,
+        server: server,
+        status: "saved"
+      });
+
+    if (error) {
+      if (error.code === "23505") {
+        throw new Error("This broker account is already saved.");
+      }
+      throw error;
+    }
+
+    connectModal.classList.remove("show");
+    await loadBrokerAccounts();
+    alert("Broker account saved. Your MT5 password was not requested or stored.");
+  } catch (error) {
+    console.error("Broker save error:", error);
+    alert(error.message || "Could not save broker account.");
+  } finally {
+    saveAccountBtn.disabled = false;
+    saveAccountBtn.textContent = "Save Account";
+  }
 });
 
 document.getElementById("syncBtn").addEventListener("click", () => {
-  alert("Demo sync complete. Real MT5 sync will be added later.");
+  alert("Account details are saved. Real MT5 trade sync will be connected in the next backend step.");
 });
-document.getElementById("updatePasswordBtn").addEventListener("click", () => {
-  connectModal.classList.add("show");
-});
-document.getElementById("disconnectBtn").addEventListener("click", () => {
-  alert("Demo only. Account was not actually disconnected.");
-});
-</script>
 
-<script id="global-sidebar-nav-script">
-(function(){
-  const analyticsMenu = document.getElementById("analyticsMenu");
-  const analyticsToggle = document.getElementById("analyticsToggle");
-  if (!analyticsMenu || !analyticsToggle) return;
+document.getElementById("disconnectBtn").addEventListener("click", async () => {
+  if (!currentBrokerAccount) return;
 
-  /* Avoid adding a second click listener on pages that already have one. */
-  if (!analyticsToggle.dataset.navReady) {
-    analyticsToggle.dataset.navReady = "1";
-    analyticsToggle.addEventListener("click", function(){
-      analyticsMenu.classList.toggle("open");
-      analyticsToggle.classList.toggle("active", analyticsMenu.classList.contains("open"));
-    });
+  const ok = confirm("Remove this broker account from Smart Trade Journal?");
+  if (!ok) return;
+
+  try {
+    const { error } = await window.stjSupabase
+      .from("broker_accounts")
+      .delete()
+      .eq("id", currentBrokerAccount.id);
+
+    if (error) throw error;
+
+    await loadBrokerAccounts();
+    alert("Broker account removed.");
+  } catch (error) {
+    console.error("Broker remove error:", error);
+    alert(error.message || "Could not remove broker account.");
   }
-})();
-</script>
+});
 
+loadBrokerAccounts();
+</script>
 <script id="stj-user-profile">
 (async () => {
   try {
