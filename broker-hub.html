@@ -220,6 +220,83 @@ body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--tex
 /* GLOBAL AUTH GUARD */
 html.auth-checking body{visibility:hidden}
 
+
+.ea-card{
+  margin-top:18px;
+  background:#101218;
+  border:1px solid #262a33;
+  border-radius:14px;
+  padding:18px;
+}
+.ea-card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+}
+.ea-card h3{font-size:15px;margin:0 0 5px}
+.ea-card p{font-size:11px;color:var(--muted);line-height:1.45;margin:0}
+.ea-status{
+  font-size:10px;
+  padding:5px 8px;
+  border:1px solid #2f3440;
+  border-radius:999px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+.ea-status.active{
+  color:#66e6a1;
+  border-color:#24543b;
+  background:#102419;
+}
+.ea-code-box{
+  display:none;
+  margin-top:12px;
+  padding:14px;
+  border:1px dashed #3a4050;
+  border-radius:12px;
+  background:#0b0d12;
+}
+.ea-code-label{font-size:10px;color:var(--muted);margin-bottom:7px}
+.ea-code{
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:1px;
+  word-break:break-all;
+}
+.ea-code-note{
+  margin-top:8px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.4;
+}
+.ea-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.ea-actions button{
+  border:1px solid #303541;
+  background:#161922;
+  color:#eef1f6;
+  padding:9px 12px;
+  border-radius:9px;
+  cursor:pointer;
+  font-size:11px;
+}
+.ea-actions button.primary{
+  background:#5b5df0;
+  border-color:#5b5df0;
+}
+.ea-actions button.danger{
+  color:#ff8a93;
+  border-color:#5c2c31;
+  background:#241315;
+}
+.ea-actions button:disabled{opacity:.55;cursor:not-allowed}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -395,6 +472,31 @@ window.stjAuthReady = (async () => {
       <div class="actions" style="grid-template-columns:1fr 1fr">
         <button class="btn" id="syncBtn">↻ Sync Status</button>
         <button class="btn danger" id="disconnectBtn">↗ Remove</button>
+      </div>
+    </section>
+
+
+    <section class="ea-card">
+      <div class="ea-card-head">
+        <div>
+          <h3>⚡ MT5 EA Connection</h3>
+          <p>Generate a temporary code, then paste it into the Smart Trade Journal EA inside MT5.</p>
+        </div>
+        <span class="ea-status" id="eaConnectionStatus">No active code</span>
+      </div>
+
+      <div class="ea-actions">
+        <button class="primary" id="generateEaCodeBtn">Generate Connection Code</button>
+        <button id="copyEaCodeBtn" style="display:none">Copy Code</button>
+        <button class="danger" id="revokeEaCodeBtn" style="display:none">Revoke</button>
+      </div>
+
+      <div class="ea-code-box" id="eaCodeBox">
+        <div class="ea-code-label">Connection Code</div>
+        <div class="ea-code" id="eaCodeValue">—</div>
+        <div class="ea-code-note" id="eaCodeNote">
+          This code is shown only now. It expires automatically and the database stores only its SHA-256 hash.
+        </div>
       </div>
     </section>
 
@@ -634,7 +736,185 @@ document.getElementById("disconnectBtn").addEventListener("click", async () => {
   }
 });
 
+
+const generateEaCodeBtn = document.getElementById("generateEaCodeBtn");
+const copyEaCodeBtn = document.getElementById("copyEaCodeBtn");
+const revokeEaCodeBtn = document.getElementById("revokeEaCodeBtn");
+const eaCodeBox = document.getElementById("eaCodeBox");
+const eaCodeValue = document.getElementById("eaCodeValue");
+const eaCodeNote = document.getElementById("eaCodeNote");
+const eaConnectionStatus = document.getElementById("eaConnectionStatus");
+
+let currentEaConnection = null;
+let currentPlainEaCode = "";
+
+function bytesToHex(bytes) {
+  return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256Hex(text) {
+  const data = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return bytesToHex(new Uint8Array(hash));
+}
+
+function makeConnectionCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+
+  let raw = "";
+  for (let i = 0; i < bytes.length; i++) {
+    raw += alphabet[bytes[i] % alphabet.length];
+  }
+
+  return "STJ-" + raw.match(/.{1,4}/g).join("-");
+}
+
+function setEaConnectionUI(connection) {
+  currentEaConnection = connection || null;
+
+  if (!connection) {
+    eaConnectionStatus.textContent = "No active code";
+    eaConnectionStatus.classList.remove("active");
+    revokeEaCodeBtn.style.display = "none";
+
+    if (!currentPlainEaCode) {
+      eaCodeBox.style.display = "none";
+      copyEaCodeBtn.style.display = "none";
+    }
+    return;
+  }
+
+  eaConnectionStatus.textContent = "Active";
+  eaConnectionStatus.classList.add("active");
+  revokeEaCodeBtn.style.display = "inline-block";
+
+  if (!currentPlainEaCode) {
+    eaCodeBox.style.display = "block";
+    eaCodeValue.textContent = connection.code_hint || "Active code";
+    eaCodeNote.textContent =
+      "An active code already exists, but the full code is not stored. Generate a new code if you need to copy it again.";
+    copyEaCodeBtn.style.display = "none";
+  }
+}
+
+async function loadEaConnection() {
+  try {
+    const user = await getLoggedInUser();
+    if (!user) return;
+
+    const nowIso = new Date().toISOString();
+
+    const { data, error } = await window.stjSupabase
+      .from("ea_connections")
+      .select("id,user_id,code_hint,is_active,expires_at,last_seen_at,created_at")
+      .eq("is_active", true)
+      .gt("expires_at", nowIso)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+    setEaConnectionUI((data && data[0]) || null);
+  } catch (error) {
+    console.error("EA connection load error:", error);
+    eaConnectionStatus.textContent = "Load error";
+  }
+}
+
+generateEaCodeBtn.addEventListener("click", async () => {
+  generateEaCodeBtn.disabled = true;
+  generateEaCodeBtn.textContent = "Generating...";
+
+  try {
+    const user = await getLoggedInUser();
+    if (!user) throw new Error("Please sign in again.");
+
+    // Revoke previous active codes for this user.
+    const { error: revokeError } = await window.stjSupabase
+      .from("ea_connections")
+      .update({ is_active: false })
+      .eq("user_id", user.id)
+      .eq("is_active", true);
+
+    if (revokeError) throw revokeError;
+
+    const plainCode = makeConnectionCode();
+    const codeHash = await sha256Hex(plainCode);
+    const hint = "••••-" + plainCode.slice(-4);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    const { data, error } = await window.stjSupabase
+      .from("ea_connections")
+      .insert({
+        user_id: user.id,
+        code_hash: codeHash,
+        code_hint: hint,
+        is_active: true,
+        expires_at: expiresAt
+      })
+      .select("id,user_id,code_hint,is_active,expires_at,last_seen_at,created_at")
+      .single();
+
+    if (error) throw error;
+
+    currentPlainEaCode = plainCode;
+    currentEaConnection = data;
+
+    eaConnectionStatus.textContent = "Active • 15 min";
+    eaConnectionStatus.classList.add("active");
+    eaCodeBox.style.display = "block";
+    eaCodeValue.textContent = plainCode;
+    eaCodeNote.textContent =
+      "Copy this code now. It expires in 15 minutes and the full code cannot be shown again after refresh.";
+    copyEaCodeBtn.style.display = "inline-block";
+    revokeEaCodeBtn.style.display = "inline-block";
+  } catch (error) {
+    console.error("EA code generation error:", error);
+    alert(error.message || "Could not generate connection code.");
+  } finally {
+    generateEaCodeBtn.disabled = false;
+    generateEaCodeBtn.textContent = "Generate Connection Code";
+  }
+});
+
+copyEaCodeBtn.addEventListener("click", async () => {
+  if (!currentPlainEaCode) return;
+
+  try {
+    await navigator.clipboard.writeText(currentPlainEaCode);
+    copyEaCodeBtn.textContent = "Copied ✓";
+    setTimeout(() => copyEaCodeBtn.textContent = "Copy Code", 1200);
+  } catch {
+    alert("Copy failed. Please select and copy the code manually.");
+  }
+});
+
+revokeEaCodeBtn.addEventListener("click", async () => {
+  if (!currentEaConnection) return;
+
+  try {
+    const { error } = await window.stjSupabase
+      .from("ea_connections")
+      .update({ is_active: false })
+      .eq("id", currentEaConnection.id);
+
+    if (error) throw error;
+
+    currentPlainEaCode = "";
+    eaCodeValue.textContent = "—";
+    eaCodeBox.style.display = "none";
+    copyEaCodeBtn.style.display = "none";
+    setEaConnectionUI(null);
+  } catch (error) {
+    console.error("EA revoke error:", error);
+    alert(error.message || "Could not revoke connection code.");
+  }
+});
+
+
 loadBrokerAccounts();
+loadEaConnection();
 </script>
 <script id="stj-user-profile">
 (async () => {
