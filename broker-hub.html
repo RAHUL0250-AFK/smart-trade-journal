@@ -467,14 +467,48 @@ window.stjAuthReady = (async () => {
         </div>
       </div>
 
-      <div class="last-sync" id="lastSyncText">Account details saved for this user. MT5 trade sync is not active yet.</div>
+      <div class="last-sync" id="lastSyncText">EA paired. Waiting for live MT5 snapshot...</div>
 
       <div class="actions" style="grid-template-columns:1fr 1fr">
-        <button class="btn" id="syncBtn">↻ Sync Status</button>
-        <button class="btn danger" id="disconnectBtn">↗ Remove</button>
+        <button class="btn" id="syncBtn">↻ Refresh Live Data</button>
+        <button class="btn danger" id="disconnectBtn">↻ Re-pair EA</button>
       </div>
     </section>
 
+
+
+    <section class="ea-card" id="livePositionsCard">
+      <div class="ea-card-head">
+        <div>
+          <h3>📡 Live MT5 Account</h3>
+          <p id="liveAccountSubtext">Waiting for MT5 EA live data...</p>
+        </div>
+        <span class="ea-status" id="liveAccountStatus">Offline</span>
+      </div>
+
+      <div class="summary-grid" style="margin-top:10px">
+        <div class="metric green">
+          <small>Balance</small>
+          <strong class="green-text" id="liveBalance">—</strong>
+        </div>
+        <div class="metric blue">
+          <small>Equity</small>
+          <strong class="blue-text" id="liveEquity">—</strong>
+        </div>
+        <div class="metric purple">
+          <small>Floating P&amp;L</small>
+          <strong id="liveFloatingPnl">—</strong>
+        </div>
+        <div class="metric">
+          <small>Open Positions</small>
+          <strong id="liveOpenCount">0</strong>
+        </div>
+      </div>
+
+      <div id="livePositionsList" style="margin-top:12px">
+        <div style="font-size:11px;color:var(--muted)">No live positions loaded yet.</div>
+      </div>
+    </section>
 
     <section class="ea-card">
       <div class="ea-card-head">
@@ -612,7 +646,7 @@ function setBrokerUI(account, total = 0) {
   document.getElementById("cardServer").textContent = account.server || "—";
 
   top.innerHTML =
-    "● " + broker + " " + masked + ' <span class="connected">Saved</span>';
+    "● " + broker + " " + masked + ' <span class="connected">EA Connected</span>';
 }
 
 async function getLoggedInUser() {
@@ -632,9 +666,10 @@ async function loadBrokerAccounts() {
     if (!user) return;
 
     const { data, error } = await window.stjSupabase
-      .from("broker_accounts")
-      .select("id,user_id,broker_name,account_id,server,status,created_at,updated_at")
-      .order("created_at", { ascending: true });
+      .from("ea_devices")
+      .select("id,user_id,broker_name,account_id,server,is_active,last_seen_at,created_at,updated_at")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
 
@@ -710,31 +745,114 @@ saveAccountBtn.addEventListener("click", async () => {
   }
 });
 
-document.getElementById("syncBtn").addEventListener("click", () => {
-  alert("Account details are saved. Real MT5 trade sync will be connected in the next backend step.");
+document.getElementById("syncBtn").addEventListener("click", async () => {
+  await Promise.all([loadBrokerAccounts(), loadLiveAccountState()]);
 });
 
-document.getElementById("disconnectBtn").addEventListener("click", async () => {
-  if (!currentBrokerAccount) return;
+document.getElementById("disconnectBtn").addEventListener("click", () => {
+  document.getElementById("generateEaCodeBtn")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  alert("Generate a fresh connection code below, then attach/restart the EA with that code if you need to re-pair.");
+});
 
-  const ok = confirm("Remove this broker account from Smart Trade Journal?");
-  if (!ok) return;
+
+
+async function loadLiveAccountState() {
+  const statusEl = document.getElementById("liveAccountStatus");
+  const subtextEl = document.getElementById("liveAccountSubtext");
+  const positionsList = document.getElementById("livePositionsList");
 
   try {
-    const { error } = await window.stjSupabase
-      .from("broker_accounts")
-      .delete()
-      .eq("id", currentBrokerAccount.id);
+    const [{ data: snapshots, error: snapshotError }, { data: positions, error: positionsError }] =
+      await Promise.all([
+        window.stjSupabase
+          .from("mt5_account_snapshots")
+          .select("account_id,server,currency,balance,equity,floating_profit,margin,margin_free,margin_level,updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(1),
+        window.stjSupabase
+          .from("mt5_open_positions")
+          .select("position_ticket,symbol,side,volume,price_open,price_current,sl,tp,profit,swap,updated_at")
+          .order("profit", { ascending: false })
+      ]);
 
-    if (error) throw error;
+    if (snapshotError) throw snapshotError;
+    if (positionsError) throw positionsError;
 
-    await loadBrokerAccounts();
-    alert("Broker account removed.");
+    const snap = snapshots && snapshots[0];
+    const livePositions = positions || [];
+
+    document.getElementById("liveOpenCount").textContent = String(livePositions.length);
+
+    if (!snap) {
+      statusEl.textContent = "Waiting";
+      statusEl.classList.remove("active");
+      subtextEl.textContent = "EA is paired, but no live snapshot has arrived yet.";
+      return;
+    }
+
+    const currency = snap.currency || "USD";
+    const formatMoney = value => new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(Number(value || 0));
+
+    document.getElementById("summaryBalance").textContent = formatMoney(snap.balance);
+    document.getElementById("summaryEquity").textContent = formatMoney(snap.equity);
+
+    const summaryFloat = document.getElementById("summaryUnrealized");
+    summaryFloat.textContent = formatMoney(snap.floating_profit);
+    summaryFloat.className = Number(snap.floating_profit) >= 0 ? "green-text" : "red-text";
+
+    document.getElementById("liveBalance").textContent = formatMoney(snap.balance);
+    document.getElementById("liveEquity").textContent = formatMoney(snap.equity);
+
+    const floatEl = document.getElementById("liveFloatingPnl");
+    floatEl.textContent = formatMoney(snap.floating_profit);
+    floatEl.className = Number(snap.floating_profit) >= 0 ? "green-text" : "red-text";
+
+    const updatedAt = new Date(snap.updated_at);
+    const ageSec = Math.max(0, (Date.now() - updatedAt.getTime()) / 1000);
+    const isLive = ageSec <= 90;
+
+    statusEl.textContent = isLive ? "Live" : "Stale";
+    statusEl.classList.toggle("active", isLive);
+    subtextEl.textContent =
+      `Last MT5 update: ${updatedAt.toLocaleString()} • ${livePositions.length} open position${livePositions.length === 1 ? "" : "s"}`;
+
+    const lastSync = document.getElementById("lastSyncText");
+    if (lastSync) {
+      lastSync.textContent =
+        `Last live sync: ${updatedAt.toLocaleString()} • ${livePositions.length} open position${livePositions.length === 1 ? "" : "s"}`;
+    }
+
+    if (!livePositions.length) {
+      positionsList.innerHTML =
+        '<div style="font-size:11px;color:var(--muted)">No open MT5 positions right now.</div>';
+    } else {
+      positionsList.innerHTML = livePositions.map(p => {
+        const profit = Number(p.profit || 0) + Number(p.swap || 0);
+        const pnlClass = profit >= 0 ? "green-text" : "red-text";
+        const side = p.side === "BUY" ? "LONG" : p.side === "SELL" ? "SHORT" : p.side;
+        return `
+          <div style="display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:10px 0;border-top:1px solid #222630">
+            <div>
+              <strong style="font-size:12px">${p.symbol}</strong>
+              <div style="font-size:10px;color:var(--muted)">${side} • ${Number(p.volume || 0)} lots • Entry ${Number(p.price_open || 0)}</div>
+            </div>
+            <div style="font-size:10px;color:var(--muted)">Now ${Number(p.price_current || 0)}</div>
+            <strong class="${pnlClass}" style="font-size:12px">${formatMoney(profit)}</strong>
+          </div>`;
+      }).join("");
+    }
   } catch (error) {
-    console.error("Broker remove error:", error);
-    alert(error.message || "Could not remove broker account.");
+    console.error("Live account load error:", error);
+    statusEl.textContent = "Error";
+    statusEl.classList.remove("active");
+    subtextEl.textContent = error.message || "Could not load live MT5 data.";
   }
-});
+}
 
 
 const generateEaCodeBtn = document.getElementById("generateEaCodeBtn");
@@ -915,6 +1033,7 @@ revokeEaCodeBtn.addEventListener("click", async () => {
 
 loadBrokerAccounts();
 loadEaConnection();
+loadLiveAccountState();
 </script>
 <script id="stj-user-profile">
 (async () => {
