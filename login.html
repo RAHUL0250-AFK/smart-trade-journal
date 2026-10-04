@@ -176,9 +176,17 @@ function showSuccess(message) {
 }
 
 async function redirectIfLoggedIn() {
-  const { data } = await supabaseClient.auth.getSession();
-  if (data.session) {
+  try {
+    const { data, error } = await supabaseClient.auth.getUser();
+
+    if (error || !data.user) {
+      await supabaseClient.auth.signOut({ scope: "local" });
+      return;
+    }
+
     location.href = "index.html";
+  } catch (err) {
+    await supabaseClient.auth.signOut({ scope: "local" });
   }
 }
 
