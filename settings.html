@@ -408,17 +408,17 @@ window.stjAuthReady = (async () => {
         <div class="form-grid">
           <div class="form-group">
             <label>Full Name</label>
-            <input type="text" value="">
+            <input id="fullNameInput" type="text" value="">
           </div>
 
           <div class="form-group">
             <label>Email</label>
-            <input type="email" value="" disabled>
+            <input id="emailInput" type="email" value="" disabled>
           </div>
 
           <div class="form-group">
             <label>Timezone</label>
-            <select>
+            <select id="timezoneSelect">
               <option>Asia/Kolkata</option>
               <option>UTC</option>
               <option>Europe/London</option>
@@ -428,7 +428,7 @@ window.stjAuthReady = (async () => {
 
           <div class="form-group">
             <label>Default Currency</label>
-            <select>
+            <select id="currencySelect">
               <option>USD</option>
               <option>INR</option>
               <option>EUR</option>
@@ -554,8 +554,66 @@ function showToast(message){
   setTimeout(() => toast.classList.remove("show"), 1800);
 }
 
-document.getElementById("saveProfile").addEventListener("click", () => {
-  showToast("Profile settings saved in demo mode.");
+document.getElementById("saveProfile").addEventListener("click", async () => {
+  const saveButton = document.getElementById("saveProfile");
+  const fullName = document.getElementById("fullNameInput").value.trim();
+  const timezone = document.getElementById("timezoneSelect").value;
+  const defaultCurrency = document.getElementById("currencySelect").value;
+
+  if (!fullName) {
+    showToast("Please enter your full name.");
+    return;
+  }
+
+  if (!window.stjSupabase) {
+    showToast("Supabase is not connected.");
+    return;
+  }
+
+  saveButton.disabled = true;
+  saveButton.textContent = "Saving...";
+
+  try {
+    const { data: currentUserData, error: currentUserError } =
+      await window.stjSupabase.auth.getUser();
+
+    if (currentUserError || !currentUserData.user) {
+      throw currentUserError || new Error("User session not found.");
+    }
+
+    const existingMetadata = currentUserData.user.user_metadata || {};
+
+    const { data, error } = await window.stjSupabase.auth.updateUser({
+      data: {
+        ...existingMetadata,
+        full_name: fullName,
+        timezone: timezone,
+        default_currency: defaultCurrency
+      }
+    });
+
+    if (error) throw error;
+
+    const updatedUser = data.user;
+
+    document.querySelectorAll(".profile strong, .profile-box strong").forEach(el => {
+      el.textContent = fullName;
+    });
+
+    const avatar = document.querySelector(".avatar");
+    if (avatar) {
+      avatar.textContent = fullName.charAt(0).toUpperCase();
+    }
+
+    window.stjCurrentUser = updatedUser;
+    showToast("Profile saved successfully.");
+  } catch (error) {
+    console.error("Profile save failed:", error);
+    showToast(error.message || "Could not save profile.");
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = "Save Changes";
+  }
 });
 
 document.getElementById("saveNotifications").addEventListener("click", () => {
@@ -566,24 +624,6 @@ document.getElementById("planBtn").addEventListener("click", () => {
   showToast("Testing plan is active.");
 });
 </script>
-
-<script id="global-sidebar-nav-script">
-(function(){
-  const analyticsMenu = document.getElementById("analyticsMenu");
-  const analyticsToggle = document.getElementById("analyticsToggle");
-  if (!analyticsMenu || !analyticsToggle) return;
-
-  /* Avoid adding a second click listener on pages that already have one. */
-  if (!analyticsToggle.dataset.navReady) {
-    analyticsToggle.dataset.navReady = "1";
-    analyticsToggle.addEventListener("click", function(){
-      analyticsMenu.classList.toggle("open");
-      analyticsToggle.classList.toggle("active", analyticsMenu.classList.contains("open"));
-    });
-  }
-})();
-</script>
-
 <script id="stj-user-profile">
 (async () => {
   try {
@@ -615,11 +655,21 @@ document.getElementById("planBtn").addEventListener("click", () => {
     });
 
     // Update Settings page fields/card when present.
-    const fullNameInput = document.querySelector('input[type="text"][value="Smart Trader"], input[type="text"][value=""]');
+    const fullNameInput = document.getElementById("fullNameInput") || document.querySelector('input[type="text"]');
     if (fullNameInput) fullNameInput.value = fullName;
 
-    const emailInput = document.querySelector('input[type="email"]');
+    const emailInput = document.getElementById("emailInput") || document.querySelector('input[type="email"]');
     if (emailInput) emailInput.value = email;
+
+    const timezoneSelect = document.getElementById("timezoneSelect");
+    if (timezoneSelect && user.user_metadata?.timezone) {
+      timezoneSelect.value = user.user_metadata.timezone;
+    }
+
+    const currencySelect = document.getElementById("currencySelect");
+    if (currencySelect && user.user_metadata?.default_currency) {
+      currencySelect.value = user.user_metadata.default_currency;
+    }
 
     const userMetaStrong = document.querySelector(".user-meta strong");
     if (userMetaStrong) userMetaStrong.textContent = email || fullName;
