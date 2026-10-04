@@ -488,6 +488,93 @@ tbody tr:hover{
     padding:15px;
   }
 }
+
+/* ===== GLOBAL SIDEBAR NAV FIX ===== */
+.sidebar .nav{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+.sidebar .nav > a,
+.sidebar .analytics-submenu a{
+  text-decoration:none;
+}
+.analytics-menu{width:100%}
+.analytics-toggle{
+  width:100%;
+  border:none;
+  background:transparent;
+  color:#80848f;
+  border-radius:9px;
+  padding:11px 12px;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  cursor:pointer;
+  text-align:left;
+  font-family:inherit;
+}
+.analytics-toggle:hover,
+.analytics-toggle.active{
+  background:#17191f;
+  color:#fff;
+}
+.analytics-arrow{
+  transition:transform .25s ease;
+}
+.analytics-menu.open .analytics-arrow{
+  transform:rotate(180deg);
+}
+.analytics-submenu{
+  margin-left:14px;
+  overflow:hidden;
+  max-height:0;
+  opacity:0;
+  transform:translateY(-7px);
+  transition:max-height .3s ease,opacity .22s ease,transform .22s ease;
+}
+.analytics-menu.open .analytics-submenu{
+  max-height:280px;
+  opacity:1;
+  transform:translateY(0);
+  margin-top:5px;
+  margin-bottom:8px;
+}
+.analytics-submenu a{
+  display:block;
+  color:#80848f;
+  border-radius:8px;
+  padding:9px 12px;
+  margin-bottom:4px;
+  font-size:12px;
+}
+.analytics-submenu a:hover{
+  background:#17191f;
+  color:#fff;
+}
+.analytics-submenu a.active{
+  background:#1a1c22;
+  border:1px solid #2a2d34;
+  color:#fff;
+}
+.sidebar .bottom{
+  margin-top:auto;
+}
+.sidebar .bottom a{
+  display:block;
+  color:#7d818c;
+  text-decoration:none;
+  padding:10px 8px;
+  font-size:13px;
+  border-radius:9px;
+}
+.sidebar .bottom a:hover,
+.sidebar .bottom a.active{
+  background:#1a1c22;
+  color:#fff;
+}
+
 </style>
 </head>
 
@@ -504,9 +591,24 @@ tbody tr:hover{
 
   <nav class="nav">
     <a href="index.html">▦ Dashboard</a>
-    <a href="#">▥ Analytics</a>
+
+    <div class="analytics-menu" id="analyticsMenu">
+      <button class="analytics-toggle" id="analyticsToggle" type="button">
+        <span>▥ Analytics</span>
+        <span class="analytics-arrow">⌄</span>
+      </button>
+
+      <div class="analytics-submenu">
+          <a href="analytics.html">▥ Performance</a>
+          <a href="reports.html">⇩ Reports</a>
+          <a href="strategies.html">▤ Strategies</a>
+          <a href="trade-replay.html">▷ Trade Replay</a>
+          <a href="share-cards.html">⌘ Share Cards</a>
+      </div>
+    </div>
+
     <a href="trade-history.html" class="active">↗ Trade History</a>
-    <a href="#">✎ Journal</a>
+    <a href="journal.html">✎ Journal</a>
     <a href="#">✦ Smart Journal AI</a>
     <a href="#">♨ Hot Topics</a>
     <a href="#">♕ Leaderboard</a>
@@ -518,8 +620,8 @@ tbody tr:hover{
   </div>
 
   <div class="bottom">
-    <a href="#">▣ Broker Hub</a>
-    <a href="#">⚙ Settings</a>
+    <a href="broker-hub.html">▣ Broker Hub</a>
+    <a href="settings.html">⚙ Settings</a>
     <a href="#">↪ Logout</a>
   </div>
 
@@ -839,6 +941,24 @@ search.addEventListener("input", function(){
 
 });
 
+</script>
+
+
+<script id="global-sidebar-nav-script">
+(function(){
+  const analyticsMenu = document.getElementById("analyticsMenu");
+  const analyticsToggle = document.getElementById("analyticsToggle");
+  if (!analyticsMenu || !analyticsToggle) return;
+
+  /* Avoid adding a second click listener on pages that already have one. */
+  if (!analyticsToggle.dataset.navReady) {
+    analyticsToggle.dataset.navReady = "1";
+    analyticsToggle.addEventListener("click", function(){
+      analyticsMenu.classList.toggle("open");
+      analyticsToggle.classList.toggle("active", analyticsMenu.classList.contains("open"));
+    });
+  }
+})();
 </script>
 
 </body>
