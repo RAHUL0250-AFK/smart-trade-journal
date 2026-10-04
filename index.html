@@ -666,6 +666,77 @@ body{
     overflow:auto;
   }
 }
+
+/* ANALYTICS DROPDOWN */
+.analytics-menu{
+  width:100%;
+}
+
+.analytics-toggle{
+  width:100%;
+  border:none;
+  background:transparent;
+  color:#858791;
+  border-radius:8px;
+  padding:11px 12px;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  cursor:pointer;
+  text-align:left;
+  font-family:inherit;
+}
+
+.analytics-toggle:hover,
+.analytics-toggle.active{
+  color:#fff;
+  background:#191a20;
+}
+
+.analytics-arrow{
+  transition:transform .25s ease;
+}
+
+.analytics-menu.open .analytics-arrow{
+  transform:rotate(180deg);
+}
+
+.analytics-submenu{
+  margin-left:14px;
+  overflow:hidden;
+  max-height:0;
+  opacity:0;
+  transform:translateY(-7px);
+  transition:
+    max-height .32s ease,
+    opacity .25s ease,
+    transform .25s ease;
+}
+
+.analytics-menu.open .analytics-submenu{
+  max-height:260px;
+  opacity:1;
+  transform:translateY(0);
+  margin-top:5px;
+  margin-bottom:8px;
+}
+
+.analytics-submenu a{
+  display:block;
+  color:#858791;
+  text-decoration:none;
+  border-radius:8px;
+  padding:9px 12px;
+  margin-bottom:4px;
+  font-size:12px;
+}
+
+.analytics-submenu a:hover{
+  background:#17191f;
+  color:#fff;
+}
+
 </style>
 </head>
 
@@ -1413,6 +1484,19 @@ for(let i=0;i<168;i++){
   activity.appendChild(dot);
 }
 
+</script>
+
+
+<script>
+const analyticsMenu = document.getElementById("analyticsMenu");
+const analyticsToggle = document.getElementById("analyticsToggle");
+
+if (analyticsMenu && analyticsToggle) {
+  analyticsToggle.addEventListener("click", () => {
+    analyticsMenu.classList.toggle("open");
+    analyticsToggle.classList.toggle("active", analyticsMenu.classList.contains("open"));
+  });
+}
 </script>
 
 </body>
