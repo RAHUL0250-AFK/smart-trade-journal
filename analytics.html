@@ -1150,8 +1150,8 @@ window.stjAuthReady = (async () => {
           </div>
           <div>
             <div class="label">Win Rate</div>
-            <div class="value">55.8%</div>
-            <div class="sub">76W / 60L</div>
+            <div class="value" id="liveWinRate">—</div>
+            <div class="sub" id="liveWinLossCount">Loading...</div>
           </div>
         </div>
 
@@ -1161,8 +1161,8 @@ window.stjAuthReady = (async () => {
           </div>
           <div>
             <div class="label">Profit Factor</div>
-            <div class="value">1.36</div>
-            <div class="sub">Needs improvement</div>
+            <div class="value" id="liveProfitFactor">—</div>
+            <div class="sub" id="liveProfitFactorNote">Loading...</div>
           </div>
         </div>
 
@@ -1172,8 +1172,8 @@ window.stjAuthReady = (async () => {
           </div>
           <div>
             <div class="label">Expectancy</div>
-            <div class="value green">$0.87</div>
-            <div class="sub">Per trade average</div>
+            <div class="value green" id="liveExpectancy">—</div>
+            <div class="sub" id="liveExpectancyNote">Per closed trade</div>
           </div>
         </div>
 
@@ -1183,8 +1183,8 @@ window.stjAuthReady = (async () => {
           </div>
           <div>
             <div class="label">Total P&amp;L</div>
-            <div class="value green">$118.60</div>
-            <div class="sub">136 trades</div>
+            <div class="value green" id="liveTotalPnl">—</div>
+            <div class="sub" id="liveTotalTrades">Loading...</div>
           </div>
         </div>
       </section>
@@ -1428,7 +1428,25 @@ window.stjAuthReady = (async () => {
       </section>
 
       <!-- Symbol performance -->
-      <section class="card" style="margin-bottom:18px;">
+      
+<div id="stjAnalyticsLiveBar" style="
+  margin:0 0 14px 0;
+  padding:10px 12px;
+  border:1px solid #214936;
+  background:#0d1f17;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  font-size:11px;">
+  <span><b style="color:#25d67d">● LIVE MT5</b> <span id="stjAnalyticsLiveText" style="color:#8e96a3">Loading real data...</span></span>
+  <button id="stjAnalyticsRefreshBtn" style="
+    border:1px solid #303541;background:#161922;color:#eef1f6;
+    padding:7px 10px;border-radius:8px;cursor:pointer;font-size:10px;">⟳ Refresh now</button>
+</div>
+
+<section class="card" style="margin-bottom:18px;">
         <div class="card-title" style="justify-content:space-between;">
           <div style="display:flex; gap:10px; align-items:center;">
             <div class="icon-badge purple-bg">◎</div>
@@ -2315,6 +2333,73 @@ window.stjAuthReady = (async () => {
       </div>`;
   }
 
+
+  function renderTopLiveKpis(closed, currency){
+    const wins = closed.filter(t => t.net > 0);
+    const losses = closed.filter(t => t.net < 0);
+    const breakeven = closed.filter(t => t.net === 0);
+
+    const winRate = closed.length ? (wins.length / closed.length) * 100 : 0;
+
+    const grossProfit = wins.reduce((s,t) => s + t.net, 0);
+    const grossLoss = Math.abs(losses.reduce((s,t) => s + t.net, 0));
+    const profitFactor = grossLoss > 0
+      ? grossProfit / grossLoss
+      : (grossProfit > 0 ? Infinity : 0);
+
+    const totalPnl = closed.reduce((s,t) => s + t.net, 0);
+    const expectancy = closed.length ? totalPnl / closed.length : 0;
+
+    const winRateEl = document.getElementById("liveWinRate");
+    const countsEl = document.getElementById("liveWinLossCount");
+    const pfEl = document.getElementById("liveProfitFactor");
+    const pfNoteEl = document.getElementById("liveProfitFactorNote");
+    const expectancyEl = document.getElementById("liveExpectancy");
+    const totalPnlEl = document.getElementById("liveTotalPnl");
+    const totalTradesEl = document.getElementById("liveTotalTrades");
+
+    if (winRateEl) {
+      winRateEl.textContent = `${winRate.toFixed(1)}%`;
+      winRateEl.className = "value";
+    }
+
+    if (countsEl) {
+      countsEl.textContent =
+        `${wins.length}W / ${losses.length}L` +
+        (breakeven.length ? ` / ${breakeven.length}BE` : "");
+    }
+
+    if (pfEl) {
+      pfEl.textContent = Number.isFinite(profitFactor)
+        ? profitFactor.toFixed(2)
+        : "∞";
+      pfEl.className = "value";
+    }
+
+    if (pfNoteEl) {
+      pfNoteEl.textContent =
+        !closed.length ? "No closed trades yet" :
+        profitFactor >= 2 ? "Strong" :
+        profitFactor >= 1.5 ? "Good" :
+        profitFactor >= 1 ? "Positive" :
+        "Below 1.0";
+    }
+
+    if (expectancyEl) {
+      expectancyEl.textContent = money(expectancy, currency, true);
+      expectancyEl.className = `value ${expectancy >= 0 ? "green" : "red"}`;
+    }
+
+    if (totalPnlEl) {
+      totalPnlEl.textContent = money(totalPnl, currency, true);
+      totalPnlEl.className = `value ${totalPnl >= 0 ? "green" : "red"}`;
+    }
+
+    if (totalTradesEl) {
+      totalTradesEl.textContent = `${closed.length} closed trades`;
+    }
+  }
+
   async function renderBrokerBadge(){
     try{
       const {data}=await window.stjSupabase.from("ea_devices")
@@ -2328,7 +2413,21 @@ window.stjAuthReady = (async () => {
     }catch(e){console.error(e);}
   }
 
+  let stjAnalyticsRefreshing = false;
+
   async function run(){
+    if (stjAnalyticsRefreshing) return;
+    stjAnalyticsRefreshing = true;
+
+    const liveText = document.getElementById("stjAnalyticsLiveText");
+    const refreshBtn = document.getElementById("stjAnalyticsRefreshBtn");
+
+    if (liveText) liveText.textContent = "Refreshing from Supabase...";
+    if (refreshBtn) {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = "⟳ Refreshing...";
+    }
+
     try{
       const [{data:userData},deals,snapRes]=await Promise.all([
         window.stjSupabase.auth.getUser(),
@@ -2341,6 +2440,7 @@ window.stjAuthReady = (async () => {
       const closed=trades.filter(t=>t.status==="closed" && t.closedAt).sort((a,b)=>a.closedAt-b.closedAt);
       const eq=equityMetrics(closed,currentBalance);
 
+      renderTopLiveKpis(closed,currency);
       renderPnl(closed,currency);
       renderWinLoss(closed);
       renderAsset(closed,currency);
@@ -2356,18 +2456,47 @@ window.stjAuthReady = (async () => {
       renderBrokerBadge();
 
       const pageTitle=document.querySelector(".page-title p");
+      const snapshotTime = snapRes.data?.[0]?.updated_at
+        ? new Date(snapRes.data[0].updated_at)
+        : null;
+
       if(pageTitle){
-        const last=snapRes.data?.[0]?.updated_at ? new Date(snapRes.data[0].updated_at).toLocaleString() : "No live snapshot";
+        const last = snapshotTime ? snapshotTime.toLocaleString() : "No live snapshot";
         pageTitle.innerHTML=`Real MT5 analytics • ${closed.length} closed trades • Last account sync: ${esc(last)} <span class="real-live-badge">LIVE DATA</span>`;
+      }
+
+      if (liveText) {
+        const now = new Date();
+        const lastSyncText = snapshotTime ? snapshotTime.toLocaleTimeString() : "no account snapshot";
+        liveText.textContent =
+          `${closed.length} closed trades • EA sync ${lastSyncText} • page refreshed ${now.toLocaleTimeString()}`;
       }
     }catch(e){
       console.error("Real analytics failed:",e);
       const p=document.querySelector(".page-title p");
       if(p)p.textContent=`Could not load real MT5 analytics: ${e.message||"Unknown error"}`;
+      if (liveText) liveText.textContent = `Refresh error: ${e.message || "Unknown error"}`;
+    } finally {
+      stjAnalyticsRefreshing = false;
+      if (refreshBtn) {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = "⟳ Refresh now";
+      }
     }
   }
 
+  document.getElementById("stjAnalyticsRefreshBtn")?.addEventListener("click", run);
+
+  // EA sends updates roughly every 15 seconds, so Performance follows the same cadence.
   await run();
+  const stjAnalyticsTimer = setInterval(run, 15000);
+
+  // Refresh immediately when user returns to this browser tab.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) run();
+  });
+
+  window.addEventListener("beforeunload", () => clearInterval(stjAnalyticsTimer));
 })();
 </script>
 
