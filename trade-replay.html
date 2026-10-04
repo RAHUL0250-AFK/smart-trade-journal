@@ -55,6 +55,7 @@ body{
 
 .logo{
   display:flex;
+  white-space:nowrap;
   align-items:center;
   gap:10px;
   font-size:17px;
@@ -724,8 +725,8 @@ body{
         data-side="SELL"
         data-date="Oct 2, 2026"
         data-pnl="+$43.33"
-        data-entry="4,182.25"
-        data-exit="4,225.58"
+        data-entry="4,225.58"
+        data-exit="4,182.25"
       >
         <div class="trade-top">
           <div class="trade-symbol">
@@ -743,8 +744,8 @@ body{
         data-side="SELL"
         data-date="Oct 2, 2026"
         data-pnl="-$7.80"
-        data-entry="4,185.92"
-        data-exit="4,178.12"
+        data-entry="4,178.12"
+        data-exit="4,185.92"
       >
         <div class="trade-top">
           <div class="trade-symbol">
@@ -762,8 +763,8 @@ body{
         data-side="SELL"
         data-date="Oct 2, 2026"
         data-pnl="-$6.24"
-        data-entry="4,186.19"
-        data-exit="4,179.95"
+        data-entry="4,179.95"
+        data-exit="4,186.19"
       >
         <div class="trade-top">
           <div class="trade-symbol">
@@ -800,8 +801,8 @@ body{
         data-side="SELL"
         data-date="Oct 2, 2026"
         data-pnl="-$2.74"
-        data-entry="4,184.93"
-        data-exit="4,182.19"
+        data-entry="4,182.19"
+        data-exit="4,184.93"
       >
         <div class="trade-top">
           <div class="trade-symbol">
@@ -912,7 +913,7 @@ body{
           <line x1="0" y1="190" x2="900" y2="190"
             stroke="#181b20"/>
 
-          <polyline
+          <polyline id="pricePath"
             points="
             0,160
             50,150
@@ -942,11 +943,11 @@ body{
 
         </svg>
 
-        <div class="entry-label">
+        <div class="entry-label" id="entryLabel">
           Entry
         </div>
 
-        <div class="exit-label">
+        <div class="exit-label" id="exitLabel">
           Exit
         </div>
 
@@ -955,11 +956,11 @@ body{
 
       <div class="controls">
 
-        <button class="control-btn">
+        <button class="control-btn" id="firstTradeBtn">
           |◀
         </button>
 
-        <button class="control-btn">
+        <button class="control-btn" id="prevTradeBtn">
           ◀
         </button>
 
@@ -967,15 +968,15 @@ body{
           ▶
         </button>
 
-        <button class="control-btn">
+        <button class="control-btn" id="nextTradeBtn">
           ▶
         </button>
 
-        <button class="control-btn">
+        <button class="control-btn" id="lastTradeBtn">
           ▶|
         </button>
 
-        <button class="control-btn">
+        <button class="control-btn" id="speedButton">
           1x
         </button>
 
@@ -1022,116 +1023,149 @@ body{
 
 
 <script>
+const trades = Array.from(document.querySelectorAll(".trade"));
+const emptyState = document.getElementById("emptyState");
+const activeReplay = document.getElementById("activeReplay");
+const replayTitle = document.getElementById("replayTitle");
+const replayDate = document.getElementById("replayDate");
+const replayPnl = document.getElementById("replayPnl");
+const infoSymbol = document.getElementById("infoSymbol");
+const infoSide = document.getElementById("infoSide");
+const infoEntry = document.getElementById("infoEntry");
+const infoExit = document.getElementById("infoExit");
+const playButton = document.getElementById("playButton");
+const firstTradeBtn = document.getElementById("firstTradeBtn");
+const prevTradeBtn = document.getElementById("prevTradeBtn");
+const nextTradeBtn = document.getElementById("nextTradeBtn");
+const lastTradeBtn = document.getElementById("lastTradeBtn");
+const speedButton = document.getElementById("speedButton");
+const pricePath = document.getElementById("pricePath");
+const entryLabel = document.getElementById("entryLabel");
+const exitLabel = document.getElementById("exitLabel");
 
-const trades =
-document.querySelectorAll(".trade");
+let activeTradeIndex = -1;
+let speed = 1;
 
-const emptyState =
-document.getElementById("emptyState");
+const risingPoints = `
+0,160 50,150 90,170 135,142 175,148 220,112 260,122
+310,98 350,107 400,82 445,93 485,71 525,88 570,59
+615,69 660,48 710,62 755,38 805,49 850,29 900,42`;
 
-const activeReplay =
-document.getElementById("activeReplay");
+const fallingPoints = `
+0,55 50,68 90,58 135,88 175,78 220,106 260,94
+310,122 350,111 400,139 445,126 485,151 525,136
+570,166 615,151 660,176 710,160 755,188 805,170
+850,197 900,184`;
 
-const replayTitle =
-document.getElementById("replayTitle");
+function isWinningTrade(trade){
+  return !String(trade.dataset.pnl || "").includes("-");
+}
 
-const replayDate =
-document.getElementById("replayDate");
+function useFallingChart(trade){
+  const side = String(trade.dataset.side || "").toUpperCase();
+  const winning = isWinningTrade(trade);
+  return (side === "SELL" && winning) || (side === "BUY" && !winning);
+}
 
-const replayPnl =
-document.getElementById("replayPnl");
+function updateChartForTrade(trade){
+  if(!pricePath) return;
 
-const infoSymbol =
-document.getElementById("infoSymbol");
+  const falling = useFallingChart(trade);
+  pricePath.setAttribute("points", falling ? fallingPoints : risingPoints);
 
-const infoSide =
-document.getElementById("infoSide");
-
-const infoEntry =
-document.getElementById("infoEntry");
-
-const infoExit =
-document.getElementById("infoExit");
-
-const playButton =
-document.getElementById("playButton");
-
-
-trades.forEach(trade => {
-
-  trade.addEventListener("click", () => {
-
-    trades.forEach(t =>
-      t.classList.remove("active")
-    );
-
-    trade.classList.add("active");
-
-    emptyState.style.display = "none";
-
-    activeReplay.classList.add("show");
-
-    const symbol =
-      trade.dataset.symbol;
-
-    const side =
-      trade.dataset.side;
-
-    const date =
-      trade.dataset.date;
-
-    const pnl =
-      trade.dataset.pnl;
-
-    const entry =
-      trade.dataset.entry;
-
-    const exit =
-      trade.dataset.exit;
-
-    replayTitle.textContent =
-      symbol + " Replay";
-
-    replayDate.textContent =
-      date;
-
-    replayPnl.textContent =
-      pnl;
-
-    if(pnl.includes("-")){
-      replayPnl.className = "loss";
+  if(entryLabel && exitLabel){
+    if(falling){
+      entryLabel.style.left = "22%";
+      entryLabel.style.top = "24%";
+      exitLabel.style.right = "14%";
+      exitLabel.style.top = "70%";
     }else{
-      replayPnl.className = "profit";
+      entryLabel.style.left = "22%";
+      entryLabel.style.top = "66%";
+      exitLabel.style.right = "14%";
+      exitLabel.style.top = "20%";
     }
+  }
 
-    infoSymbol.textContent =
-      symbol;
+  pricePath.style.transition = "none";
+  pricePath.style.strokeDasharray = "none";
+  pricePath.style.strokeDashoffset = "0";
+  if(playButton) playButton.textContent = "▶";
+}
 
-    infoSide.textContent =
-      side;
+function selectTrade(index){
+  if(!trades.length) return;
 
-    infoEntry.textContent =
-      "$" + entry;
+  activeTradeIndex = Math.max(0, Math.min(index, trades.length - 1));
+  const trade = trades[activeTradeIndex];
 
-    infoExit.textContent =
-      "$" + exit;
+  trades.forEach(t => t.classList.remove("active"));
+  trade.classList.add("active");
 
+  if(emptyState) emptyState.style.display = "none";
+  if(activeReplay) activeReplay.classList.add("show");
+
+  const symbol = trade.dataset.symbol || "-";
+  const side = trade.dataset.side || "-";
+  const date = trade.dataset.date || "-";
+  const pnl = trade.dataset.pnl || "$0.00";
+  const entry = trade.dataset.entry || "0";
+  const exit = trade.dataset.exit || "0";
+
+  replayTitle.textContent = symbol + " Replay";
+  replayDate.textContent = date;
+  replayPnl.textContent = pnl;
+  replayPnl.classList.remove("profit","loss");
+  replayPnl.classList.add(pnl.includes("-") ? "loss" : "profit");
+
+  infoSymbol.textContent = symbol;
+  infoSide.textContent = side;
+  infoEntry.textContent = "$" + entry;
+  infoExit.textContent = "$" + exit;
+
+  updateChartForTrade(trade);
+}
+
+trades.forEach((trade, index) => {
+  trade.addEventListener("click", () => selectTrade(index));
+});
+
+function playReplay(){
+  if(activeTradeIndex < 0) selectTrade(0);
+  if(!pricePath || !playButton) return;
+
+  const length = pricePath.getTotalLength();
+  const duration = Math.max(700, 2600 / speed);
+
+  pricePath.style.transition = "none";
+  pricePath.style.strokeDasharray = `${length} ${length}`;
+  pricePath.style.strokeDashoffset = String(length);
+  pricePath.getBoundingClientRect();
+
+  playButton.textContent = "❚❚";
+
+  requestAnimationFrame(() => {
+    pricePath.style.transition = `stroke-dashoffset ${duration}ms linear`;
+    pricePath.style.strokeDashoffset = "0";
   });
 
-});
+  window.setTimeout(() => {
+    playButton.textContent = "▶";
+  }, duration);
+}
 
+if(playButton) playButton.addEventListener("click", playReplay);
+if(firstTradeBtn) firstTradeBtn.addEventListener("click", () => selectTrade(0));
+if(lastTradeBtn) lastTradeBtn.addEventListener("click", () => selectTrade(trades.length - 1));
+if(prevTradeBtn) prevTradeBtn.addEventListener("click", () => selectTrade(activeTradeIndex <= 0 ? 0 : activeTradeIndex - 1));
+if(nextTradeBtn) nextTradeBtn.addEventListener("click", () => selectTrade(activeTradeIndex < 0 ? 0 : Math.min(activeTradeIndex + 1, trades.length - 1)));
 
-let playing = false;
-
-playButton.addEventListener("click", () => {
-
-  playing = !playing;
-
-  playButton.textContent =
-    playing ? "❚❚" : "▶";
-
-});
-
+if(speedButton){
+  speedButton.addEventListener("click", () => {
+    speed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
+    speedButton.textContent = speed + "x";
+  });
+}
 </script>
 
 
