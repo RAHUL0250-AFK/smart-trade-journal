@@ -213,8 +213,19 @@ async function redirectIfLoggedIn() {
     }
 
     const params = new URLSearchParams(window.location.search);
+
     if (params.get("verified") === "1") {
       showSuccess("Email verified successfully. Please sign in with your email and password.");
+      return;
+    }
+
+    if (params.get("signup") === "success") {
+      showSuccess("Account created successfully. Please sign in.");
+      return;
+    }
+
+    if (params.get("signup") === "pending") {
+      showSuccess("Account created. Confirm your email, then sign in.");
       return;
     }
 
