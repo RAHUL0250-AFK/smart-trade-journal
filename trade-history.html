@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trade History | Smart Trade Journal</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#08090c;
+  --sidebar:#0d0e11;
+  --panel:#101115;
+  --panel2:#14151a;
+  --border:#222329;
+  --text:#f3f4f6;
+  --muted:#777a84;
+  --green:#20d67c;
+  --red:#ff4e57;
+  --purple:#8357ff;
+  --yellow:#f5bc18;
+  --blue:#3290ff;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+  width:240px;
+  height:100vh;
+  position:fixed;
+  left:0;
+  top:0;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  z-index:10;
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:17px;
+  font-weight:800;
+  padding-bottom:22px;
+}
+
+.logo-box{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,#6a3cff,#a75cff);
+  font-size:12px;
+}
+
+.logo span{
+  color:#ff4f9d;
+}
+
+.nav{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.nav a{
+  color:#80838d;
+  text-decoration:none;
+  padding:11px 12px;
+  border-radius:9px;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.nav a:hover{
+  background:#17181d;
+  color:#fff;
+}
+
+.nav a.active{
+  background:#1a1b20;
+  color:#fff;
+  border:1px solid #2a2b31;
+}
+
+.giveaway{
+  margin-top:22px;
+  border:1px solid #543b00;
+  background:#1d1608;
+  border-radius:12px;
+  padding:13px;
+  font-size:11px;
+}
+
+.giveaway strong{
+  color:#ffd349;
+}
+
+.bottom{
+  margin-top:auto;
+}
+
+.bottom a{
+  display:block;
+  color:#7c7f88;
+  text-decoration:none;
+  padding:10px 8px;
+  font-size:13px;
+}
+
+/* MAIN */
+
+.main{
+  margin-left:240px;
+  width:calc(100% - 240px);
+}
+
+.topbar{
+  height:60px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:16px;
+  padding:0 28px;
+  background:#090a0d;
+  position:sticky;
+  top:0;
+  z-index:8;
+}
+
+.account{
+  background:#111216;
+  border:1px solid #1e2026;
+  padding:9px 14px;
+  border-radius:10px;
+  font-size:12px;
+}
+
+.connected{
+  color:var(--green);
+}
+
+.profile{
+  background:#131419;
+  border:1px solid #23252b;
+  border-radius:10px;
+  padding:8px 14px;
+  min-width:145px;
+}
+
+.profile strong{
+  font-size:12px;
+}
+
+.profile small{
+  display:block;
+  color:#777a84;
+  margin-top:3px;
+  font-size:10px;
+}
+
+.content{
+  padding:28px;
+  max-width:1600px;
+  margin:auto;
+}
+
+/* PAGE HEADER */
+
+.page-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:24px;
+}
+
+.page-head h1{
+  font-size:30px;
+  margin-bottom:7px;
+}
+
+.page-head p{
+  color:#777a84;
+  font-size:14px;
+}
+
+.sync-btn{
+  border:none;
+  background:#60349f;
+  color:#c9b1ee;
+  border-radius:10px;
+  padding:12px 18px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+/* SYNC STRIP */
+
+.sync-strip{
+  height:42px;
+  border:1px solid #1f2127;
+  background:#101115;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  padding:0 14px;
+  color:var(--blue);
+  font-size:12px;
+  margin-bottom:26px;
+}
+
+/* METRICS */
+
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+  margin-bottom:27px;
+}
+
+.metric{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:11px;
+  padding:17px;
+  display:flex;
+  gap:13px;
+  align-items:center;
+}
+
+.metric-icon{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  background:#201442;
+  color:#8c61ff;
+  font-weight:700;
+}
+
+.metric-icon.yellow{
+  background:#2b230a;
+  color:#f4c126;
+}
+
+.metric-icon.green{
+  background:#0a2c1b;
+  color:var(--green);
+}
+
+.metric small{
+  color:#747782;
+  display:block;
+  margin-bottom:6px;
+  font-size:10px;
+  letter-spacing:.5px;
+}
+
+.metric strong{
+  font-size:18px;
+}
+
+/* FILTER */
+
+.filters{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 15px;
+  margin-bottom:28px;
+}
+
+.search{
+  width:100%;
+  background:#14151a;
+  border:1px solid #1d1f24;
+  color:#fff;
+  height:38px;
+  padding:0 13px;
+  border-radius:9px;
+  outline:none;
+  margin-bottom:12px;
+}
+
+.search::placeholder{
+  color:#686b73;
+}
+
+.filter-row{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.filter-btn{
+  border:none;
+  background:#121318;
+  color:#8b8e98;
+  border-radius:9px;
+  padding:9px 13px;
+  cursor:pointer;
+  font-size:12px;
+}
+
+.filter-btn.active{
+  background:var(--purple);
+  color:#fff;
+}
+
+.filter-btn.list{
+  background:var(--purple);
+  color:#fff;
+}
+
+/* TABLE */
+
+.trades-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.trades-title{
+  padding:18px;
+}
+
+.trades-title h2{
+  font-size:22px;
+}
+
+.trades-title small{
+  color:#747782;
+}
+
+.table-wrap{
+  overflow-x:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1050px;
+}
+
+thead th{
+  color:#777a84;
+  font-size:10px;
+  letter-spacing:.5px;
+  text-align:left;
+  padding:13px 15px;
+  border-top:1px solid #1c1e24;
+  border-bottom:1px solid #1c1e24;
+  font-weight:600;
+}
+
+tbody td{
+  padding:15px;
+  border-bottom:1px solid #191a1f;
+  font-size:12px;
+}
+
+tbody tr:hover{
+  background:#121318;
+}
+
+.symbol{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:700;
+}
+
+.symbol-icon{
+  width:28px;
+  height:28px;
+  background:#dda400;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:11px;
+}
+
+.symbol-icon.index{
+  background:#17181d;
+  color:#81838d;
+}
+
+.side{
+  display:inline-block;
+  border-radius:15px;
+  padding:5px 8px;
+  font-size:10px;
+}
+
+.long{
+  background:#092c1c;
+  color:#19ce74;
+}
+
+.short{
+  background:#351315;
+  color:#ff565e;
+}
+
+.closed{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:15px;
+  background:#082b1a;
+  color:#1dd878;
+  font-size:10px;
+}
+
+.pnl-win{
+  color:var(--green);
+  font-weight:700;
+}
+
+.pnl-loss{
+  color:var(--red);
+  font-weight:700;
+}
+
+.muted{
+  color:#777a84;
+}
+
+.actions{
+  display:flex;
+  gap:14px;
+  color:#777a84;
+  font-size:14px;
+}
+
+.actions span{
+  cursor:pointer;
+}
+
+.actions span:hover{
+  color:#fff;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1000px){
+  .metrics{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:750px){
+  .sidebar{
+    display:none;
+  }
+
+  .main{
+    margin-left:0;
+    width:100%;
+  }
+
+  .metrics{
+    grid-template-columns:1fr;
+  }
+
+  .content{
+    padding:15px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+
+  <div class="logo">
+    <div class="logo-box">ST</div>
+    Smart Trade <span>Journal</span>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">▦ Dashboard</a>
+    <a href="#">▥ Analytics</a>
+    <a href="trade-history.html" class="active">↗ Trade History</a>
+    <a href="#">✎ Journal</a>
+    <a href="#">✦ Smart Journal AI</a>
+    <a href="#">♨ Hot Topics</a>
+    <a href="#">♕ Leaderboard</a>
+  </nav>
+
+  <div class="giveaway">
+    🎁 <strong>Giveaway</strong><br>
+    Win rewards every month
+  </div>
+
+  <div class="bottom">
+    <a href="#">▣ Broker Hub</a>
+    <a href="#">⚙ Settings</a>
+    <a href="#">↪ Logout</a>
+  </div>
+
+</aside>
+
+<main class="main">
+
+<header class="topbar">
+
+  <div class="account">
+    ● XM #430381517 &nbsp;
+    <span class="connected">Connected</span>
+  </div>
+
+  <div>☼</div>
+
+  <div class="profile">
+    <strong>Rahul Kumawat</strong>
+    <small>Trader</small>
+  </div>
+
+</header>
+
+<div class="content">
+
+<section class="page-head">
+
+  <div>
+    <h1>Trades</h1>
+    <p>Track, manage, and analyze your trading activity</p>
+  </div>
+
+  <button class="sync-btn">⟳ Syncing...</button>
+
+</section>
+
+
+<div class="sync-strip">
+  ◔ &nbsp; Syncing trades from broker...
+</div>
+
+
+<section class="metrics">
+
+  <div class="metric">
+    <div class="metric-icon">$</div>
+    <div>
+      <small>TOTAL P&amp;L</small>
+      <strong class="pnl-win">$118.72</strong>
+    </div>
+  </div>
+
+  <div class="metric">
+    <div class="metric-icon yellow">↗</div>
+    <div>
+      <small>OPEN</small>
+      <strong>0</strong>
+    </div>
+  </div>
+
+  <div class="metric">
+    <div class="metric-icon green">◎</div>
+    <div>
+      <small>WIN RATE</small>
+      <strong>55.9%</strong>
+    </div>
+  </div>
+
+  <div class="metric">
+    <div class="metric-icon">▥</div>
+    <div>
+      <small>TRADES</small>
+      <strong>136</strong>
+    </div>
+  </div>
+
+</section>
+
+
+<section class="filters">
+
+  <input
+    id="tradeSearch"
+    class="search"
+    type="text"
+    placeholder="⌕  Search by symbol..."
+  >
+
+  <div class="filter-row">
+
+    <button class="filter-btn list">☷ List</button>
+    <button class="filter-btn">▣ Day</button>
+
+    <button class="filter-btn active" data-filter="all">
+      All
+    </button>
+
+    <button class="filter-btn" data-filter="open">
+      Open
+    </button>
+
+    <button class="filter-btn" data-filter="closed">
+      Closed
+    </button>
+
+    <button class="filter-btn">
+      All Time⌄
+    </button>
+
+  </div>
+
+</section>
+
+
+<section class="trades-card">
+
+  <div class="trades-title">
+    <h2>All Trades</h2>
+    <small>136 trades</small>
+  </div>
+
+  <div class="table-wrap">
+
+  <table id="tradeTable">
+
+    <thead>
+      <tr>
+        <th>SYMBOL</th>
+        <th>SIDE</th>
+        <th>ENTRY</th>
+        <th>EXIT</th>
+        <th>P&amp;L</th>
+        <th>DATE</th>
+        <th>STATUS</th>
+        <th>ACTIONS</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      <tr>
+        <td>
+          <div class="symbol">
+            <span class="symbol-icon">◆</span>
+            GOLD
+          </div>
+        </td>
+        <td><span class="side long">↗ LONG</span></td>
+        <td><b>$4,182.25</b></td>
+        <td class="muted">$4,225.58</td>
+        <td class="pnl-win">$43.33</td>
+        <td class="muted">Oct 2, 2026</td>
+        <td><span class="closed">● closed</span></td>
+        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
+      </tr>
+
+      <tr>
+        <td>
+          <div class="symbol">
+            <span class="symbol-icon">◆</span>
+            GOLD
+          </div>
+        </td>
+        <td><span class="side long">↗ LONG</span></td>
+        <td><b>$4,185.92</b></td>
+        <td class="muted">$4,178.12</td>
+        <td class="pnl-loss">-$7.80</td>
+        <td class="muted">Oct 2, 2026</td>
+        <td><span class="closed">● closed</span></td>
+        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
+      </tr>
+
+      <tr>
+        <td>
+          <div class="symbol">
+            <span class="symbol-icon">◆</span>
+            GOLD
+          </div>
+        </td>
+        <td><span class="side long">↗ LONG</span></td>
+        <td><b>$4,186.19</b></td>
+        <td class="muted">$4,179.95</td>
+        <td class="pnl-loss">-$6.24</td>
+        <td class="muted">Oct 2, 2026</td>
+        <td><span class="closed">● closed</span></td>
+        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
+      </tr>
+
+      <tr>
+        <td>
+          <div class="symbol">
+            <span class="symbol-icon">◆</span>
+            GOLD
+          </div>
+        </td>
+        <td><span class="side short">↘ SHORT</span></td>
+        <td><b>$4,182.16</b></td>
+        <td class="muted">$4,188.64</td>
+        <td class="pnl-loss">-$6.48</td>
+        <td class="muted">Oct 2, 2026</td>
+        <td><span class="closed">● closed</span></td>
+        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
+      </tr>
+
+      <tr>
+        <td>
+          <div class="symbol">
+            <span class="symbol-icon">◆</span>
+            GOLD
+          </div>
+        </td>
+        <td><span class="side long">↗ LONG</span></td>
+        <td><b>$4,184.93</b></td>
+        <td class="muted">$4,182.19</td>
+        <td class="pnl-loss">-$2.74</td>
+        <td class="muted">Oct 2, 2026</td>
+        <td><span class="closed">● closed</span></td>
+        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
+      </tr>
+
+      <tr>
+        <td>
+          <div class="symbol">
+            <span class="symbol-icon">◆</span>
+            GOLD
+          </div>
+        </td>
+        <td><span class="side long">↗ LONG</span></td>
+        <td><b>$4,165.14</b></td>
+        <td class="muted">$4,171.38</td>
+        <td class="pnl-win">$6.24</td>
+        <td class="muted">Oct 1, 2026</td>
+        <td><span class="closed">● closed</span></td>
+        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
+      </tr>
+
+      <tr>
+        <td>
+          <div class="symbol">
+            <span class="symbol-icon">◆</span>
+            GOLD
+          </div>
+        </td>
+        <td><span class="side long">↗ LONG</span></td>
+        <td><b>$4,170.18</b></td>
+        <td class="muted">$4,164.03</td>
+        <td class="pnl-loss">-$6.15</td>
+        <td class="muted">Oct 1, 2026</td>
+        <td><span class="closed">● closed</span></td>
+        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
+      </tr>
+
+      <tr>
+        <td>
+          <div class="symbol">
+            <span class="symbol-icon index">US</span>
+            US100Cash
+          </div>
+        </td>
+        <td><span class="side short">↘ SHORT</span></td>
+        <td><b>$30,545.93</b></td>
+        <td class="muted">$30,445.33</td>
+        <td class="pnl-win">$10.06</td>
+        <td class="muted">Oct 1, 2026</td>
+        <td><span class="closed">● closed</span></td>
+        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
+      </tr>
+
+      <tr>
+        <td>
+          <div class="symbol">
+            <span class="symbol-icon index">US</span>
+            US100Cash
+          </div>
+        </td>
+        <td><span class="side long">↗ LONG</span></td>
+        <td><b>$30,453.43</b></td>
+        <td class="muted">$30,574.40</td>
+        <td class="pnl-win">$12.10</td>
+        <td class="muted">Sep 30, 2026</td>
+        <td><span class="closed">● closed</span></td>
+        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
+      </tr>
+
+    </tbody>
+
+  </table>
+
+  </div>
+
+</section>
+
+</div>
+</main>
+</div>
+
+
+<script>
+
+const search = document.getElementById("tradeSearch");
+const rows = document.querySelectorAll("#tradeTable tbody tr");
+
+search.addEventListener("input", function(){
+
+  const value = this.value.toLowerCase();
+
+  rows.forEach(row => {
+
+    const text = row.innerText.toLowerCase();
+
+    row.style.display =
+      text.includes(value)
+      ? ""
+      : "none";
+
+  });
+
+});
+
+</script>
+
+</body>
+</html>
