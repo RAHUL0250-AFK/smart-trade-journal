@@ -107,7 +107,7 @@ body{
       <h2>Create account</h2>
       <p class="sub">Start building your Smart Trade Journal profile.</p>
 
-      <div class="notice">Demo signup page only. Your password is not being sent to or stored by a real authentication server yet.</div>
+      <div class="notice">Account creation is connected to Supabase Auth. You may need to confirm your email before signing in.</div>
 
       <form id="signupForm">
         <div class="field">
@@ -148,37 +148,83 @@ body{
   </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-document.querySelectorAll(".eye").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    const input=document.getElementById(btn.dataset.target);
-    input.type=input.type==="password"?"text":"password";
-    btn.textContent=input.type==="password"?"Show":"Hide";
+const SUPABASE_URL = "https://vboelobxtkgewkwxllsq.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
+const EMAIL_REDIRECT_URL = "https://rahul0250-afk.github.io/smart-trade-journal/login.html";
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+document.querySelectorAll(".eye").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const input = document.getElementById(btn.dataset.target);
+    input.type = input.type === "password" ? "text" : "password";
+    btn.textContent = input.type === "password" ? "Show" : "Hide";
   });
 });
 
-document.getElementById("signupForm").addEventListener("submit",e=>{
+const form = document.getElementById("signupForm");
+const errorBox = document.getElementById("error");
+const successBox = document.getElementById("success");
+const submitBtn = form.querySelector('button[type="submit"]');
+
+function showError(message) {
+  errorBox.textContent = message;
+  errorBox.style.display = "block";
+  successBox.style.display = "none";
+}
+
+function showSuccess(message) {
+  successBox.textContent = message;
+  successBox.style.display = "block";
+  errorBox.style.display = "none";
+}
+
+form.addEventListener("submit", async e => {
   e.preventDefault();
 
-  const name=document.getElementById("name").value.trim();
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value;
-  const confirm=document.getElementById("confirmPassword").value;
-  const terms=document.getElementById("terms").checked;
-  const error=document.getElementById("error");
-  const success=document.getElementById("success");
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+  const terms = document.getElementById("terms").checked;
 
-  const valid=name && email.includes("@") && password.length>=6 && password===confirm && terms;
-
-  if(!valid){
-    error.style.display="block";
-    success.style.display="none";
+  if (!name || !email.includes("@") || password.length < 6 || password !== confirmPassword || !terms) {
+    showError("Please check your details. Passwords must match and be at least 6 characters.");
     return;
   }
 
-  error.style.display="none";
-  success.style.display="block";
-  setTimeout(()=>location.href="index.html",700);
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Creating Account...";
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: name
+      },
+      emailRedirectTo: EMAIL_REDIRECT_URL
+    }
+  });
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = "Create Account";
+
+  if (error) {
+    showError(error.message);
+    return;
+  }
+
+  if (data.session) {
+    showSuccess("Account created. Opening dashboard...");
+    setTimeout(() => location.href = "index.html", 600);
+  } else {
+    showSuccess("Account created. Check your email and confirm your address, then sign in.");
+  }
 });
 </script>
 </body>
