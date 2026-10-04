@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trade Replay | Smart Trade Journal</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+  --bg:#08090d;
+  --sidebar:#0c0d11;
+  --panel:#101116;
+  --panel2:#14161b;
+  --border:#20232b;
+  --text:#f4f5f7;
+  --muted:#7d818c;
+  --green:#20d080;
+  --red:#ff4e58;
+  --purple:#8357ff;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+  width:240px;
+  position:fixed;
+  left:0;
+  top:0;
+  bottom:0;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  z-index:20;
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:17px;
+  font-weight:800;
+  padding-bottom:22px;
+}
+
+.logo-box{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:linear-gradient(135deg,#693cff,#a75cff);
+  font-size:12px;
+}
+
+.logo span{
+  color:#ff4c91;
+}
+
+.nav,
+.subnav{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.nav a,
+.subnav a{
+  color:#80848f;
+  text-decoration:none;
+  border-radius:9px;
+  padding:11px 12px;
+  font-size:13px;
+}
+
+.nav a:hover,
+.subnav a:hover{
+  background:#17191f;
+  color:#fff;
+}
+
+.nav a.active{
+  background:#191b21;
+  color:#fff;
+}
+
+.subnav{
+  margin-left:14px;
+  margin-top:5px;
+  margin-bottom:8px;
+}
+
+.subnav a{
+  font-size:12px;
+  padding:9px 12px;
+}
+
+.subnav a.active{
+  background:#1a1c22;
+  border:1px solid #2a2d34;
+  color:#fff;
+}
+
+.giveaway{
+  margin-top:20px;
+  background:#1d1608;
+  border:1px solid #563e00;
+  border-radius:12px;
+  padding:13px;
+  font-size:11px;
+}
+
+.giveaway strong{
+  color:#ffd142;
+}
+
+.bottom{
+  margin-top:auto;
+}
+
+.bottom a{
+  display:block;
+  color:#7d818c;
+  text-decoration:none;
+  padding:10px 8px;
+  font-size:13px;
+}
+
+/* MAIN */
+
+.main{
+  margin-left:240px;
+  width:calc(100% - 240px);
+}
+
+.topbar{
+  height:60px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:15px;
+  padding:0 26px;
+  background:#090a0e;
+}
+
+.account{
+  background:#111319;
+  border:1px solid #20232a;
+  border-radius:10px;
+  padding:9px 14px;
+  font-size:12px;
+}
+
+.connected{
+  color:var(--green);
+}
+
+.profile{
+  background:#12141a;
+  border:1px solid #23262e;
+  border-radius:10px;
+  padding:8px 14px;
+  min-width:150px;
+}
+
+.profile strong{
+  display:block;
+  font-size:12px;
+}
+
+.profile small{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.content{
+  padding:28px;
+  max-width:1600px;
+  margin:auto;
+}
+
+/* TITLE */
+
+.page-title{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:20px;
+}
+
+.page-icon{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  background:#241847;
+  color:#916aff;
+}
+
+.page-title h1{
+  font-size:24px;
+  margin-bottom:5px;
+}
+
+.page-title p{
+  color:var(--muted);
+  font-size:13px;
+}
+
+/* REPLAY LAYOUT */
+
+.replay-layout{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:18px;
+  align-items:start;
+}
+
+/* LEFT TRADES */
+
+.trades-panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  height:345px;
+  overflow:hidden;
+}
+
+.trades-header{
+  padding:14px 15px;
+  border-bottom:1px solid #1d2026;
+  color:#80848f;
+  font-size:11px;
+  font-weight:700;
+}
+
+.trades-list{
+  height:300px;
+  overflow-y:auto;
+}
+
+.trades-list::-webkit-scrollbar{
+  width:5px;
+}
+
+.trades-list::-webkit-scrollbar-thumb{
+  background:#31343d;
+  border-radius:20px;
+}
+
+.trade{
+  padding:13px 16px;
+  cursor:pointer;
+  border-bottom:1px solid #16181d;
+  transition:.15s;
+}
+
+.trade:hover,
+.trade.active{
+  background:#15171c;
+}
+
+.trade-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.trade-symbol{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-weight:700;
+  font-size:13px;
+}
+
+.badge{
+  font-size:9px;
+  border-radius:4px;
+  padding:3px 5px;
+  font-weight:700;
+}
+
+.sell{
+  color:#ff6268;
+  background:#3b1419;
+}
+
+.buy{
+  color:#32da87;
+  background:#0d3322;
+}
+
+.profit{
+  color:var(--green);
+  font-weight:700;
+  font-size:13px;
+}
+
+.loss{
+  color:var(--red);
+  font-weight:700;
+  font-size:13px;
+}
+
+.date{
+  color:var(--muted);
+  font-size:10px;
+  margin-top:5px;
+}
+
+/* REPLAY PANEL */
+
+.replay-panel{
+  min-height:345px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  position:relative;
+  overflow:hidden;
+}
+
+.empty-state{
+  min-height:345px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+.play-icon{
+  width:56px;
+  height:56px;
+  border-radius:14px;
+  background:#15171d;
+  display:grid;
+  place-items:center;
+  margin:0 auto 18px;
+  font-size:28px;
+  color:#7f8490;
+}
+
+.empty-state h2{
+  font-size:17px;
+  margin-bottom:10px;
+}
+
+.empty-state p{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.6;
+  max-width:420px;
+}
+
+/* ACTIVE REPLAY */
+
+.active-replay{
+  display:none;
+  padding:18px;
+}
+
+.active-replay.show{
+  display:block;
+}
+
+.replay-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:15px;
+}
+
+.replay-head h3{
+  font-size:16px;
+}
+
+.replay-meta{
+  color:var(--muted);
+  font-size:11px;
+  margin-top:5px;
+}
+
+.chart-box{
+  height:215px;
+  background:#0c0e12;
+  border:1px solid #1c1f25;
+  border-radius:12px;
+  overflow:hidden;
+  position:relative;
+}
+
+.chart-box svg{
+  width:100%;
+  height:100%;
+}
+
+.entry-label,
+.exit-label{
+  position:absolute;
+  padding:5px 8px;
+  border-radius:6px;
+  font-size:10px;
+  font-weight:700;
+}
+
+.entry-label{
+  left:23%;
+  top:42%;
+  background:#163d2b;
+  color:var(--green);
+}
+
+.exit-label{
+  right:14%;
+  top:25%;
+  background:#38202a;
+  color:#ff6870;
+}
+
+.controls{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-top:14px;
+}
+
+.control-btn{
+  height:38px;
+  min-width:38px;
+  padding:0 12px;
+  border-radius:9px;
+  border:1px solid #262932;
+  background:#17191f;
+  color:#fff;
+  cursor:pointer;
+}
+
+.control-btn.play{
+  background:var(--purple);
+  border-color:var(--purple);
+}
+
+.replay-info{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-top:14px;
+}
+
+.info-box{
+  background:#13151a;
+  border:1px solid #20232a;
+  border-radius:9px;
+  padding:11px;
+}
+
+.info-box small{
+  display:block;
+  color:var(--muted);
+  margin-bottom:5px;
+  font-size:10px;
+}
+
+.info-box strong{
+  font-size:13px;
+}
+
+/* HELP */
+
+.help{
+  position:fixed;
+  right:22px;
+  bottom:20px;
+  width:50px;
+  height:50px;
+  border:none;
+  border-radius:50%;
+  background:var(--purple);
+  color:#fff;
+  font-size:22px;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:900px){
+  .replay-layout{
+    grid-template-columns:1fr;
+  }
+
+  .trades-panel{
+    height:280px;
+  }
+}
+
+@media(max-width:760px){
+  .sidebar{
+    display:none;
+  }
+
+  .main{
+    margin-left:0;
+    width:100%;
+  }
+
+  .content{
+    padding:16px;
+  }
+
+  .replay-info{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+
+  <div class="logo">
+    <div class="logo-box">ST</div>
+    Smart Trade <span>Journal</span>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">▦ Dashboard</a>
+    <a href="analytics.html" class="active">▥ Analytics</a>
+  </nav>
+
+  <div class="subnav">
+    <a href="analytics.html">▥ Performance</a>
+    <a href="reports.html">⇩ Reports</a>
+    <a href="strategies.html">▤ Strategies</a>
+    <a href="trade-replay.html" class="active">▷ Trade Replay</a>
+    <a href="#">⌘ Share Cards</a>
+  </div>
+
+  <nav class="nav">
+    <a href="trade-history.html">↗ Trade History</a>
+    <a href="#">✎ Journal</a>
+    <a href="#">✦ Smart Journal AI</a>
+    <a href="#">♨ Hot Topics</a>
+    <a href="#">♕ Leaderboard</a>
+  </nav>
+
+  <div class="giveaway">
+    🎁 <strong>Giveaway</strong><br>
+    Win rewards every month
+  </div>
+
+  <div class="bottom">
+    <a href="#">▣ Broker Hub</a>
+    <a href="#">⚙ Settings</a>
+    <a href="#">↪ Logout</a>
+  </div>
+
+</aside>
+
+
+<main class="main">
+
+<header class="topbar">
+
+  <div class="account">
+    ● XM #430381517
+    <span class="connected">Connected</span>
+  </div>
+
+  <div>☼</div>
+
+  <div class="profile">
+    <strong>Rahul Kumawat</strong>
+    <small>Trader</small>
+  </div>
+
+</header>
+
+
+<div class="content">
+
+<section class="page-title">
+
+  <div class="page-icon">▥</div>
+
+  <div>
+    <h1>Trade Replay</h1>
+    <p>Replay your trades with real market data</p>
+  </div>
+
+</section>
+
+
+<section class="replay-layout">
+
+  <!-- LEFT LIST -->
+
+  <div class="trades-panel">
+
+    <div class="trades-header">
+      RECENT TRADES (100)
+    </div>
+
+    <div class="trades-list">
+
+      <div
+        class="trade"
+        data-symbol="GOLD"
+        data-side="SELL"
+        data-date="Oct 2, 2026"
+        data-pnl="+$43.33"
+        data-entry="4,182.25"
+        data-exit="4,225.58"
+      >
+        <div class="trade-top">
+          <div class="trade-symbol">
+            GOLD
+            <span class="badge sell">SELL</span>
+          </div>
+          <div class="profit">+$43.33</div>
+        </div>
+        <div class="date">Oct 2, 2026</div>
+      </div>
+
+      <div
+        class="trade"
+        data-symbol="GOLD"
+        data-side="SELL"
+        data-date="Oct 2, 2026"
+        data-pnl="-$7.80"
+        data-entry="4,185.92"
+        data-exit="4,178.12"
+      >
+        <div class="trade-top">
+          <div class="trade-symbol">
+            GOLD
+            <span class="badge sell">SELL</span>
+          </div>
+          <div class="loss">-$7.80</div>
+        </div>
+        <div class="date">Oct 2, 2026</div>
+      </div>
+
+      <div
+        class="trade"
+        data-symbol="GOLD"
+        data-side="SELL"
+        data-date="Oct 2, 2026"
+        data-pnl="-$6.24"
+        data-entry="4,186.19"
+        data-exit="4,179.95"
+      >
+        <div class="trade-top">
+          <div class="trade-symbol">
+            GOLD
+            <span class="badge sell">SELL</span>
+          </div>
+          <div class="loss">-$6.24</div>
+        </div>
+        <div class="date">Oct 2, 2026</div>
+      </div>
+
+      <div
+        class="trade"
+        data-symbol="GOLD"
+        data-side="SELL"
+        data-date="Oct 2, 2026"
+        data-pnl="-$6.48"
+        data-entry="4,182.16"
+        data-exit="4,188.64"
+      >
+        <div class="trade-top">
+          <div class="trade-symbol">
+            GOLD
+            <span class="badge sell">SELL</span>
+          </div>
+          <div class="loss">-$6.48</div>
+        </div>
+        <div class="date">Oct 2, 2026</div>
+      </div>
+
+      <div
+        class="trade"
+        data-symbol="GOLD"
+        data-side="SELL"
+        data-date="Oct 2, 2026"
+        data-pnl="-$2.74"
+        data-entry="4,184.93"
+        data-exit="4,182.19"
+      >
+        <div class="trade-top">
+          <div class="trade-symbol">
+            GOLD
+            <span class="badge sell">SELL</span>
+          </div>
+          <div class="loss">-$2.74</div>
+        </div>
+        <div class="date">Oct 2, 2026</div>
+      </div>
+
+      <div
+        class="trade"
+        data-symbol="GOLD"
+        data-side="BUY"
+        data-date="Oct 1, 2026"
+        data-pnl="+$6.24"
+        data-entry="4,165.14"
+        data-exit="4,171.38"
+      >
+        <div class="trade-top">
+          <div class="trade-symbol">
+            GOLD
+            <span class="badge buy">BUY</span>
+          </div>
+          <div class="profit">+$6.24</div>
+        </div>
+        <div class="date">Oct 1, 2026</div>
+      </div>
+
+      <div
+        class="trade"
+        data-symbol="US100Cash"
+        data-side="BUY"
+        data-date="Sep 30, 2026"
+        data-pnl="+$12.10"
+        data-entry="30,453.43"
+        data-exit="30,574.40"
+      >
+        <div class="trade-top">
+          <div class="trade-symbol">
+            US100Cash
+            <span class="badge buy">BUY</span>
+          </div>
+          <div class="profit">+$12.10</div>
+        </div>
+        <div class="date">Sep 30, 2026</div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- RIGHT PANEL -->
+
+  <div class="replay-panel">
+
+    <div class="empty-state" id="emptyState">
+
+      <div>
+
+        <div class="play-icon">▷</div>
+
+        <h2>Select a trade to replay</h2>
+
+        <p>
+          Choose a trade from the list to replay it with real market
+          data, entry/exit markers, and playback controls
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="active-replay" id="activeReplay">
+
+      <div class="replay-head">
+
+        <div>
+          <h3 id="replayTitle">GOLD Replay</h3>
+          <div class="replay-meta" id="replayDate">
+            Oct 2, 2026
+          </div>
+        </div>
+
+        <strong id="replayPnl" class="profit">
+          +$43.33
+        </strong>
+
+      </div>
+
+
+      <div class="chart-box">
+
+        <svg viewBox="0 0 900 220" preserveAspectRatio="none">
+
+          <line x1="0" y1="40" x2="900" y2="40"
+            stroke="#181b20"/>
+
+          <line x1="0" y1="90" x2="900" y2="90"
+            stroke="#181b20"/>
+
+          <line x1="0" y1="140" x2="900" y2="140"
+            stroke="#181b20"/>
+
+          <line x1="0" y1="190" x2="900" y2="190"
+            stroke="#181b20"/>
+
+          <polyline
+            points="
+            0,160
+            50,150
+            90,170
+            135,142
+            175,148
+            220,112
+            260,122
+            310,98
+            350,107
+            400,82
+            445,93
+            485,71
+            525,88
+            570,59
+            615,69
+            660,48
+            710,62
+            755,38
+            805,49
+            850,29
+            900,42"
+            fill="none"
+            stroke="#31d58a"
+            stroke-width="3"
+          />
+
+        </svg>
+
+        <div class="entry-label">
+          Entry
+        </div>
+
+        <div class="exit-label">
+          Exit
+        </div>
+
+      </div>
+
+
+      <div class="controls">
+
+        <button class="control-btn">
+          |◀
+        </button>
+
+        <button class="control-btn">
+          ◀
+        </button>
+
+        <button class="control-btn play" id="playButton">
+          ▶
+        </button>
+
+        <button class="control-btn">
+          ▶
+        </button>
+
+        <button class="control-btn">
+          ▶|
+        </button>
+
+        <button class="control-btn">
+          1x
+        </button>
+
+      </div>
+
+
+      <div class="replay-info">
+
+        <div class="info-box">
+          <small>SYMBOL</small>
+          <strong id="infoSymbol">GOLD</strong>
+        </div>
+
+        <div class="info-box">
+          <small>SIDE</small>
+          <strong id="infoSide">SELL</strong>
+        </div>
+
+        <div class="info-box">
+          <small>ENTRY</small>
+          <strong id="infoEntry">$4,182.25</strong>
+        </div>
+
+        <div class="info-box">
+          <small>EXIT</small>
+          <strong id="infoExit">$4,225.58</strong>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+</div>
+
+</main>
+
+</div>
+
+<button class="help">?</button>
+
+
+<script>
+
+const trades =
+document.querySelectorAll(".trade");
+
+const emptyState =
+document.getElementById("emptyState");
+
+const activeReplay =
+document.getElementById("activeReplay");
+
+const replayTitle =
+document.getElementById("replayTitle");
+
+const replayDate =
+document.getElementById("replayDate");
+
+const replayPnl =
+document.getElementById("replayPnl");
+
+const infoSymbol =
+document.getElementById("infoSymbol");
+
+const infoSide =
+document.getElementById("infoSide");
+
+const infoEntry =
+document.getElementById("infoEntry");
+
+const infoExit =
+document.getElementById("infoExit");
+
+const playButton =
+document.getElementById("playButton");
+
+
+trades.forEach(trade => {
+
+  trade.addEventListener("click", () => {
+
+    trades.forEach(t =>
+      t.classList.remove("active")
+    );
+
+    trade.classList.add("active");
+
+    emptyState.style.display = "none";
+
+    activeReplay.classList.add("show");
+
+    const symbol =
+      trade.dataset.symbol;
+
+    const side =
+      trade.dataset.side;
+
+    const date =
+      trade.dataset.date;
+
+    const pnl =
+      trade.dataset.pnl;
+
+    const entry =
+      trade.dataset.entry;
+
+    const exit =
+      trade.dataset.exit;
+
+    replayTitle.textContent =
+      symbol + " Replay";
+
+    replayDate.textContent =
+      date;
+
+    replayPnl.textContent =
+      pnl;
+
+    if(pnl.includes("-")){
+      replayPnl.className = "loss";
+    }else{
+      replayPnl.className = "profit";
+    }
+
+    infoSymbol.textContent =
+      symbol;
+
+    infoSide.textContent =
+      side;
+
+    infoEntry.textContent =
+      "$" + entry;
+
+    infoExit.textContent =
+      "$" + exit;
+
+  });
+
+});
+
+
+let playing = false;
+
+playButton.addEventListener("click", () => {
+
+  playing = !playing;
+
+  playButton.textContent =
+    playing ? "❚❚" : "▶";
+
+});
+
+</script>
+
+</body>
+</html>
