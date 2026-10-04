@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="auth-checking" lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -824,7 +824,36 @@ body{
   color:#fff;
 }
 
+
+/* AUTH GATE */
+html.auth-checking body{visibility:hidden}
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://vboelobxtkgewkwxllsq.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+(async () => {
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
+
+    if (error || !data.session) {
+      window.location.replace("login.html");
+      return;
+    }
+
+    document.documentElement.classList.remove("auth-checking");
+  } catch (err) {
+    window.location.replace("login.html");
+  }
+})();
+</script>
+
 </head>
 
 <body>
