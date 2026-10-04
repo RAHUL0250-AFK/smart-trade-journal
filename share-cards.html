@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Share Cards | Smart Trade Journal</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+  --bg:#08090d;
+  --sidebar:#0c0d11;
+  --panel:#101116;
+  --panel2:#14161b;
+  --border:#20232b;
+  --text:#f4f5f7;
+  --muted:#7d818c;
+  --green:#20d080;
+  --red:#ff4e58;
+  --purple:#8357ff;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+  width:240px;
+  position:fixed;
+  left:0;
+  top:0;
+  bottom:0;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:17px;
+  font-weight:800;
+  padding-bottom:22px;
+}
+
+.logo-box{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:linear-gradient(135deg,#693cff,#a75cff);
+  font-size:12px;
+}
+
+.logo span{
+  color:#ff4c91;
+}
+
+.nav,
+.subnav{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.nav a,
+.subnav a{
+  color:#80848f;
+  text-decoration:none;
+  border-radius:9px;
+  padding:11px 12px;
+  font-size:13px;
+}
+
+.nav a:hover,
+.subnav a:hover{
+  background:#17191f;
+  color:#fff;
+}
+
+.nav a.active{
+  background:#191b21;
+  color:#fff;
+}
+
+.subnav{
+  margin-left:14px;
+  margin-top:5px;
+  margin-bottom:8px;
+}
+
+.subnav a{
+  font-size:12px;
+  padding:9px 12px;
+}
+
+.subnav a.active{
+  background:#1a1c22;
+  border:1px solid #2a2d34;
+  color:#fff;
+}
+
+.giveaway{
+  margin-top:20px;
+  background:#1d1608;
+  border:1px solid #563e00;
+  border-radius:12px;
+  padding:13px;
+  font-size:11px;
+}
+
+.giveaway strong{
+  color:#ffd142;
+}
+
+.bottom{
+  margin-top:auto;
+}
+
+.bottom a{
+  display:block;
+  color:#7d818c;
+  text-decoration:none;
+  padding:10px 8px;
+  font-size:13px;
+}
+
+/* MAIN */
+
+.main{
+  margin-left:240px;
+  width:calc(100% - 240px);
+}
+
+.topbar{
+  height:60px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:15px;
+  padding:0 26px;
+  background:#090a0e;
+}
+
+.account{
+  background:#111319;
+  border:1px solid #20232a;
+  border-radius:10px;
+  padding:9px 14px;
+  font-size:12px;
+}
+
+.connected{
+  color:var(--green);
+}
+
+.profile{
+  background:#12141a;
+  border:1px solid #23262e;
+  border-radius:10px;
+  padding:8px 14px;
+  min-width:150px;
+}
+
+.profile strong{
+  display:block;
+  font-size:12px;
+}
+
+.profile small{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.content{
+  padding:20px 28px;
+  max-width:1600px;
+  margin:auto;
+}
+
+/* SHARE HEADER */
+
+.share-header{
+  min-height:105px;
+  background:
+    radial-gradient(circle at 10% 50%,rgba(131,87,255,.18),transparent 35%),
+    linear-gradient(90deg,#171021,#101018);
+  border:1px solid #211a33;
+  border-radius:15px;
+  padding:25px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:26px;
+}
+
+.share-icon{
+  width:42px;
+  height:42px;
+  border-radius:11px;
+  display:grid;
+  place-items:center;
+  background:var(--purple);
+  font-size:22px;
+}
+
+.share-header h1{
+  font-size:22px;
+  margin-bottom:5px;
+}
+
+.share-header p{
+  color:var(--muted);
+  font-size:13px;
+}
+
+/* TYPES */
+
+.type-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin-bottom:26px;
+}
+
+.type-card{
+  min-height:105px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--panel);
+  padding:18px;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.type-card:hover{
+  transform:translateY(-1px);
+}
+
+.type-card.active{
+  border-color:#493078;
+  background:
+    linear-gradient(135deg,rgba(131,87,255,.17),rgba(131,87,255,.04)),
+    #111016;
+}
+
+.type-card.monthly{
+  background:
+    linear-gradient(135deg,rgba(198,143,20,.10),transparent),
+    var(--panel);
+}
+
+.type-card.yearly{
+  background:
+    linear-gradient(135deg,rgba(160,44,54,.10),transparent),
+    var(--panel);
+}
+
+.type-top{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+.type-icon{
+  width:35px;
+  height:35px;
+  border-radius:9px;
+  background:#1a1c22;
+  display:grid;
+  place-items:center;
+  font-size:17px;
+}
+
+.active .type-icon{
+  background:var(--purple);
+}
+
+.type-title{
+  font-size:14px;
+  font-weight:700;
+}
+
+.type-sub{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+.type-value{
+  color:var(--muted);
+  font-size:13px;
+}
+
+.type-value strong{
+  color:var(--green);
+  font-size:18px;
+  margin-right:8px;
+}
+
+/* NAVIGATION */
+
+.controls{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin-bottom:24px;
+}
+
+.date-controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.arrow{
+  width:34px;
+  height:34px;
+  border:none;
+  background:#111319;
+  border-radius:10px;
+  color:#fff;
+  cursor:pointer;
+}
+
+.date-box{
+  min-width:160px;
+  height:34px;
+  padding:0 14px;
+  border-radius:10px;
+  background:#111319;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:700;
+}
+
+.today{
+  color:var(--muted);
+  font-size:11px;
+  margin-left:10px;
+}
+
+.generate{
+  background:#5b3298;
+  border:none;
+  color:#cab0f0;
+  border-radius:10px;
+  padding:11px 18px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+/* CONTENT */
+
+.empty-panel{
+  min-height:165px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+.empty-icon{
+  font-size:35px;
+  color:#3c3f48;
+  margin-bottom:16px;
+}
+
+.empty-panel h3{
+  color:#8c909b;
+  font-size:14px;
+  font-weight:500;
+  margin-bottom:7px;
+}
+
+.empty-panel p{
+  color:#686d79;
+  font-size:11px;
+}
+
+/* GENERATED PREVIEW */
+
+.preview{
+  display:none;
+  max-width:520px;
+  margin:30px auto 0;
+  padding:25px;
+  border-radius:18px;
+  background:
+    radial-gradient(circle at top right,rgba(131,87,255,.2),transparent 38%),
+    #111217;
+  border:1px solid #2c243e;
+}
+
+.preview.show{
+  display:block;
+}
+
+.preview-brand{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:35px;
+}
+
+.preview-brand strong{
+  font-size:15px;
+}
+
+.preview-brand span{
+  color:#8b8f98;
+  font-size:11px;
+}
+
+.preview-date{
+  color:#8a8e98;
+  font-size:12px;
+}
+
+.preview h2{
+  font-size:30px;
+  margin-top:8px;
+}
+
+.preview .big-pnl{
+  font-size:42px;
+  font-weight:800;
+  color:var(--green);
+  margin:30px 0;
+}
+
+.preview-stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+.preview-stat{
+  background:#17191f;
+  border:1px solid #252832;
+  border-radius:10px;
+  padding:13px;
+}
+
+.preview-stat small{
+  display:block;
+  color:#777c87;
+  margin-bottom:7px;
+}
+
+.preview-stat strong{
+  font-size:14px;
+}
+
+@media(max-width:900px){
+  .type-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:760px){
+  .sidebar{
+    display:none;
+  }
+
+  .main{
+    margin-left:0;
+    width:100%;
+  }
+
+  .content{
+    padding:16px;
+  }
+
+  .controls{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+
+<div class="logo">
+  <div class="logo-box">ST</div>
+  Smart Trade <span>Journal</span>
+</div>
+
+<nav class="nav">
+  <a href="index.html">▦ Dashboard</a>
+  <a href="analytics.html" class="active">▥ Analytics</a>
+</nav>
+
+<div class="subnav">
+  <a href="analytics.html">▥ Performance</a>
+  <a href="reports.html">⇩ Reports</a>
+  <a href="strategies.html">▤ Strategies</a>
+  <a href="trade-replay.html">▷ Trade Replay</a>
+  <a href="share-cards.html" class="active">⌘ Share Cards</a>
+</div>
+
+<nav class="nav">
+  <a href="trade-history.html">↗ Trade History</a>
+  <a href="#">✎ Journal</a>
+  <a href="#">✦ Smart Journal AI</a>
+  <a href="#">♨ Hot Topics</a>
+  <a href="#">♕ Leaderboard</a>
+</nav>
+
+<div class="giveaway">
+  🎁 <strong>Giveaway</strong><br>
+  Win rewards every month
+</div>
+
+<div class="bottom">
+  <a href="#">▣ Broker Hub</a>
+  <a href="#">⚙ Settings</a>
+  <a href="#">↪ Logout</a>
+</div>
+
+</aside>
+
+
+<main class="main">
+
+<header class="topbar">
+
+<div class="account">
+  ● XM #430381517
+  <span class="connected">Connected</span>
+</div>
+
+<div>☼</div>
+
+<div class="profile">
+  <strong>Rahul Kumawat</strong>
+  <small>Trader</small>
+</div>
+
+</header>
+
+
+<div class="content">
+
+<section class="share-header">
+
+<div class="share-icon">⌘</div>
+
+<div>
+  <h1>Share Cards</h1>
+  <p>Create stunning performance cards for social media</p>
+</div>
+
+</section>
+
+
+<section class="type-grid">
+
+<div class="type-card active" data-type="daily">
+
+  <div class="type-top">
+    <div class="type-icon">▣</div>
+
+    <div>
+      <div class="type-title">Daily</div>
+      <div class="type-sub">Daily trading recap</div>
+    </div>
+  </div>
+
+  <div class="type-value">
+    No trades
+  </div>
+
+</div>
+
+
+<div class="type-card monthly" data-type="monthly">
+
+  <div class="type-top">
+    <div class="type-icon">▥</div>
+
+    <div>
+      <div class="type-title">Monthly</div>
+      <div class="type-sub">Month summary with heatmap</div>
+    </div>
+  </div>
+
+  <div class="type-value">
+    <strong>+$30</strong>
+    8 trades
+  </div>
+
+</div>
+
+
+<div class="type-card yearly" data-type="yearly">
+
+  <div class="type-top">
+    <div class="type-icon">↗</div>
+
+    <div>
+      <div class="type-title">Yearly</div>
+      <div class="type-sub">Year in review</div>
+    </div>
+  </div>
+
+  <div class="type-value">
+    <strong>+$119</strong>
+    136 trades
+  </div>
+
+</div>
+
+</section>
+
+
+<section class="controls">
+
+<div class="date-controls">
+
+<button class="arrow" id="prevDay">
+  ‹
+</button>
+
+<div class="date-box" id="dateText">
+  Sun, Oct 4, 2026
+</div>
+
+<button class="arrow" id="nextDay">
+  ›
+</button>
+
+<span class="today">
+  Today
+</span>
+
+</div>
+
+<button class="generate" id="generateBtn">
+  ✦ &nbsp; Generate Card
+</button>
+
+</section>
+
+
+<section class="empty-panel" id="emptyPanel">
+
+<div>
+
+  <div class="empty-icon">
+    ▣
+  </div>
+
+  <h3 id="emptyTitle">
+    No trades on Sun, Oct 4, 2026
+  </h3>
+
+  <p>
+    Use the arrows to navigate to a day with trades
+  </p>
+
+</div>
+
+</section>
+
+
+<section class="preview" id="preview">
+
+<div class="preview-brand">
+
+<strong>
+  Smart Trade Journal
+</strong>
+
+<span>
+  Trading Performance
+</span>
+
+</div>
+
+
+<div class="preview-date" id="previewType">
+Daily Performance
+</div>
+
+<h2 id="previewHeading">
+October 2, 2026
+</h2>
+
+<div class="big-pnl" id="previewPnl">
++$20.07
+</div>
+
+<div class="preview-stats">
+
+<div class="preview-stat">
+  <small>Trades</small>
+  <strong id="previewTrades">5</strong>
+</div>
+
+<div class="preview-stat">
+  <small>Win Rate</small>
+  <strong id="previewWinrate">60%</strong>
+</div>
+
+<div class="preview-stat">
+  <small>Best Trade</small>
+  <strong class="connected" id="previewBest">
+    +$43.33
+  </strong>
+</div>
+
+</div>
+
+</section>
+
+</div>
+</main>
+</div>
+
+
+<script>
+
+const cards =
+document.querySelectorAll(".type-card");
+
+const generateBtn =
+document.getElementById("generateBtn");
+
+const preview =
+document.getElementById("preview");
+
+const emptyPanel =
+document.getElementById("emptyPanel");
+
+const previewType =
+document.getElementById("previewType");
+
+const previewHeading =
+document.getElementById("previewHeading");
+
+const previewPnl =
+document.getElementById("previewPnl");
+
+const previewTrades =
+document.getElementById("previewTrades");
+
+const previewWinrate =
+document.getElementById("previewWinrate");
+
+const previewBest =
+document.getElementById("previewBest");
+
+const dateText =
+document.getElementById("dateText");
+
+const emptyTitle =
+document.getElementById("emptyTitle");
+
+let selectedType = "daily";
+
+let currentDate =
+new Date(2026,9,4);
+
+
+cards.forEach(card => {
+
+  card.addEventListener("click", () => {
+
+    cards.forEach(c =>
+      c.classList.remove("active")
+    );
+
+    card.classList.add("active");
+
+    selectedType =
+      card.dataset.type;
+
+    preview.classList.remove("show");
+
+    emptyPanel.style.display =
+      "flex";
+
+  });
+
+});
+
+
+function updateDate(){
+
+  const options = {
+    weekday:"short",
+    month:"short",
+    day:"numeric",
+    year:"numeric"
+  };
+
+  const text =
+    currentDate.toLocaleDateString(
+      "en-US",
+      options
+    );
+
+  dateText.textContent =
+    text;
+
+  emptyTitle.textContent =
+    "No trades on " + text;
+
+}
+
+
+document
+.getElementById("prevDay")
+.addEventListener("click", () => {
+
+  currentDate.setDate(
+    currentDate.getDate() - 1
+  );
+
+  updateDate();
+
+});
+
+
+document
+.getElementById("nextDay")
+.addEventListener("click", () => {
+
+  currentDate.setDate(
+    currentDate.getDate() + 1
+  );
+
+  updateDate();
+
+});
+
+
+generateBtn.addEventListener(
+"click",
+() => {
+
+  preview.classList.add("show");
+
+  emptyPanel.style.display =
+    "none";
+
+
+  if(selectedType === "daily"){
+
+    previewType.textContent =
+      "Daily Performance";
+
+    previewHeading.textContent =
+      "October 2, 2026";
+
+    previewPnl.textContent =
+      "+$20.07";
+
+    previewTrades.textContent =
+      "5";
+
+    previewWinrate.textContent =
+      "60%";
+
+    previewBest.textContent =
+      "+$43.33";
+
+  }
+
+
+  if(selectedType === "monthly"){
+
+    previewType.textContent =
+      "Monthly Performance";
+
+    previewHeading.textContent =
+      "October 2026";
+
+    previewPnl.textContent =
+      "+$30.22";
+
+    previewTrades.textContent =
+      "8";
+
+    previewWinrate.textContent =
+      "62.5%";
+
+    previewBest.textContent =
+      "+$43.33";
+
+  }
+
+
+  if(selectedType === "yearly"){
+
+    previewType.textContent =
+      "2026 Performance";
+
+    previewHeading.textContent =
+      "Year in Review";
+
+    previewPnl.textContent =
+      "+$118.72";
+
+    previewTrades.textContent =
+      "136";
+
+    previewWinrate.textContent =
+      "55.9%";
+
+    previewBest.textContent =
+      "+$43.33";
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>
