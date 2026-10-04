@@ -107,7 +107,7 @@ body{
       <h2>Welcome back</h2>
       <p class="sub">Sign in to continue to your trading dashboard.</p>
 
-      <div class="notice">Demo login page for the current GitHub Pages build. Real account authentication will be connected later.</div>
+      <div class="notice">Secure sign-in is connected to Supabase Auth. Your password is handled by Supabase and is not stored in this page.</div>
 
       <form id="loginForm">
         <div class="field">
@@ -141,37 +141,85 @@ body{
   </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-document.querySelectorAll(".eye").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    const input=document.getElementById(btn.dataset.target);
-    input.type=input.type==="password"?"text":"password";
-    btn.textContent=input.type==="password"?"Show":"Hide";
+const SUPABASE_URL = "https://vboelobxtkgewkwxllsq.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+document.querySelectorAll(".eye").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const input = document.getElementById(btn.dataset.target);
+    input.type = input.type === "password" ? "text" : "password";
+    btn.textContent = input.type === "password" ? "Show" : "Hide";
   });
 });
 
-const form=document.getElementById("loginForm");
-form.addEventListener("submit",e=>{
-  e.preventDefault();
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value;
-  const error=document.getElementById("error");
-  const success=document.getElementById("success");
+const form = document.getElementById("loginForm");
+const errorBox = document.getElementById("error");
+const successBox = document.getElementById("success");
+const submitBtn = form.querySelector('button[type="submit"]');
 
-  if(!email || !email.includes("@") || password.length<6){
-    error.style.display="block";
-    success.style.display="none";
+function showError(message) {
+  errorBox.textContent = message;
+  errorBox.style.display = "block";
+  successBox.style.display = "none";
+}
+
+function showSuccess(message) {
+  successBox.textContent = message;
+  successBox.style.display = "block";
+  errorBox.style.display = "none";
+}
+
+async function redirectIfLoggedIn() {
+  const { data } = await supabaseClient.auth.getSession();
+  if (data.session) {
+    location.href = "index.html";
+  }
+}
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !email.includes("@") || password.length < 6) {
+    showError("Please enter a valid email and password.");
     return;
   }
 
-  error.style.display="none";
-  success.style.display="block";
-  setTimeout(()=>location.href="index.html",700);
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Signing In...";
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = "Sign In";
+
+  if (error) {
+    showError(error.message);
+    return;
+  }
+
+  if (data.session) {
+    showSuccess("Login successful. Opening dashboard...");
+    setTimeout(() => location.href = "index.html", 500);
+  }
 });
 
-document.getElementById("demoBtn").addEventListener("click",()=>{
-  location.href="index.html";
+document.getElementById("demoBtn").addEventListener("click", () => {
+  location.href = "index.html";
 });
+
+redirectIfLoggedIn();
 </script>
 </body>
 </html>
