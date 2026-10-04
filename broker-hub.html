@@ -477,38 +477,7 @@ window.stjAuthReady = (async () => {
 
 
 
-    <section class="ea-card" id="livePositionsCard">
-      <div class="ea-card-head">
-        <div>
-          <h3>📡 Live MT5 Account</h3>
-          <p id="liveAccountSubtext">Waiting for MT5 EA live data...</p>
-        </div>
-        <span class="ea-status" id="liveAccountStatus">Offline</span>
-      </div>
-
-      <div class="summary-grid" style="margin-top:10px">
-        <div class="metric green">
-          <small>Balance</small>
-          <strong class="green-text" id="liveBalance">—</strong>
-        </div>
-        <div class="metric blue">
-          <small>Equity</small>
-          <strong class="blue-text" id="liveEquity">—</strong>
-        </div>
-        <div class="metric purple">
-          <small>Floating P&amp;L</small>
-          <strong id="liveFloatingPnl">—</strong>
-        </div>
-        <div class="metric">
-          <small>Open Positions</small>
-          <strong id="liveOpenCount">0</strong>
-        </div>
-      </div>
-
-      <div id="livePositionsList" style="margin-top:12px">
-        <div style="font-size:11px;color:var(--muted)">No live positions loaded yet.</div>
-      </div>
-    </section>
+    
 
     <section class="ea-card">
       <div class="ea-card-head">
@@ -757,36 +726,26 @@ document.getElementById("disconnectBtn").addEventListener("click", () => {
 
 
 async function loadLiveAccountState() {
-  const statusEl = document.getElementById("liveAccountStatus");
-  const subtextEl = document.getElementById("liveAccountSubtext");
-  const positionsList = document.getElementById("livePositionsList");
-
   try {
-    const [{ data: snapshots, error: snapshotError }, { data: positions, error: positionsError }] =
-      await Promise.all([
-        window.stjSupabase
-          .from("mt5_account_snapshots")
-          .select("account_id,server,currency,balance,equity,floating_profit,margin,margin_free,margin_level,updated_at")
-          .order("updated_at", { ascending: false })
-          .limit(1),
-        window.stjSupabase
-          .from("mt5_open_positions")
-          .select("position_ticket,symbol,side,volume,price_open,price_current,sl,tp,profit,swap,updated_at")
-          .order("profit", { ascending: false })
-      ]);
+    const { data: snapshots, error } = await window.stjSupabase
+      .from("mt5_account_snapshots")
+      .select("account_id,server,currency,balance,equity,floating_profit,updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(1);
 
-    if (snapshotError) throw snapshotError;
-    if (positionsError) throw positionsError;
+    if (error) throw error;
 
     const snap = snapshots && snapshots[0];
-    const livePositions = positions || [];
-
-    document.getElementById("liveOpenCount").textContent = String(livePositions.length);
 
     if (!snap) {
-      statusEl.textContent = "Waiting";
-      statusEl.classList.remove("active");
-      subtextEl.textContent = "EA is paired, but no live snapshot has arrived yet.";
+      document.getElementById("summaryBalance").textContent = "—";
+      document.getElementById("summaryEquity").textContent = "—";
+      document.getElementById("summaryUnrealized").textContent = "—";
+
+      const lastSync = document.getElementById("lastSyncText");
+      if (lastSync) {
+        lastSync.textContent = "EA paired. Waiting for live MT5 account data...";
+      }
       return;
     }
 
@@ -805,55 +764,23 @@ async function loadLiveAccountState() {
     summaryFloat.textContent = formatMoney(snap.floating_profit);
     summaryFloat.className = Number(snap.floating_profit) >= 0 ? "green-text" : "red-text";
 
-    document.getElementById("liveBalance").textContent = formatMoney(snap.balance);
-    document.getElementById("liveEquity").textContent = formatMoney(snap.equity);
-
-    const floatEl = document.getElementById("liveFloatingPnl");
-    floatEl.textContent = formatMoney(snap.floating_profit);
-    floatEl.className = Number(snap.floating_profit) >= 0 ? "green-text" : "red-text";
-
     const updatedAt = new Date(snap.updated_at);
     const ageSec = Math.max(0, (Date.now() - updatedAt.getTime()) / 1000);
     const isLive = ageSec <= 90;
 
-    statusEl.textContent = isLive ? "Live" : "Stale";
-    statusEl.classList.toggle("active", isLive);
-    subtextEl.textContent =
-      `Last MT5 update: ${updatedAt.toLocaleString()} • ${livePositions.length} open position${livePositions.length === 1 ? "" : "s"}`;
-
     const lastSync = document.getElementById("lastSyncText");
     if (lastSync) {
       lastSync.textContent =
-        `Last live sync: ${updatedAt.toLocaleString()} • ${livePositions.length} open position${livePositions.length === 1 ? "" : "s"}`;
-    }
-
-    if (!livePositions.length) {
-      positionsList.innerHTML =
-        '<div style="font-size:11px;color:var(--muted)">No open MT5 positions right now.</div>';
-    } else {
-      positionsList.innerHTML = livePositions.map(p => {
-        const profit = Number(p.profit || 0) + Number(p.swap || 0);
-        const pnlClass = profit >= 0 ? "green-text" : "red-text";
-        const side = p.side === "BUY" ? "LONG" : p.side === "SELL" ? "SHORT" : p.side;
-        return `
-          <div style="display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:10px 0;border-top:1px solid #222630">
-            <div>
-              <strong style="font-size:12px">${p.symbol}</strong>
-              <div style="font-size:10px;color:var(--muted)">${side} • ${Number(p.volume || 0)} lots • Entry ${Number(p.price_open || 0)}</div>
-            </div>
-            <div style="font-size:10px;color:var(--muted)">Now ${Number(p.price_current || 0)}</div>
-            <strong class="${pnlClass}" style="font-size:12px">${formatMoney(profit)}</strong>
-          </div>`;
-      }).join("");
+        `${isLive ? "Live MT5 sync" : "Last MT5 sync"}: ${updatedAt.toLocaleString()}`;
     }
   } catch (error) {
     console.error("Live account load error:", error);
-    statusEl.textContent = "Error";
-    statusEl.classList.remove("active");
-    subtextEl.textContent = error.message || "Could not load live MT5 data.";
+    const lastSync = document.getElementById("lastSyncText");
+    if (lastSync) {
+      lastSync.textContent = "Could not load live MT5 account data.";
+    }
   }
 }
-
 
 const generateEaCodeBtn = document.getElementById("generateEaCodeBtn");
 const copyEaCodeBtn = document.getElementById("copyEaCodeBtn");
