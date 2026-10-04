@@ -936,9 +936,7 @@ window.stjAuthReady = (async () => {
 <main class="main">
 
 <header class="topbar">
-  <div class="account-pill">
-    ● XM <span class="connected">Connected</span>
-  </div>
+  <div class="account-pill" id="dashboardBrokerStatus">● MT5 <span class="connected">Checking...</span></div>
   <div>☼</div>
   <div class="profile">Rahul ▾</div>
 </header>
@@ -952,31 +950,31 @@ window.stjAuthReady = (async () => {
     <h2>RAHUL KUMAWAT</h2>
 
     <div class="pnl-label">↗ TODAY'S P&amp;L</div>
-    <div class="big-pnl">+$0.00</div>
+    <div class="big-pnl" id="todayPnl">—</div>
   </div>
 
   <div class="hero-right">
 
-    <button class="sync">⟳ Sync Trades</button>
+    <button class="sync" id="dashboardSyncBtn">⟳ Refresh Trades</button>
 
     <div class="mini-card">
       <small>BALANCE</small>
-      <b>$61.23</b>
+      <b id="dashboardBalance">—</b>
     </div>
 
     <div class="mini-card">
       <small>TOTAL P&amp;L</small>
-      <b class="green">+$118.72</b>
+      <b class="green" id="totalPnl">—</b>
     </div>
 
     <div class="mini-card">
       <small>BEST DAY</small>
-      <b class="yellow">+$20.07</b>
+      <b class="yellow" id="bestDayPnl">—</b>
     </div>
 
     <div class="mini-card">
       <small>STREAK</small>
-      <b class="green">1W</b>
+      <b class="green" id="tradeStreak">—</b>
     </div>
 
   </div>
@@ -988,32 +986,32 @@ window.stjAuthReady = (async () => {
 
 <div class="stat">
   <small>WIN RATE</small>
-  <strong>56%</strong>
+  <strong id="winRate">—</strong>
 </div>
 
 <div class="stat">
   <small>TOTAL TRADES</small>
-  <strong>136</strong>
+  <strong id="totalTrades">—</strong>
 </div>
 
 <div class="stat">
   <small>BIGGEST WIN</small>
-  <strong class="green">+$43.33</strong>
+  <strong class="green" id="biggestWin">—</strong>
 </div>
 
 <div class="stat">
   <small>AVG WIN</small>
-  <strong class="green">$5.84</strong>
+  <strong class="green" id="avgWin">—</strong>
 </div>
 
 <div class="stat">
   <small>AVG LOSS</small>
-  <strong class="red">$5.41</strong>
+  <strong class="red" id="avgLoss">—</strong>
 </div>
 
 <div class="stat">
   <small>THIS MONTH</small>
-  <strong class="green">+$30.22</strong>
+  <strong class="green" id="thisMonthPnl">—</strong>
 </div>
 
 </section>
@@ -1160,67 +1158,13 @@ window.stjAuthReady = (async () => {
 <div class="grid2">
 
 <section class="card">
-
   <div class="card-head">
     <h3>Recent Trades</h3>
-    <span class="subtitle">View All →</span>
+    <a class="subtitle" href="trade-history.html" style="text-decoration:none">View All →</a>
   </div>
-
-  <div class="trade">
-    <div class="trade-info">
-      <div class="trade-icon">◆</div>
-      <div>
-        <b>GOLD</b>
-        <small>LONG • Oct 2, 2026</small>
-      </div>
-    </div>
-    <b class="green">+$43.33</b>
+  <div id="recentTradesList">
+    <div class="subtitle" style="padding:14px 0">Loading real MT5 trades...</div>
   </div>
-
-  <div class="trade">
-    <div class="trade-info">
-      <div class="trade-icon">◆</div>
-      <div>
-        <b>GOLD</b>
-        <small>LONG • Oct 2, 2026</small>
-      </div>
-    </div>
-    <b class="red">-$7.80</b>
-  </div>
-
-  <div class="trade">
-    <div class="trade-info">
-      <div class="trade-icon">◆</div>
-      <div>
-        <b>GOLD</b>
-        <small>LONG • Oct 2, 2026</small>
-      </div>
-    </div>
-    <b class="red">-$6.24</b>
-  </div>
-
-  <div class="trade">
-    <div class="trade-info">
-      <div class="trade-icon">◆</div>
-      <div>
-        <b>GOLD</b>
-        <small>SHORT • Oct 2, 2026</small>
-      </div>
-    </div>
-    <b class="red">-$6.48</b>
-  </div>
-
-  <div class="trade">
-    <div class="trade-info">
-      <div class="trade-icon">◆</div>
-      <div>
-        <b>GOLD</b>
-        <small>LONG • Oct 2, 2026</small>
-      </div>
-    </div>
-    <b class="red">-$2.74</b>
-  </div>
-
 </section>
 
 
@@ -1700,6 +1644,280 @@ if (analyticsMenu && analyticsToggle) {
   } catch (err) {
     console.error("Could not load user profile:", err);
   }
+})();
+</script>
+
+
+<script id="stj-real-mt5-dashboard">
+(async () => {
+  if (window.stjAuthReady) {
+    const ok = await window.stjAuthReady;
+    if (!ok) return;
+  }
+  if (!window.stjSupabase) return;
+
+  const $ = id => document.getElementById(id);
+
+  function money(value, currency = "USD", signed = false) {
+    const n = Number(value || 0);
+    const abs = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(Math.abs(n));
+    if (!signed) return (n < 0 ? "-" : "") + abs;
+    return (n > 0 ? "+" : n < 0 ? "-" : "") + abs;
+  }
+
+  function setMoneyClass(el, value) {
+    if (!el) return;
+    el.classList.remove("green", "red", "yellow");
+    if (value > 0) el.classList.add("green");
+    else if (value < 0) el.classList.add("red");
+  }
+
+  async function fetchAllDeals() {
+    const pageSize = 1000;
+    let from = 0;
+    const all = [];
+
+    while (true) {
+      const { data, error } = await window.stjSupabase
+        .from("mt5_deals")
+        .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
+        .order("time_msc", { ascending: true })
+        .range(from, from + pageSize - 1);
+
+      if (error) throw error;
+      all.push(...(data || []));
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
+      if (from >= 10000) break;
+    }
+    return all;
+  }
+
+  function groupTrades(deals) {
+    const map = new Map();
+
+    for (const d of deals) {
+      if (!d.symbol) continue;
+      if (![0, 1].includes(Number(d.deal_type))) continue;
+
+      const key = d.position_id || ("deal-" + d.deal_ticket);
+      if (!map.has(key)) {
+        map.set(key, {
+          positionId: key,
+          symbol: d.symbol,
+          entries: [],
+          exits: [],
+          deals: [],
+          net: 0,
+          firstTime: null,
+          lastTime: null
+        });
+      }
+
+      const t = map.get(key);
+      t.deals.push(d);
+      t.symbol = t.symbol || d.symbol;
+      t.net += Number(d.profit || 0) + Number(d.commission || 0) +
+               Number(d.swap || 0) + Number(d.fee || 0);
+
+      const dt = new Date(d.deal_time);
+      if (!t.firstTime || dt < t.firstTime) t.firstTime = dt;
+      if (!t.lastTime || dt > t.lastTime) t.lastTime = dt;
+
+      const entryType = Number(d.entry_type);
+      if (entryType === 0) t.entries.push(d);
+      if (entryType === 1 || entryType === 2 || entryType === 3) t.exits.push(d);
+    }
+
+    function weightedPrice(rows) {
+      let v = 0, pv = 0;
+      rows.forEach(r => {
+        const vol = Number(r.volume || 0);
+        v += vol;
+        pv += Number(r.price || 0) * vol;
+      });
+      return v > 0 ? pv / v : null;
+    }
+
+    return Array.from(map.values()).map(t => {
+      const firstEntry = t.entries[0];
+      const lastExit = t.exits[t.exits.length - 1];
+
+      let originalSide = firstEntry?.side || "";
+      if (!originalSide && lastExit?.side) {
+        originalSide = lastExit.side === "BUY" ? "SELL" : "BUY";
+      }
+
+      return {
+        ...t,
+        side: originalSide === "BUY" ? "LONG" : originalSide === "SELL" ? "SHORT" : "—",
+        entryPrice: weightedPrice(t.entries),
+        exitPrice: weightedPrice(t.exits),
+        status: t.exits.length ? "closed" : "open",
+        closedAt: t.exits.length ? new Date(t.exits[t.exits.length - 1].deal_time) : null
+      };
+    });
+  }
+
+  function localDayKey(date) {
+    if (!date) return "";
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+  }
+
+  async function loadBrokerStatus() {
+    try {
+      const { data } = await window.stjSupabase
+        .from("ea_devices")
+        .select("account_id,server,broker_name,is_active,last_seen_at")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      const d = data && data[0];
+      if (!d) {
+        $("dashboardBrokerStatus").innerHTML = '● MT5 <span>Not paired</span>';
+        return;
+      }
+
+      const account = String(d.account_id || "");
+      const masked = account ? "••••" + account.slice(-4) : "";
+      const broker = d.broker_name || "MT5";
+      $("dashboardBrokerStatus").innerHTML =
+        `● ${broker} ${masked} <span class="connected">EA Connected</span>`;
+    } catch (e) {
+      console.error("Broker status load failed:", e);
+    }
+  }
+
+  async function loadDashboardTrades() {
+    const btn = $("dashboardSyncBtn");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "⟳ Loading...";
+    }
+
+    try {
+      const { data: userData } = await window.stjSupabase.auth.getUser();
+      const currency = userData?.user?.user_metadata?.default_currency || "USD";
+
+      const deals = await fetchAllDeals();
+      const grouped = groupTrades(deals);
+      const closed = grouped
+        .filter(t => t.status === "closed")
+        .sort((a,b) => (b.closedAt?.getTime() || 0) - (a.closedAt?.getTime() || 0));
+
+      const total = closed.reduce((s,t) => s + t.net, 0);
+      const wins = closed.filter(t => t.net > 0);
+      const losses = closed.filter(t => t.net < 0);
+      const winRate = closed.length ? (wins.length / closed.length * 100) : 0;
+      const biggest = wins.length ? Math.max(...wins.map(t => t.net)) : 0;
+      const avgWin = wins.length ? wins.reduce((s,t) => s+t.net, 0) / wins.length : 0;
+      const avgLoss = losses.length ? Math.abs(losses.reduce((s,t) => s+t.net, 0) / losses.length) : 0;
+
+      const now = new Date();
+      const todayKey = localDayKey(now);
+      const todayPnl = closed.filter(t => localDayKey(t.closedAt) === todayKey)
+                             .reduce((s,t) => s+t.net, 0);
+
+      const monthPnl = closed.filter(t =>
+        t.closedAt &&
+        t.closedAt.getFullYear() === now.getFullYear() &&
+        t.closedAt.getMonth() === now.getMonth()
+      ).reduce((s,t) => s+t.net, 0);
+
+      const byDay = new Map();
+      closed.forEach(t => {
+        const k = localDayKey(t.closedAt);
+        byDay.set(k, (byDay.get(k) || 0) + t.net);
+      });
+      const bestDay = byDay.size ? Math.max(...byDay.values()) : 0;
+
+      let streakCount = 0;
+      let streakType = "";
+      for (const t of closed) {
+        const type = t.net > 0 ? "W" : t.net < 0 ? "L" : "";
+        if (!type) continue;
+        if (!streakType) {
+          streakType = type;
+          streakCount = 1;
+        } else if (type === streakType) {
+          streakCount++;
+        } else {
+          break;
+        }
+      }
+
+      const pairs = [
+        ["todayPnl", todayPnl, true],
+        ["totalPnl", total, true],
+        ["bestDayPnl", bestDay, true],
+        ["biggestWin", biggest, true],
+        ["avgWin", avgWin, false],
+        ["avgLoss", -avgLoss, false],
+        ["thisMonthPnl", monthPnl, true]
+      ];
+
+      pairs.forEach(([id,val,signed]) => {
+        const el = $(id);
+        if (!el) return;
+        el.textContent = money(val, currency, signed);
+        setMoneyClass(el, val);
+      });
+
+      $("winRate").textContent = `${winRate.toFixed(1)}%`;
+      $("totalTrades").textContent = String(closed.length);
+      $("tradeStreak").textContent = streakCount ? `${streakCount}${streakType}` : "—";
+      setMoneyClass($("tradeStreak"), streakType === "W" ? 1 : streakType === "L" ? -1 : 0);
+
+      // Balance is intentionally not faked. We'll add live account snapshots next.
+      $("dashboardBalance").textContent = "—";
+
+      const list = $("recentTradesList");
+      if (!closed.length) {
+        list.innerHTML = '<div class="subtitle" style="padding:14px 0">No closed MT5 trades synced yet.</div>';
+      } else {
+        list.innerHTML = closed.slice(0,5).map(t => {
+          const pnlClass = t.net >= 0 ? "green" : "red";
+          const dateText = t.closedAt
+            ? t.closedAt.toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"})
+            : "—";
+          return `
+            <div class="trade">
+              <div class="trade-info">
+                <div class="trade-icon">◆</div>
+                <div>
+                  <b>${t.symbol}</b>
+                  <small>${t.side} • ${dateText}</small>
+                </div>
+              </div>
+              <b class="${pnlClass}">${money(t.net, currency, true)}</b>
+            </div>`;
+        }).join("");
+      }
+    } catch (e) {
+      console.error("Real MT5 dashboard load failed:", e);
+      const list = $("recentTradesList");
+      if (list) list.innerHTML =
+        `<div class="subtitle" style="padding:14px 0;color:#ff6670">Could not load MT5 trades: ${e.message || "Unknown error"}</div>`;
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "⟳ Refresh Trades";
+      }
+    }
+  }
+
+  document.getElementById("dashboardSyncBtn")?.addEventListener("click", loadDashboardTrades);
+
+  await Promise.all([
+    loadBrokerStatus(),
+    loadDashboardTrades()
+  ]);
 })();
 </script>
 
