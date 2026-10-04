@@ -829,6 +829,21 @@ body{
 /* GLOBAL AUTH GUARD */
 html.auth-checking body{visibility:hidden}
 
+
+.day.loss-day{
+  background:#331114;
+  border-color:#5b2229;
+}
+.day.loss-day .day-profit strong{
+  color:var(--red);
+}
+.score-note{
+  margin-top:8px;
+  font-size:10px;
+  color:var(--muted);
+  text-align:center;
+}
+
 </style>
 
 
@@ -1028,7 +1043,7 @@ window.stjAuthReady = (async () => {
     </div>
   </div>
 
-  <div class="score-number">68</div>
+  <div class="score-number" id="tradeScoreNumber">—</div>
 
   <div class="radar-area">
 
@@ -1043,15 +1058,14 @@ window.stjAuthReady = (async () => {
       <polygon class="base"
       points="150,95 200,122 200,178 150,205 100,178 100,122"/>
 
-      <polygon class="data"
-      points="150,80 190,125 230,190 150,205 95,180 70,120"/>
+      <polygon class="data" id="tradeScoreRadar" points="150,150 150,150 150,150 150,150 150,150 150,150"/>
 
-      <circle cx="150" cy="80" r="4" fill="#8c67ff"/>
-      <circle cx="190" cy="125" r="4" fill="#8c67ff"/>
-      <circle cx="230" cy="190" r="4" fill="#8c67ff"/>
-      <circle cx="150" cy="205" r="4" fill="#8c67ff"/>
-      <circle cx="95" cy="180" r="4" fill="#8c67ff"/>
-      <circle cx="70" cy="120" r="4" fill="#8c67ff"/>
+      <circle id="radarPoint0" cx="150" cy="150" r="4" fill="#8c67ff"/>
+      <circle id="radarPoint1" cx="150" cy="150" r="4" fill="#8c67ff"/>
+      <circle id="radarPoint2" cx="150" cy="150" r="4" fill="#8c67ff"/>
+      <circle id="radarPoint3" cx="150" cy="150" r="4" fill="#8c67ff"/>
+      <circle id="radarPoint4" cx="150" cy="150" r="4" fill="#8c67ff"/>
+      <circle id="radarPoint5" cx="150" cy="150" r="4" fill="#8c67ff"/>
 
     </svg>
 
@@ -1060,36 +1074,37 @@ window.stjAuthReady = (async () => {
   <div class="score-details">
 
     <div>
-      <b class="yellow">67</b>
+      <b class="yellow" id="scoreWinRate">—</b>
       Win Rate
     </div>
 
     <div>
-      <b class="yellow">53</b>
+      <b class="yellow" id="scoreRiskReward">—</b>
       Risk/Reward
     </div>
 
     <div>
-      <b class="green">92</b>
+      <b class="green" id="scoreConsistency">—</b>
       Consistency
     </div>
 
     <div>
-      <b class="yellow">55</b>
+      <b class="yellow" id="scoreDrawdown">—</b>
       Max Drawdown
     </div>
 
     <div>
-      <b class="yellow">61</b>
+      <b class="yellow" id="scoreProfitability">—</b>
       Profitability
     </div>
 
     <div>
-      <b class="green">100</b>
+      <b class="green" id="scoreRecovery">—</b>
       Recovery
     </div>
 
   </div>
+  <div class="score-note">Calculated from your synced closed MT5 trades.</div>
 
 </section>
 
@@ -1099,7 +1114,7 @@ window.stjAuthReady = (async () => {
   <div class="card-head">
     <div>
       <h3>Trading Activity</h3>
-      <div class="subtitle">136 trades in 2026</div>
+      <div class="subtitle" id="activityTitle">Loading synced activity...</div>
     </div>
   </div>
 
@@ -1108,32 +1123,32 @@ window.stjAuthReady = (async () => {
   <div class="activity-summary">
 
     <div>
-      <strong class="purple">38</strong>
+      <strong class="purple" id="activityDaysTraded">—</strong>
       <span class="subtitle">Days Traded</span>
     </div>
 
     <div>
-      <strong class="green">27</strong>
+      <strong class="green" id="activityGreenDays">—</strong>
       <span class="subtitle">Green Days</span>
     </div>
 
     <div>
-      <strong class="red">11</strong>
+      <strong class="red" id="activityRedDays">—</strong>
       <span class="subtitle">Red Days</span>
     </div>
 
     <div>
-      <strong class="purple">5</strong>
+      <strong class="purple" id="activityCurrentStreak">—</strong>
       <span class="subtitle">Current Streak</span>
     </div>
 
     <div>
-      <strong class="purple">11</strong>
+      <strong class="purple" id="activityLongestStreak">—</strong>
       <span class="subtitle">Longest Streak</span>
     </div>
 
     <div>
-      <strong class="green">+$119</strong>
+      <strong class="green" id="activityTotalPnl">—</strong>
       <span class="subtitle">Total P&amp;L</span>
     </div>
 
@@ -1142,12 +1157,10 @@ window.stjAuthReady = (async () => {
   <div class="winbar">
     <div style="display:flex;justify-content:space-between;font-size:11px;color:#777985;">
       <span>Daily Win Rate</span>
-      <span class="green">71.1%</span>
+      <span class="green" id="dailyWinRate">—</span>
     </div>
 
-    <div class="bar">
-      <span></span>
-    </div>
+    <div class="bar"><span id="dailyWinRateBar" style="width:0%"></span></div>
   </div>
 
 </section>
@@ -1176,24 +1189,24 @@ window.stjAuthReady = (async () => {
       <div class="subtitle">Account balance over time</div>
     </div>
 
-    <strong class="green">+0.00%</strong>
+    <strong class="green" id="equityReturn">—</strong>
   </div>
 
   <div class="equity-metrics">
 
     <div class="eqbox">
       <small>Peak</small>
-      <strong>$61.23</strong>
+      <strong id="equityPeak">—</strong>
     </div>
 
     <div class="eqbox">
       <small>Max DD</small>
-      <strong class="yellow">18.9%</strong>
+      <strong class="yellow" id="equityMaxDd">—</strong>
     </div>
 
     <div class="eqbox">
       <small>Current</small>
-      <strong>$61.23</strong>
+      <strong id="equityCurrent">—</strong>
     </div>
 
   </div>
@@ -1212,7 +1225,7 @@ window.stjAuthReady = (async () => {
     stroke="#45464c"
     stroke-dasharray="4"/>
 
-    <path
+    <path id="equityArea"
     d="
     M0 245
     L20 230 L35 250 L50 220
@@ -1240,7 +1253,7 @@ window.stjAuthReady = (async () => {
     fill="url(#area)"
     />
 
-    <polyline
+    <polyline id="equityLine"
     points="
     0,245 20,230 35,250 50,220
     70,235 90,225 110,250
@@ -1283,7 +1296,7 @@ window.stjAuthReady = (async () => {
     <div class="subtitle">Net P&amp;L by day of week</div>
   </div>
 
-  <div class="day-chart">
+  <div class="day-chart" id="pnlByDayChart">
 
     <div class="day-row">
       <span>Mon</span>
@@ -1332,7 +1345,7 @@ window.stjAuthReady = (async () => {
     <div class="subtitle">P&amp;L by hour of day</div>
   </div>
 
-  <div class="time-chart">
+  <div class="time-chart" id="performanceByTimeChart">
 
     <div class="time-col">
       <div class="v" style="height:3%;background:#ed4d55;"></div>
@@ -1422,18 +1435,18 @@ window.stjAuthReady = (async () => {
 
   <div>
     <span class="subtitle">Monthly P&amp;L</span>
-    <strong class="green"> +$30.22</strong>
+    <strong class="green" id="calendarMonthPnl">—</strong>
   </div>
 
 </div>
 
-<h3 class="month-title">October 2026</h3>
+<h3 class="month-title" id="calendarMonthTitle">—</h3>
 
 <div class="calendar-layout">
 
 <div>
 
-<div class="calendar">
+<div class="calendar" id="tradingCalendarGrid">
 
   <div class="week-name">Sun</div>
   <div class="week-name">Mon</div>
@@ -1502,7 +1515,7 @@ window.stjAuthReady = (async () => {
 
 </div>
 
-<div class="week-summary">
+<div class="week-summary" id="calendarWeekSummary">
 
   <div class="weekbox active">
     Week 1
@@ -1951,6 +1964,460 @@ if (analyticsMenu && analyticsToggle) {
     loadDashboardTrades(),
     loadLiveAccountSnapshot()
   ]);
+})();
+</script>
+
+
+<script id="stj-real-advanced-dashboard">
+(async () => {
+  if (window.stjAuthReady) {
+    const ok = await window.stjAuthReady;
+    if (!ok) return;
+  }
+  if (!window.stjSupabase) return;
+
+  const byId = id => document.getElementById(id);
+  const clamp = (v, min=0, max=100) => Math.max(min, Math.min(max, v));
+
+  function fmtMoney(value, currency="USD", signed=true) {
+    const n = Number(value || 0);
+    const abs = new Intl.NumberFormat("en-US", {
+      style:"currency", currency,
+      minimumFractionDigits:2, maximumFractionDigits:2
+    }).format(Math.abs(n));
+    return (signed ? (n > 0 ? "+" : n < 0 ? "-" : "") : (n < 0 ? "-" : "")) + abs;
+  }
+
+  function dayKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+
+  async function fetchDeals() {
+    const all = [];
+    const pageSize = 1000;
+    let from = 0;
+    while (true) {
+      const {data, error} = await window.stjSupabase
+        .from("mt5_deals")
+        .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
+        .order("time_msc", {ascending:true})
+        .range(from, from + pageSize - 1);
+      if (error) throw error;
+      all.push(...(data || []));
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
+      if (from >= 10000) break;
+    }
+    return all;
+  }
+
+  function groupClosedTrades(deals) {
+    const map = new Map();
+
+    for (const d of deals) {
+      if (!d.symbol || ![0,1].includes(Number(d.deal_type))) continue;
+      const key = d.position_id || `deal-${d.deal_ticket}`;
+
+      if (!map.has(key)) {
+        map.set(key, {
+          positionId:key, symbol:d.symbol,
+          entries:[], exits:[], net:0,
+          firstTime:null, lastTime:null
+        });
+      }
+
+      const t = map.get(key);
+      t.net += Number(d.profit || 0) + Number(d.commission || 0) +
+               Number(d.swap || 0) + Number(d.fee || 0);
+
+      const dt = new Date(d.deal_time);
+      if (!t.firstTime || dt < t.firstTime) t.firstTime = dt;
+      if (!t.lastTime || dt > t.lastTime) t.lastTime = dt;
+
+      const entryType = Number(d.entry_type);
+      if (entryType === 0) t.entries.push(d);
+      if ([1,2,3].includes(entryType)) t.exits.push(d);
+    }
+
+    return Array.from(map.values())
+      .filter(t => t.exits.length)
+      .map(t => ({
+        ...t,
+        openedAt: t.entries.length ? new Date(t.entries[0].deal_time) : t.firstTime,
+        closedAt: new Date(t.exits[t.exits.length - 1].deal_time)
+      }))
+      .sort((a,b) => a.closedAt - b.closedAt);
+  }
+
+  function buildDaily(closed) {
+    const map = new Map();
+    for (const t of closed) {
+      const k = dayKey(t.closedAt);
+      if (!map.has(k)) map.set(k, {pnl:0, trades:0, date:new Date(t.closedAt)});
+      const d = map.get(k);
+      d.pnl += t.net;
+      d.trades += 1;
+    }
+    return map;
+  }
+
+  function getStreaks(dailyMap) {
+    const days = Array.from(dailyMap.values())
+      .sort((a,b)=>a.date-b.date)
+      .filter(d=>d.pnl !== 0);
+
+    let longest = 0, run = 0, prevType = "";
+    for (const d of days) {
+      const type = d.pnl > 0 ? "W" : "L";
+      if (type === prevType) run++;
+      else { run = 1; prevType = type; }
+      longest = Math.max(longest, run);
+    }
+
+    let current = 0, currentType = "";
+    for (let i = days.length - 1; i >= 0; i--) {
+      const type = days[i].pnl > 0 ? "W" : "L";
+      if (!currentType) { currentType = type; current = 1; }
+      else if (type === currentType) current++;
+      else break;
+    }
+
+    return {
+      current: current ? `${current}${currentType}` : "—",
+      currentType,
+      longest
+    };
+  }
+
+  function renderTradeScore(closed, dailyMap) {
+    const wins = closed.filter(t=>t.net>0);
+    const losses = closed.filter(t=>t.net<0);
+
+    const winRate = closed.length ? wins.length / closed.length * 100 : 0;
+    const avgWin = wins.length ? wins.reduce((s,t)=>s+t.net,0)/wins.length : 0;
+    const avgLoss = losses.length ? Math.abs(losses.reduce((s,t)=>s+t.net,0)/losses.length) : 0;
+    const rr = avgLoss > 0 ? avgWin / avgLoss : (avgWin > 0 ? 2 : 0);
+
+    const greenDays = Array.from(dailyMap.values()).filter(d=>d.pnl>0).length;
+    const redDays = Array.from(dailyMap.values()).filter(d=>d.pnl<0).length;
+    const consistency = (greenDays + redDays) ? greenDays / (greenDays + redDays) * 100 : 0;
+
+    let cumulative = 0, peak = 0, maxDdAbs = 0;
+    for (const t of closed) {
+      cumulative += t.net;
+      peak = Math.max(peak, cumulative);
+      maxDdAbs = Math.max(maxDdAbs, peak - cumulative);
+    }
+
+    const grossWin = wins.reduce((s,t)=>s+t.net,0);
+    const grossLoss = Math.abs(losses.reduce((s,t)=>s+t.net,0));
+    const profitFactor = grossLoss > 0 ? grossWin / grossLoss : (grossWin > 0 ? 3 : 0);
+    const recoveryFactor = maxDdAbs > 0 ? Math.max(0, cumulative) / maxDdAbs : (cumulative > 0 ? 3 : 0);
+
+    // Custom journal score, not an industry-standard rating.
+    const scores = [
+      clamp(winRate),
+      clamp((rr / 2) * 100),
+      clamp(consistency),
+      clamp(100 - Math.min(100, maxDdAbs > 0 && peak > 0 ? (maxDdAbs / peak * 100) * 5 : 0)),
+      clamp((profitFactor / 2) * 100),
+      clamp((recoveryFactor / 3) * 100)
+    ];
+
+    const totalScore = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+    byId("tradeScoreNumber").textContent = String(totalScore);
+
+    const ids = ["scoreWinRate","scoreRiskReward","scoreConsistency","scoreDrawdown","scoreProfitability","scoreRecovery"];
+    scores.forEach((s,i)=> {
+      const el = byId(ids[i]);
+      if (el) el.textContent = String(Math.round(s));
+    });
+
+    const angles = [-90,-30,30,90,150,210];
+    const pts = scores.map((s,i)=>{
+      const radius = 115 * (s/100);
+      const rad = angles[i] * Math.PI / 180;
+      const x = 150 + Math.cos(rad)*radius;
+      const y = 150 + Math.sin(rad)*radius;
+      const circle = byId(`radarPoint${i}`);
+      if (circle) {
+        circle.setAttribute("cx", x.toFixed(1));
+        circle.setAttribute("cy", y.toFixed(1));
+      }
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    byId("tradeScoreRadar")?.setAttribute("points", pts.join(" "));
+  }
+
+  function renderActivity(closed, dailyMap, currency) {
+    const activity = byId("activityDots");
+    if (!activity) return;
+    activity.innerHTML = "";
+
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0,0,0,0);
+    start.setDate(start.getDate() - 167);
+
+    for (let i=0; i<168; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate()+i);
+      const info = dailyMap.get(dayKey(d));
+
+      const dot = document.createElement("div");
+      dot.className = "dot";
+      if (info?.pnl > 0) dot.classList.add("win");
+      if (info?.pnl < 0) dot.classList.add("loss");
+      if (info) dot.title = `${d.toLocaleDateString()}: ${fmtMoney(info.pnl,currency,true)} • ${info.trades} trades`;
+      activity.appendChild(dot);
+    }
+
+    const days = Array.from(dailyMap.values());
+    const green = days.filter(d=>d.pnl>0).length;
+    const red = days.filter(d=>d.pnl<0).length;
+    const traded = days.length;
+    const streaks = getStreaks(dailyMap);
+    const total = closed.reduce((s,t)=>s+t.net,0);
+    const dailyWin = (green+red) ? green/(green+red)*100 : 0;
+
+    byId("activityTitle").textContent = `${closed.length} closed trades in ${now.getFullYear()}`;
+    byId("activityDaysTraded").textContent = String(traded);
+    byId("activityGreenDays").textContent = String(green);
+    byId("activityRedDays").textContent = String(red);
+    byId("activityCurrentStreak").textContent = streaks.current;
+    byId("activityLongestStreak").textContent = String(streaks.longest || 0);
+    byId("activityTotalPnl").textContent = fmtMoney(total,currency,true);
+    byId("dailyWinRate").textContent = `${dailyWin.toFixed(1)}%`;
+    if (byId("dailyWinRateBar")) byId("dailyWinRateBar").style.width = `${clamp(dailyWin)}%`;
+  }
+
+  async function renderEquity(closed, currency) {
+    let currentBalance = null;
+    try {
+      const {data} = await window.stjSupabase
+        .from("mt5_account_snapshots")
+        .select("balance")
+        .order("updated_at",{ascending:false})
+        .limit(1);
+      if (data?.[0]) currentBalance = Number(data[0].balance || 0);
+    } catch {}
+
+    const totalPnl = closed.reduce((s,t)=>s+t.net,0);
+    const startBalance = currentBalance != null ? currentBalance - totalPnl : 0;
+
+    let running = startBalance;
+    const values = [running];
+    let peak = running;
+    let maxDdPct = 0;
+
+    for (const t of closed) {
+      running += t.net;
+      values.push(running);
+      peak = Math.max(peak, running);
+      if (peak > 0) maxDdPct = Math.max(maxDdPct, (peak-running)/peak*100);
+    }
+
+    const current = values[values.length-1] || 0;
+    const peakValue = Math.max(...values);
+    const ret = Math.abs(startBalance) > 0 ? ((current-startBalance)/Math.abs(startBalance))*100 : 0;
+
+    byId("equityPeak").textContent = fmtMoney(peakValue,currency,false);
+    byId("equityCurrent").textContent = fmtMoney(current,currency,false);
+    byId("equityMaxDd").textContent = `${maxDdPct.toFixed(1)}%`;
+    byId("equityReturn").textContent = `${ret>=0?"+":""}${ret.toFixed(2)}%`;
+    byId("equityReturn").className = ret >= 0 ? "green" : "red";
+
+    const w=800, h=280, topPad=20, bottomPad=35;
+    const minV = Math.min(...values);
+    const maxV = Math.max(...values);
+    const span = Math.max(1e-9, maxV-minV);
+    const pts = values.map((v,i)=>{
+      const x = values.length<=1 ? 0 : (i/(values.length-1))*w;
+      const y = topPad + (maxV-v)/span*(h-topPad-bottomPad);
+      return [x,y];
+    });
+
+    const linePts = pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+    byId("equityLine")?.setAttribute("points", linePts);
+
+    if (byId("equityArea")) {
+      const d = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)} ` +
+        pts.slice(1).map(p=>`L ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ") +
+        ` L ${w} ${h} L 0 ${h} Z`;
+      byId("equityArea").setAttribute("d", d);
+    }
+  }
+
+  function renderPnlByDay(closed, currency) {
+    const names = ["Mon","Tue","Wed","Thu","Fri"];
+    const totals = [0,0,0,0,0];
+
+    closed.forEach(t=>{
+      const day = t.closedAt.getDay();
+      if (day>=1 && day<=5) totals[day-1] += t.net;
+    });
+
+    const maxAbs = Math.max(1, ...totals.map(v=>Math.abs(v)));
+    const el = byId("pnlByDayChart");
+    if (!el) return;
+
+    el.innerHTML = totals.map((v,i)=>{
+      const width = Math.max(v === 0 ? 0 : 4, Math.abs(v)/maxAbs*100);
+      const color = v >= 0 ? "#3db75f" : "#ee5a61";
+      return `
+        <div class="day-row">
+          <span>${names[i]}</span>
+          <div class="day-bar" title="${fmtMoney(v,currency,true)}">
+            <span style="width:${width.toFixed(1)}%;background:${color};"></span>
+          </div>
+          <b class="${v>=0?"green":"red"}" style="font-size:10px">${fmtMoney(v,currency,true)}</b>
+        </div>`;
+    }).join("");
+  }
+
+  function renderPerformanceByTime(closed, currency) {
+    const totals = Array(24).fill(0);
+    const counts = Array(24).fill(0);
+
+    closed.forEach(t=>{
+      const h = t.closedAt.getHours();
+      totals[h] += t.net;
+      counts[h]++;
+    });
+
+    let hours = totals.map((v,h)=>({h,v,count:counts[h]})).filter(x=>x.count>0);
+    if (!hours.length) hours = [{h:0,v:0,count:0}];
+
+    const maxAbs = Math.max(1, ...hours.map(x=>Math.abs(x.v)));
+    const el = byId("performanceByTimeChart");
+    if (!el) return;
+
+    el.innerHTML = hours.map(x=>{
+      const height = Math.max(x.v===0?3:6, Math.abs(x.v)/maxAbs*90);
+      const color = x.v >= 0 ? "#22c66e" : "#ed4d55";
+      return `
+        <div class="time-col" title="${String(x.h).padStart(2,"0")}:00 • ${fmtMoney(x.v,currency,true)} • ${x.count} trades">
+          <div class="v" style="height:${height.toFixed(1)}%;background:${color};"></div>
+          <span class="time-label">${String(x.h).padStart(2,"0")}</span>
+        </div>`;
+    }).join("");
+  }
+
+  function renderCalendar(closed, currency) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    const monthTrades = closed.filter(t =>
+      t.closedAt.getFullYear()===year && t.closedAt.getMonth()===month
+    );
+
+    const daily = new Map();
+    monthTrades.forEach(t=>{
+      const day = t.closedAt.getDate();
+      if (!daily.has(day)) daily.set(day,{pnl:0,trades:0});
+      const x = daily.get(day);
+      x.pnl += t.net;
+      x.trades++;
+    });
+
+    const monthPnl = monthTrades.reduce((s,t)=>s+t.net,0);
+    byId("calendarMonthPnl").textContent = fmtMoney(monthPnl,currency,true);
+    byId("calendarMonthPnl").className = monthPnl>=0 ? "green" : "red";
+    byId("calendarMonthTitle").textContent =
+      new Intl.DateTimeFormat("en-US",{month:"long",year:"numeric"}).format(now);
+
+    const grid = byId("tradingCalendarGrid");
+    if (!grid) return;
+
+    const weekNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    let cells = weekNames.map(n=>`<div class="week-name">${n}</div>`);
+
+    const firstDay = new Date(year,month,1).getDay();
+    const daysInMonth = new Date(year,month+1,0).getDate();
+
+    for (let i=0;i<firstDay;i++) cells.push('<div class="day"></div>');
+
+    for (let d=1; d<=daysInMonth; d++) {
+      const info = daily.get(d);
+      const isToday = d===now.getDate();
+      const cls = [
+        "day",
+        info?.pnl>0 ? "win-day" : "",
+        info?.pnl<0 ? "loss-day" : "",
+        isToday ? "active-day" : ""
+      ].filter(Boolean).join(" ");
+
+      cells.push(`
+        <div class="${cls}">
+          ${d}
+          ${info ? `
+            <div class="day-profit">
+              <strong>${fmtMoney(info.pnl,currency,true)}</strong>
+              <span class="subtitle">${info.trades} trade${info.trades===1?"":"s"}</span>
+            </div>` : ""}
+        </div>`);
+    }
+
+    const used = firstDay + daysInMonth;
+    const trailing = (7 - (used % 7)) % 7;
+    for (let i=0;i<trailing;i++) cells.push('<div class="day"></div>');
+    grid.innerHTML = cells.join("");
+
+    const weekCount = Math.ceil((firstDay + daysInMonth)/7);
+    const weeks = Array.from({length:weekCount},(_,i)=>({pnl:0,trades:0,days:new Set(),i}));
+
+    monthTrades.forEach(t=>{
+      const day = t.closedAt.getDate();
+      const wi = Math.floor((firstDay + day - 1)/7);
+      if (weeks[wi]) {
+        weeks[wi].pnl += t.net;
+        weeks[wi].trades++;
+        weeks[wi].days.add(day);
+      }
+    });
+
+    const summary = byId("calendarWeekSummary");
+    if (summary) {
+      summary.innerHTML = weeks.map((w,i)=>{
+        const active = w.trades>0 ? " active" : "";
+        if (!w.trades) {
+          return `<div class="weekbox${active}">Week ${i+1}<div class="subtitle">No trades</div></div>`;
+        }
+        return `
+          <div class="weekbox${active}">
+            Week ${i+1}
+            <strong class="${w.pnl>=0?"green":"red"}">${fmtMoney(w.pnl,currency,true)}</strong>
+            <span class="subtitle">${w.days.size} day${w.days.size===1?"":"s"} • ${w.trades} trades</span>
+          </div>`;
+      }).join("");
+    }
+  }
+
+  async function run() {
+    try {
+      const [{data:userData}, deals] = await Promise.all([
+        window.stjSupabase.auth.getUser(),
+        fetchDeals()
+      ]);
+
+      const currency = userData?.user?.user_metadata?.default_currency || "USD";
+      const closed = groupClosedTrades(deals);
+      const dailyMap = buildDaily(closed);
+
+      renderTradeScore(closed,dailyMap);
+      renderActivity(closed,dailyMap,currency);
+      await renderEquity(closed,currency);
+      renderPnlByDay(closed,currency);
+      renderPerformanceByTime(closed,currency);
+      renderCalendar(closed,currency);
+    } catch (e) {
+      console.error("Advanced dashboard update failed:", e);
+    }
+  }
+
+  await run();
+  document.getElementById("dashboardSyncBtn")?.addEventListener("click", () => setTimeout(run, 350));
 })();
 </script>
 
