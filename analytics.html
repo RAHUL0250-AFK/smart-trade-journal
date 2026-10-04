@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analytics | Smart Trade Journal</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#08090d;
+      --panel:#101116;
+      --panel-2:#14161d;
+      --border:#20232b;
+      --text:#f3f5f7;
+      --muted:#7b808d;
+      --green:#25d67d;
+      --green-soft:#103a28;
+      --red:#ff4f57;
+      --red-soft:#38161b;
+      --purple:#8b63ff;
+      --purple-soft:#23183f;
+      --yellow:#f7bf2a;
+      --blue:#3d88ff;
+      --cyan:#13b9d9;
+      --orange:#ff9f2e;
+    }
+
+    body{
+      font-family:Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .app{
+      display:flex;
+      min-height:100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar{
+      width:240px;
+      background:#0c0d11;
+      border-right:1px solid var(--border);
+      position:fixed;
+      top:0;
+      left:0;
+      bottom:0;
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      z-index:20;
+    }
+
+    .logo{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:17px;
+      font-weight:800;
+      padding-bottom:22px;
+    }
+
+    .logo-box{
+      width:34px;
+      height:34px;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg,#6a3cff,#a85cff);
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .logo span{
+      color:#ff4a93;
+    }
+
+    .nav,
+    .subnav{
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+    }
+
+    .nav a,
+    .subnav a{
+      color:#808590;
+      text-decoration:none;
+      padding:11px 12px;
+      border-radius:9px;
+      font-size:13px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .nav a:hover,
+    .subnav a:hover{
+      background:#171920;
+      color:#fff;
+    }
+
+    .nav a.active,
+    .subnav a.active{
+      background:#191b21;
+      color:#fff;
+      border:1px solid #2a2d34;
+    }
+
+    .subnav{
+      margin-left:14px;
+      margin-top:4px;
+      margin-bottom:8px;
+    }
+
+    .subnav a{
+      padding:9px 12px;
+      font-size:12px;
+    }
+
+    .giveaway{
+      margin-top:18px;
+      border:1px solid #584100;
+      background:#1d1608;
+      border-radius:12px;
+      padding:13px;
+      font-size:11px;
+    }
+
+    .giveaway strong{
+      color:#ffd448;
+    }
+
+    .bottom-links{
+      margin-top:auto;
+    }
+
+    .bottom-links a{
+      display:block;
+      color:#7e838f;
+      text-decoration:none;
+      padding:10px 8px;
+      font-size:13px;
+    }
+
+    /* MAIN */
+    .main{
+      margin-left:240px;
+      width:calc(100% - 240px);
+    }
+
+    .topbar{
+      height:60px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:15px;
+      padding:0 26px;
+      position:sticky;
+      top:0;
+      z-index:10;
+      background:rgba(8,9,13,.95);
+      backdrop-filter:blur(10px);
+    }
+
+    .account-pill{
+      background:#111318;
+      border:1px solid #20232a;
+      border-radius:10px;
+      padding:8px 14px;
+      font-size:12px;
+    }
+
+    .connected{
+      color:var(--green);
+    }
+
+    .profile{
+      background:#12141a;
+      border:1px solid #23262e;
+      border-radius:10px;
+      padding:8px 14px;
+      min-width:150px;
+    }
+
+    .profile strong{
+      display:block;
+      font-size:12px;
+    }
+
+    .profile small{
+      color:var(--muted);
+      font-size:10px;
+    }
+
+    .content{
+      padding:26px;
+      max-width:1600px;
+      margin:auto;
+    }
+
+    .page-title{
+      margin-bottom:22px;
+    }
+
+    .page-title h1{
+      font-size:30px;
+      margin-bottom:8px;
+    }
+
+    .page-title p{
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    /* COMMON CARD */
+    .card{
+      background:linear-gradient(180deg,#101116,#0d0f13);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:18px;
+      overflow:hidden;
+    }
+
+    .card-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .card-title h3{
+      font-size:17px;
+    }
+
+    .card-title small{
+      color:var(--muted);
+      display:block;
+      margin-top:4px;
+    }
+
+    .icon-badge{
+      width:32px;
+      height:32px;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .purple-bg{background:var(--purple-soft); color:var(--purple);}
+    .green-bg{background:var(--green-soft); color:var(--green);}
+    .blue-bg{background:#122844; color:#4ea0ff;}
+    .cyan-bg{background:#0d2d35; color:var(--cyan);}
+    .orange-bg{background:#2d1e0c; color:var(--orange);}
+    .red-bg{background:var(--red-soft); color:var(--red);}
+    .yellow-bg{background:#2a220a; color:var(--yellow);}
+
+    .muted{color:var(--muted)}
+    .green{color:var(--green)}
+    .red{color:var(--red)}
+    .purple{color:var(--purple)}
+
+    /* TOP METRICS */
+    .top-metrics{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:14px;
+      margin-bottom:18px;
+    }
+
+    .metric-card{
+      min-height:120px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+
+    .metric-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+    }
+
+    .pill{
+      background:#3a2666;
+      color:#d4c2ff;
+      font-size:10px;
+      padding:6px 10px;
+      border-radius:999px;
+    }
+
+    .metric-card .label{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:6px;
+      text-transform:uppercase;
+      letter-spacing:.7px;
+    }
+
+    .metric-card .value{
+      font-size:24px;
+      font-weight:800;
+      margin-top:5px;
+    }
+
+    .metric-card .sub{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:6px;
+    }
+
+    /* GRIDS */
+    .grid-2{
+      display:grid;
+      grid-template-columns:2fr 1fr;
+      gap:18px;
+      margin-bottom:18px;
+    }
+
+    .grid-2-equal{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:18px;
+      margin-bottom:18px;
+    }
+
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:18px;
+      margin-bottom:18px;
+    }
+
+    /* CHART BAR */
+    .chart-toolbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .toggle-group{
+      display:flex;
+      gap:6px;
+      background:#0e1015;
+      border:1px solid #1f2229;
+      border-radius:10px;
+      padding:4px;
+    }
+
+    .toggle-group span{
+      font-size:11px;
+      color:var(--muted);
+      padding:7px 12px;
+      border-radius:8px;
+    }
+
+    .toggle-group span.active{
+      background:var(--purple);
+      color:#fff;
+    }
+
+    .month-nav{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      font-size:13px;
+    }
+
+    .month-nav b{
+      display:block;
+      text-align:center;
+    }
+
+    .bar-chart{
+      height:250px;
+      display:flex;
+      align-items:flex-end;
+      gap:10px;
+      padding:10px 10px 28px;
+      border-bottom:1px solid #23262e;
+      position:relative;
+    }
+
+    .bar-chart::before,
+    .bar-chart::after{
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      border-top:1px dashed rgba(255,255,255,.04);
+    }
+
+    .bar-chart::before{top:25%}
+    .bar-chart::after{top:60%}
+
+    .bar-col{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      align-items:center;
+      height:100%;
+      min-width:10px;
+    }
+
+    .bar{
+      width:80%;
+      background:var(--green);
+      border-radius:5px 5px 0 0;
+      min-height:2px;
+    }
+
+    .bar-col small{
+      color:#6e7380;
+      font-size:9px;
+      margin-top:8px;
+    }
+
+    /* DONUT */
+    .donut-wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      min-height:340px;
+    }
+
+    .donut{
+      width:180px;
+      height:180px;
+      border-radius:50%;
+      background:conic-gradient(var(--green) 0 56%, var(--red) 56% 100%);
+      position:relative;
+      margin-bottom:24px;
+      box-shadow:0 0 20px rgba(37,214,125,.08);
+    }
+
+    .donut::after{
+      content:"";
+      position:absolute;
+      inset:28px;
+      border-radius:50%;
+      background:var(--bg);
+      border:1px solid #1f232b;
+    }
+
+    .legend{
+      display:flex;
+      gap:16px;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .legend span{
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .dot{
+      width:12px;
+      height:12px;
+      border-radius:4px;
+      display:inline-block;
+    }
+
+    /* HORIZONTAL BARS */
+    .hbar-wrap{
+      margin:18px 0 16px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .hbar-row{
+      display:grid;
+      grid-template-columns:110px 1fr 70px;
+      gap:12px;
+      align-items:center;
+      font-size:13px;
+    }
+
+    .htrack{
+      height:56px;
+      display:flex;
+      align-items:center;
+    }
+
+    .hfill{
+      height:100%;
+      background:var(--green);
+      border-radius:4px;
+    }
+
+    .hfill.red{
+      background:var(--red);
+    }
+
+    .asset-list .line{
+      display:flex;
+      justify-content:space-between;
+      border-top:1px solid #1d2026;
+      padding:14px 2px;
+      font-size:13px;
+    }
+
+    /* LINE AREA */
+    .svg-box{
+      width:100%;
+      height:250px;
+    }
+
+    .best-boxes{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+    }
+
+    .mini-panel{
+      background:#12141a;
+      border:1px solid #1f232a;
+      border-radius:12px;
+      padding:16px;
+      min-height:86px;
+    }
+
+    .mini-panel small{
+      color:var(--muted);
+      display:block;
+      margin-bottom:9px;
+    }
+
+    .mini-panel b{
+      font-size:16px;
+      display:block;
+      margin-bottom:5px;
+    }
+
+    /* DRAWDOWN / STREAK */
+    .dd-boxes{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+      margin-top:14px;
+    }
+
+    .streak-number{
+      font-size:24px;
+      font-weight:800;
+      margin-top:8px;
+    }
+
+    .streak-row{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .history-pills{
+      margin-top:14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .history-pills span{
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .w{
+      background:#103a28;
+      color:var(--green);
+    }
+
+    .l{
+      background:#38161b;
+      color:var(--red);
+    }
+
+    /* SYMBOL PERFORMANCE */
+    .symbol-summary{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:12px;
+      margin-bottom:18px;
+    }
+
+    .summary-box{
+      border-radius:12px;
+      padding:16px;
+      min-height:92px;
+      border:1px solid rgba(255,255,255,.06);
+    }
+
+    .summary-box.greenbox{
+      background:linear-gradient(90deg,#0b3324,#10251b);
+    }
+
+    .summary-box.purplebox{
+      background:linear-gradient(90deg,#221944,#171525);
+    }
+
+    .summary-box.redbox{
+      background:linear-gradient(90deg,#34161b,#271416);
+    }
+
+    .summary-box small{
+      color:#c4c6cc;
+      display:block;
+      margin-bottom:10px;
+    }
+
+    .summary-box strong{
+      display:block;
+      font-size:22px;
+      margin-bottom:5px;
+    }
+
+    .symbol-performance{
+      display:grid;
+      grid-template-columns:1.2fr 1fr;
+      gap:18px;
+      margin-top:10px;
+      margin-bottom:18px;
+    }
+
+    .pie-wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      min-height:320px;
+    }
+
+    .pie{
+      width:220px;
+      height:220px;
+      border-radius:50%;
+      background:conic-gradient(
+        #22c67a 0 69%,
+        #467fe3 69% 96%,
+        #9464ff 96% 100%
+      );
+      position:relative;
+      margin-bottom:18px;
+    }
+
+    .pie::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      clip-path:polygon(50% 50%,100% 50%,100% 0);
+      border-left:2px solid rgba(255,255,255,.9);
+    }
+
+    .symbols-list{
+      margin-top:10px;
+    }
+
+    .symbol-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:16px 6px;
+      border-top:1px solid #1d2026;
+    }
+
+    .symbol-left{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+
+    .sym-icon{
+      width:38px;
+      height:38px;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      font-weight:700;
+    }
+
+    .gold{background:#dba700;color:#fff}
+    .us{background:#112c1f;color:#31d483}
+    .btc{background:#f39a2a;color:#fff}
+
+    /* HEATMAP */
+    .heatmap{
+      display:grid;
+      grid-template-columns:60px repeat(24,1fr);
+      gap:6px;
+      align-items:center;
+      margin-top:10px;
+    }
+
+    .heat-label{
+      color:var(--muted);
+      font-size:12px;
+      text-align:center;
+    }
+
+    .heat-y{
+      color:var(--muted);
+      font-size:12px;
+      text-align:right;
+      padding-right:6px;
+    }
+
+    .cell{
+      height:36px;
+      border-radius:6px;
+      background:#0f1116;
+      border:1px solid rgba(255,255,255,.02);
+      display:grid;
+      place-items:center;
+      font-size:11px;
+      color:#c9ccd2;
+    }
+
+    .profit-cell{background:#1c6c42;color:#fff}
+    .loss-cell{background:#82363c;color:#fff}
+    .empty-cell{background:#101216;color:#101216}
+
+    .heat-legend{
+      margin-top:16px;
+      display:flex;
+      justify-content:center;
+      gap:24px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    /* RISK BOXES */
+    .risk-box{
+      min-height:135px;
+    }
+
+    .risk-value{
+      font-size:24px;
+      font-weight:800;
+      margin:8px 0 8px;
+    }
+
+    .progress{
+      width:100%;
+      height:6px;
+      background:#1b1e24;
+      border-radius:999px;
+      margin-top:12px;
+      overflow:hidden;
+    }
+
+    .progress span{
+      display:block;
+      height:100%;
+      border-radius:999px;
+    }
+
+    /* AVG HOLD */
+    .hold-row{
+      margin:22px 0;
+    }
+
+    .hold-row .top{
+      display:flex;
+      justify-content:space-between;
+      margin-bottom:10px;
+      font-weight:700;
+    }
+
+    .hold-track{
+      height:14px;
+      background:#181b21;
+      border-radius:999px;
+      overflow:hidden;
+    }
+
+    .hold-track span{
+      display:block;
+      height:100%;
+      border-radius:999px;
+    }
+
+    .insight{
+      margin-top:18px;
+      background:#103a28;
+      border:1px solid #1a5b3e;
+      color:#79f0ae;
+      padding:16px;
+      border-radius:12px;
+      font-size:14px;
+    }
+
+    /* HISTOGRAM */
+    .histogram{
+      height:250px;
+      display:flex;
+      align-items:flex-end;
+      gap:14px;
+      padding:10px 10px 28px;
+      border-bottom:1px solid #23262e;
+    }
+
+    .hist-col{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      align-items:center;
+      height:100%;
+    }
+
+    .hist-bar{
+      width:80%;
+      border-radius:5px 5px 0 0;
+      min-height:2px;
+    }
+
+    .hist-col small{
+      color:#707580;
+      font-size:10px;
+      margin-top:8px;
+    }
+
+    /* ROLLING PERFORMANCE */
+    .rolling-card{
+      margin-bottom:10px;
+    }
+
+    .rolling-svg{
+      width:100%;
+      height:420px;
+    }
+
+    .rolling-legend{
+      margin-top:10px;
+      display:flex;
+      gap:28px;
+      flex-wrap:wrap;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .rolling-legend span{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .line-chip{
+      width:24px;
+      height:3px;
+      border-radius:999px;
+      display:inline-block;
+    }
+
+    /* RESPONSIVE */
+    @media(max-width:1200px){
+      .top-metrics{grid-template-columns:repeat(2,1fr)}
+      .grid-2,
+      .grid-2-equal,
+      .symbol-performance{grid-template-columns:1fr}
+      .grid-3{grid-template-columns:1fr}
+    }
+
+    @media(max-width:820px){
+      .sidebar{display:none}
+      .main{
+        margin-left:0;
+        width:100%;
+      }
+      .content{padding:16px}
+      .top-metrics{grid-template-columns:1fr}
+      .best-boxes,
+      .symbol-summary,
+      .dd-boxes,
+      .streak-row{
+        grid-template-columns:1fr;
+      }
+      .heatmap{
+        overflow:auto;
+        display:grid;
+        min-width:1000px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-box">ST</div>
+      Smart Trade <span>Journal</span>
+    </div>
+
+    <nav class="nav">
+      <a href="index.html">▦ Dashboard</a>
+      <a href="analytics.html" class="active">▥ Analytics</a>
+    </nav>
+
+    <div class="subnav">
+      <a href="analytics.html" class="active">▥ Performance</a>
+      <a href="#">↓ Reports</a>
+      <a href="#">▤ Strategies</a>
+      <a href="#">▷ Trade Replay</a>
+      <a href="#">⤴ Share Cards</a>
+    </div>
+
+    <nav class="nav">
+      <a href="trade-history.html">↗ Trade History</a>
+      <a href="#">✎ Journal</a>
+      <a href="#">✦ Smart Journal AI</a>
+      <a href="#">♨ Hot Topics</a>
+      <a href="#">♕ Leaderboard</a>
+    </nav>
+
+    <div class="giveaway">
+      🎁 <strong>Giveaway</strong><br>
+      Win rewards every month
+    </div>
+
+    <div class="bottom-links">
+      <a href="#">▣ Broker Hub</a>
+      <a href="#">⚙ Settings</a>
+      <a href="#">↪ Logout</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="account-pill">● XM #430381517 <span class="connected">Connected</span></div>
+      <div>☀</div>
+      <div class="profile">
+        <strong>Rahul Kumawat</strong>
+        <small>Trader</small>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="page-title">
+        <h1>Analytics</h1>
+        <p>Deep dive into your trading performance</p>
+      </div>
+
+      <!-- Top metrics -->
+      <section class="top-metrics">
+        <div class="card metric-card">
+          <div class="metric-top">
+            <div class="icon-badge purple-bg">◎</div>
+            <span class="pill">Key Metric</span>
+          </div>
+          <div>
+            <div class="label">Win Rate</div>
+            <div class="value">55.8%</div>
+            <div class="sub">76W / 60L</div>
+          </div>
+        </div>
+
+        <div class="card metric-card">
+          <div class="metric-top">
+            <div class="icon-badge green-bg">↗</div>
+          </div>
+          <div>
+            <div class="label">Profit Factor</div>
+            <div class="value">1.36</div>
+            <div class="sub">Needs improvement</div>
+          </div>
+        </div>
+
+        <div class="card metric-card">
+          <div class="metric-top">
+            <div class="icon-badge blue-bg">∿</div>
+          </div>
+          <div>
+            <div class="label">Expectancy</div>
+            <div class="value green">$0.87</div>
+            <div class="sub">Per trade average</div>
+          </div>
+        </div>
+
+        <div class="card metric-card">
+          <div class="metric-top">
+            <div class="icon-badge green-bg">$</div>
+          </div>
+          <div>
+            <div class="label">Total P&amp;L</div>
+            <div class="value green">$118.60</div>
+            <div class="sub">136 trades</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- P&L + Win loss -->
+      <section class="grid-2">
+        <div class="card">
+          <div class="chart-toolbar">
+            <div class="card-title" style="margin-bottom:0;">
+              <div class="icon-badge purple-bg">▥</div>
+              <div>
+                <h3>P&amp;L</h3>
+              </div>
+            </div>
+
+            <div class="toggle-group">
+              <span>Year</span>
+              <span class="active">Month</span>
+              <span>Week</span>
+            </div>
+
+            <div class="month-nav">
+              <span>‹</span>
+              <div>
+                <b>October 2026</b>
+                <small class="green">+$30.22</small>
+              </div>
+              <span>›</span>
+            </div>
+          </div>
+
+          <div class="bar-chart">
+            <div class="bar-col"><div class="bar" style="height:42%"></div><small>1</small></div>
+            <div class="bar-col"><div class="bar" style="height:82%"></div><small>2</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>3</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>4</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>5</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>6</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>7</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>8</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>9</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>10</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>11</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>12</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>13</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>14</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>15</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>16</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>17</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>18</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>19</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>20</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>21</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>22</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>23</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>24</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>25</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>26</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>27</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>28</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>29</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>30</small></div>
+            <div class="bar-col"><div class="bar" style="height:0%"></div><small>31</small></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <div class="icon-badge purple-bg">◔</div>
+            <div><h3>Win/Loss</h3></div>
+          </div>
+
+          <div class="donut-wrap">
+            <div class="donut"></div>
+            <div class="legend">
+              <span><i class="dot" style="background:var(--green)"></i>Wins</span>
+              <span><i class="dot" style="background:var(--red)"></i>Losses</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Asset + Time -->
+      <section class="grid-2-equal">
+        <div class="card">
+          <div class="card-title">
+            <div class="icon-badge blue-bg">⚖</div>
+            <div><h3>Asset Class Performance</h3></div>
+          </div>
+
+          <div class="hbar-wrap">
+            <div class="hbar-row">
+              <span>Forex</span>
+              <div class="htrack"><div class="hfill" style="width:88%"></div></div>
+              <span>$131</span>
+            </div>
+            <div class="hbar-row">
+              <span>Crypto</span>
+              <div class="htrack"><div class="hfill red" style="width:4%"></div></div>
+              <span>-$5</span>
+            </div>
+          </div>
+
+          <div class="asset-list">
+            <div class="line"><span>Forex</span><span><span class="muted">131 trades</span> &nbsp; 57% win</span></div>
+            <div class="line"><span>Crypto</span><span><span class="muted">5 trades</span> &nbsp; 20% win</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <div class="icon-badge yellow-bg">◔</div>
+            <div><h3>Time of Day Performance</h3></div>
+          </div>
+
+          <svg class="svg-box" viewBox="0 0 600 250" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="blueArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#4a91ff" stop-opacity=".45"/>
+                <stop offset="100%" stop-color="#4a91ff" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+
+            <line x1="40" y1="20" x2="40" y2="220" stroke="#2b2f37"/>
+            <line x1="40" y1="220" x2="580" y2="220" stroke="#2b2f37"/>
+
+            <path d="M40 30 L80 40 L110 75 L140 125 L190 132 L250 140 L310 150 L370 152 L410 164 L455 166 L495 172 L540 175 L580 190 L580 220 L40 220 Z" fill="url(#blueArea)"></path>
+            <polyline points="40,30 80,40 110,75 140,125 190,132 250,140 310,150 370,152 410,164 455,166 495,172 540,175 580,190" fill="none" stroke="#4a91ff" stroke-width="4"/>
+
+            <text x="28" y="30" fill="#8e95a3" font-size="12">$60</text>
+            <text x="28" y="95" fill="#8e95a3" font-size="12">$40</text>
+            <text x="28" y="160" fill="#8e95a3" font-size="12">$20</text>
+            <text x="32" y="223" fill="#8e95a3" font-size="12">$0</text>
+
+            <text x="35" y="243" fill="#8e95a3" font-size="11">19:00</text>
+            <text x="90" y="243" fill="#8e95a3" font-size="11">17:00</text>
+            <text x="145" y="243" fill="#8e95a3" font-size="11">22:00</text>
+            <text x="205" y="243" fill="#8e95a3" font-size="11">20:00</text>
+            <text x="265" y="243" fill="#8e95a3" font-size="11">09:00</text>
+            <text x="325" y="243" fill="#8e95a3" font-size="11">11:00</text>
+            <text x="385" y="243" fill="#8e95a3" font-size="11">08:00</text>
+            <text x="445" y="243" fill="#8e95a3" font-size="11">18:00</text>
+            <text x="500" y="243" fill="#8e95a3" font-size="11">07:00</text>
+            <text x="548" y="243" fill="#8e95a3" font-size="11">13:00</text>
+          </svg>
+
+          <div class="best-boxes">
+            <div class="mini-panel">
+              <small>#1 Best</small>
+              <b>19:00</b>
+              <span class="green">$54.77</span>
+            </div>
+            <div class="mini-panel">
+              <small>#2 Best</small>
+              <b>17:00</b>
+              <span class="green">$47.32</span>
+            </div>
+            <div class="mini-panel">
+              <small>#3 Best</small>
+              <b>22:00</b>
+              <span class="green">$15.30</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Drawdown + Streak -->
+      <section class="grid-2-equal">
+        <div class="card">
+          <div class="card-title">
+            <div class="icon-badge red-bg">⌁</div>
+            <div><h3>Drawdown Analysis</h3></div>
+          </div>
+
+          <svg class="svg-box" viewBox="0 0 700 240" preserveAspectRatio="none">
+            <line x1="50" y1="20" x2="50" y2="200" stroke="#2a2e35"/>
+            <line x1="50" y1="200" x2="670" y2="200" stroke="#2a2e35"/>
+            <polyline
+              points="50,40 62,55 74,42 86,60 98,48 110,70 122,82 134,55 146,102 158,75 170,32 182,84 194,28 206,60 218,50 230,62 242,45 254,42 266,44 278,46 290,48 302,110 314,128 326,102 338,116 350,88 362,148 374,136 386,96 398,92 410,52 422,106 434,82 446,95 458,112 470,104 482,125 494,136 506,118 518,160 530,145 542,50 554,92 566,86 578,118 590,98 602,172 614,124 626,142 638,30 650,44 662,120 670,35"
+              fill="none"
+              stroke="#ff4f57"
+              stroke-width="3"
+            />
+            <text x="8" y="58" fill="#8b90a0" font-size="12">0</text>
+            <text x="0" y="100" fill="#8b90a0" font-size="12">-15</text>
+            <text x="0" y="140" fill="#8b90a0" font-size="12">-30</text>
+            <text x="0" y="180" fill="#8b90a0" font-size="12">-45</text>
+            <text x="0" y="203" fill="#8b90a0" font-size="12">-60</text>
+          </svg>
+
+          <div class="dd-boxes">
+            <div class="mini-panel">
+              <small>Max Drawdown</small>
+              <b class="red">-$41.85</b>
+            </div>
+            <div class="mini-panel">
+              <small>Max DD %</small>
+              <b class="red">-45.1%</b>
+            </div>
+            <div class="mini-panel">
+              <small>Date</small>
+              <b>Sep 22</b>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <div class="icon-badge orange-bg">◔</div>
+            <div><h3>Streak Tracking</h3></div>
+          </div>
+
+          <div class="muted" style="font-size:12px;">Current Streak</div>
+          <div class="streak-number green">1.00 Winning Streak 🔥</div>
+
+          <div class="streak-row">
+            <div class="mini-panel">
+              <small>Longest Win</small>
+              <b class="green">5.99</b>
+            </div>
+            <div class="mini-panel">
+              <small>Longest Loss</small>
+              <b class="red">5.00</b>
+            </div>
+          </div>
+
+          <div class="muted" style="font-size:12px; margin-top:18px;">History</div>
+          <div class="history-pills">
+            <span class="l">L1</span>
+            <span class="w">W2</span>
+            <span class="l">L4</span>
+            <span class="w">W1</span>
+            <span class="l">L1</span>
+            <span class="w">W4</span>
+            <span class="l">L1</span>
+            <span class="w">W1</span>
+            <span class="l">L4</span>
+            <span class="w">W1</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Symbol performance -->
+      <section class="card" style="margin-bottom:18px;">
+        <div class="card-title" style="justify-content:space-between;">
+          <div style="display:flex; gap:10px; align-items:center;">
+            <div class="icon-badge purple-bg">◎</div>
+            <div>
+              <h3>Symbol Performance</h3>
+              <small>P&amp;L breakdown by symbol</small>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <small class="muted">Symbols Traded</small>
+            <div style="font-size:18px;font-weight:800;">3</div>
+          </div>
+        </div>
+
+        <div class="symbol-summary">
+          <div class="summary-box greenbox">
+            <small>↗ Best</small>
+            <strong>GOLD</strong>
+            <span class="green">+$64.10</span>
+          </div>
+          <div class="summary-box purplebox">
+            <small>$ Most Traded</small>
+            <strong>GOLD</strong>
+            <span class="muted">94 trades</span>
+          </div>
+          <div class="summary-box redbox">
+            <small>⌁ Worst</small>
+            <strong>BTCUSD</strong>
+            <span class="red">-$5.29</span>
+          </div>
+        </div>
+
+        <div class="symbol-performance">
+          <div>
+            <div style="font-weight:700; margin-bottom:12px;">P&amp;L by Symbol</div>
+
+            <div class="hbar-wrap">
+              <div class="hbar-row">
+                <span>GOLD</span>
+                <div class="htrack"><div class="hfill" style="width:85%"></div></div>
+                <span>$64</span>
+              </div>
+              <div class="hbar-row">
+                <span>US100Cash</span>
+                <div class="htrack"><div class="hfill" style="width:80%"></div></div>
+                <span>$59</span>
+              </div>
+              <div class="hbar-row">
+                <span>BTCUSD</span>
+                <div class="htrack"><div class="hfill red" style="width:7%"></div></div>
+                <span>-$5</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pie-wrap">
+            <div style="font-weight:700; margin-bottom:14px;">Trade Distribution</div>
+            <div class="pie"></div>
+            <div class="legend" style="flex-wrap:wrap; justify-content:center;">
+              <span><i class="dot" style="background:#22c67a"></i>GOLD (69%)</span>
+              <span><i class="dot" style="background:#467fe3"></i>US100Cash (27%)</span>
+              <span><i class="dot" style="background:#9464ff"></i>BTCUSD (4%)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="symbols-list">
+          <div class="symbol-row">
+            <div class="symbol-left">
+              <div class="sym-icon gold">◆</div>
+              <div>
+                <div style="font-weight:700;">GOLD</div>
+                <small class="muted">51W / 43L • 54% WR</small>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div class="green" style="font-weight:800; font-size:16px;">+$64.10</div>
+              <small class="muted">94 trades</small>
+            </div>
+          </div>
+
+          <div class="symbol-row">
+            <div class="symbol-left">
+              <div class="sym-icon us">US</div>
+              <div>
+                <div style="font-weight:700;">US100Cash</div>
+                <small class="muted">24W / 13L • 65% WR</small>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div class="green" style="font-weight:800; font-size:16px;">+$59.91</div>
+              <small class="muted">37 trades</small>
+            </div>
+          </div>
+
+          <div class="symbol-row">
+            <div class="symbol-left">
+              <div class="sym-icon btc">₿</div>
+              <div>
+                <div style="font-weight:700;">BTCUSD</div>
+                <small class="muted">1W / 4L • 20% WR</small>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div class="red" style="font-weight:800; font-size:16px;">-$5.29</div>
+              <small class="muted">5 trades</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Heatmap -->
+      <section class="card" style="margin-bottom:18px;">
+        <div class="card-title">
+          <div class="icon-badge cyan-bg">▣</div>
+          <div>
+            <h3>Trading Heatmap <small class="muted">(Day x Hour)</small></h3>
+          </div>
+        </div>
+
+        <div class="heatmap">
+          <div></div>
+          <div class="heat-label">00</div><div class="heat-label">01</div><div class="heat-label">02</div><div class="heat-label">03</div>
+          <div class="heat-label">04</div><div class="heat-label">05</div><div class="heat-label">06</div><div class="heat-label">07</div>
+          <div class="heat-label">08</div><div class="heat-label">09</div><div class="heat-label">10</div><div class="heat-label">11</div>
+          <div class="heat-label">12</div><div class="heat-label">13</div><div class="heat-label">14</div><div class="heat-label">15</div>
+          <div class="heat-label">16</div><div class="heat-label">17</div><div class="heat-label">18</div><div class="heat-label">19</div>
+          <div class="heat-label">20</div><div class="heat-label">21</div><div class="heat-label">22</div><div class="heat-label">23</div>
+
+          <!-- Monday -->
+          <div class="heat-y">Mon</div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell loss-cell">1</div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell loss-cell">2</div><div class="cell loss-cell">7</div><div class="cell profit-cell">7</div>
+          <div class="cell profit-cell">1</div><div class="cell profit-cell">4</div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+
+          <!-- Tuesday -->
+          <div class="heat-y">Tue</div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell profit-cell">2</div>
+          <div class="cell profit-cell">2</div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell profit-cell">1</div><div class="cell profit-cell">2</div><div class="cell profit-cell">9</div>
+          <div class="cell loss-cell">4</div><div class="cell loss-cell">1</div><div class="cell profit-cell">1</div><div class="cell empty-cell"></div>
+
+          <!-- Wednesday -->
+          <div class="heat-y">Wed</div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell profit-cell">1</div>
+          <div class="cell empty-cell"></div><div class="cell profit-cell">2</div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell profit-cell">8</div><div class="cell profit-cell">5</div>
+          <div class="cell profit-cell">8</div><div class="cell profit-cell">2</div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+
+          <!-- Thursday -->
+          <div class="heat-y">Thu</div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell profit-cell">2</div>
+          <div class="cell empty-cell"></div><div class="cell profit-cell">1</div><div class="cell empty-cell"></div><div class="cell loss-cell">4</div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell profit-cell">2</div><div class="cell profit-cell">7</div><div class="cell profit-cell">13</div>
+          <div class="cell profit-cell">4</div><div class="cell loss-cell">1</div><div class="cell profit-cell">2</div><div class="cell empty-cell"></div>
+
+          <!-- Friday -->
+          <div class="heat-y">Fri</div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell loss-cell">1</div>
+          <div class="cell empty-cell"></div><div class="cell profit-cell">1</div><div class="cell empty-cell"></div><div class="cell profit-cell">2</div>
+          <div class="cell loss-cell">1</div><div class="cell loss-cell">3</div><div class="cell loss-cell">2</div><div class="cell empty-cell"></div>
+          <div class="cell loss-cell">1</div><div class="cell profit-cell">2</div><div class="cell loss-cell">4</div><div class="cell loss-cell">6</div>
+          <div class="cell profit-cell">5</div><div class="cell profit-cell">2</div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+
+          <!-- Saturday -->
+          <div class="heat-y">Sat</div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+
+          <!-- Sunday -->
+          <div class="heat-y">Sun</div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+          <div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div><div class="cell empty-cell"></div>
+        </div>
+
+        <div class="heat-legend">
+          <span><i class="dot" style="background:#82363c"></i> Loss</span>
+          <span><i class="dot" style="background:#101216"></i> No trades</span>
+          <span><i class="dot" style="background:#1c6c42"></i> Profit</span>
+        </div>
+      </section>
+
+      <!-- Risk adjusted -->
+      <section style="margin-bottom:18px;">
+        <div class="card-title" style="margin-bottom:14px;">
+          <div class="icon-badge purple-bg">⚖</div>
+          <div><h3>Risk-Adjusted Performance</h3></div>
+        </div>
+
+        <div class="grid-3">
+          <div class="card risk-box">
+            <div class="muted" style="font-size:12px;">SHARPE RATIO</div>
+            <div class="risk-value green">5.36</div>
+            <div class="muted" style="font-size:13px;">Excellent — top tier</div>
+            <div class="progress"><span style="width:100%; background:var(--green)"></span></div>
+          </div>
+
+          <div class="card risk-box">
+            <div class="muted" style="font-size:12px;">SORTINO RATIO</div>
+            <div class="risk-value green">7.83</div>
+            <div class="muted" style="font-size:13px;">Like Sharpe but only penalises losing days.</div>
+            <div class="progress"><span style="width:95%; background:var(--green)"></span></div>
+          </div>
+
+          <div class="card risk-box">
+            <div class="muted" style="font-size:12px;">KELLY CRITERION</div>
+            <div class="risk-value purple">+15.0%</div>
+            <div class="muted" style="font-size:13px;">Optimal position size per trade.</div>
+            <div class="progress"><span style="width:15%; background:var(--purple)"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Hold time + distribution -->
+      <section class="grid-2-equal">
+        <div class="card">
+          <div class="card-title">
+            <div class="icon-badge cyan-bg">◔</div>
+            <div><h3>Avg Hold Time: Winners vs Losers</h3></div>
+          </div>
+
+          <div class="hold-row">
+            <div class="top">
+              <span class="green">Winning Trades</span>
+              <span class="green">57 min</span>
+            </div>
+            <div class="hold-track">
+              <span style="width:100%; background:var(--green)"></span>
+            </div>
+          </div>
+
+          <div class="hold-row">
+            <div class="top">
+              <span class="red">Losing Trades</span>
+              <span class="red">11 min</span>
+            </div>
+            <div class="hold-track">
+              <span style="width:19%; background:var(--red)"></span>
+            </div>
+          </div>
+
+          <div class="insight">✓ You exit losers faster than winners. Healthy risk management.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <div class="icon-badge orange-bg">▥</div>
+            <div><h3>P&amp;L Distribution</h3></div>
+          </div>
+
+          <div class="histogram">
+            <div class="hist-col"><div class="hist-bar" style="height:8%; background:#d24a4e"></div><small>$-16</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:28%; background:#d24a4e"></div><small>$-10</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:72%; background:#d24a4e"></div><small>$-5</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:62%; background:#d24a4e"></div><small>$0</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:44%; background:#28c674"></div><small>$5</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:30%; background:#28c674"></div><small>$10</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:8%; background:#28c674"></div><small>$15</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:1%; background:#28c674"></div><small>$20</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:1%; background:#28c674"></div><small>$25</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:0%; background:#28c674"></div><small>$31</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:0%; background:#28c674"></div><small>$36</small></div>
+            <div class="hist-col"><div class="hist-bar" style="height:0%; background:#28c674"></div><small>$41</small></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Rolling performance -->
+      <section class="card rolling-card">
+        <div class="card-title">
+          <div class="icon-badge purple-bg">∿</div>
+          <div>
+            <h3>Rolling Performance</h3>
+            <small>20-trade rolling window — tracks current form</small>
+          </div>
+        </div>
+
+        <svg class="rolling-svg" viewBox="0 0 1400 420" preserveAspectRatio="none">
+          <line x1="50" y1="40" x2="50" y2="340" stroke="#2b2e36"/>
+          <line x1="50" y1="340" x2="1350" y2="340" stroke="#2b2e36"/>
+
+          <!-- baselines -->
+          <line x1="50" y1="165" x2="1350" y2="165" stroke="#1aa865" stroke-dasharray="6 6" opacity=".65"/>
+          <line x1="50" y1="250" x2="1350" y2="250" stroke="#8b63ff" stroke-dasharray="6 6" opacity=".35"/>
+
+          <!-- green line -->
+          <polyline
+            points="
+            50,60 58,160 66,230 74,180 82,140 90,210 98,180 106,160 114,142 122,182
+            130,160 138,190 146,175 154,162 162,150 170,145 178,170 186,190 194,178 202,168
+            210,158 218,158 226,158 234,176 242,190 250,190 258,160 266,188 274,190 282,190
+            290,190 298,210 306,210 314,226 322,226 330,226 338,250 346,230 354,200 362,226
+            370,226 378,226 386,250 394,226 402,190 410,190 418,190 426,170 434,170 442,170
+            450,148 458,122 466,100 474,100 482,120 490,98 498,120 506,140 514,140 522,140
+            530,140 538,140 546,122 554,122 562,144 570,144 578,144 586,168 594,168 602,168
+            610,190 618,210 626,240 634,240 642,270 650,270 658,232 666,210 674,208 682,208
+            690,250 698,250 706,210 714,210 722,210 730,210 738,250 746,210 754,250 762,250
+            770,250 778,250 786,230 794,190 802,212 810,230 818,250 826,250 834,250 842,276
+            850,296 858,296 866,250 874,250 882,210 890,210 898,210 906,250 914,250 922,250
+            930,210 938,210 946,210 954,210 962,250 970,250 978,230 986,210 994,250 1002,250
+            1010,250 1018,250 1026,250 1034,230 1042,210 1050,210 1058,210 1066,250 1074,230 1082,230
+            1090,210 1098,210 1106,210 1114,210 1122,250 1130,210 1138,210 1146,210 1154,210 1162,230
+            1170,230 1178,250 1186,250 1194,210 1202,210 1210,210 1218,210 1226,250 1234,250 1242,250
+            1250,210 1258,250 1266,250 1274,250 1282,250 1290,230 1298,230 1306,230 1314,230 1322,250
+            1330,250 1338,250 1346,250"
+            fill="none"
+            stroke="#1fd073"
+            stroke-width="3.5"
+          />
+
+          <!-- purple line -->
+          <polyline
+            points="
+            50,110 58,310 66,340 74,250 82,200 90,250 98,245 106,240 114,220 122,218
+            130,250 138,250 146,258 154,252 162,248 170,248 178,248 186,260 194,260 202,258
+            210,252 218,248 226,248 234,252 242,254 250,254 258,248 266,260 274,258 282,256
+            290,250 298,250 306,240 314,236 322,228 330,220 338,226 346,228 354,230 362,232
+            370,240 378,226 386,214 394,202 402,198 410,210 418,192 426,190 434,170 442,165
+            450,160 458,140 466,110 474,150 482,185 490,205 498,188 506,178 514,196 522,208
+            530,220 538,230 546,236 554,238 562,245 570,246 578,250 586,252 594,254 602,256
+            610,258 618,260 626,258 634,256 642,236 650,230 658,228 666,232 674,234 682,240
+            690,236 698,238 706,240 714,244 722,246 730,248 738,250 746,244 754,242 762,244
+            770,246 778,242 786,240 794,236 802,238 810,240 818,244 826,248 834,252 842,256
+            850,258 858,260 866,262 874,264 882,260 890,258 898,254 906,250 914,246 922,244
+            930,242 938,240 946,238 954,236 962,240 970,242 978,244 986,246 994,244 1002,242
+            1010,240 1018,236 1026,230 1034,224 1042,222 1050,220 1058,218 1066,220 1074,222 1082,224
+            1090,228 1098,232 1106,236 1114,240 1122,236 1130,232 1138,226 1146,222 1154,218 1162,216
+            1170,214 1178,212 1186,214 1194,218 1202,222 1210,226 1218,230 1226,232 1234,236 1242,238
+            1250,236 1258,234 1266,236 1274,238 1282,240 1290,242 1298,244 1306,246 1314,246 1322,244
+            1330,240 1338,236 1346,220"
+            fill="none"
+            stroke="#9a7dff"
+            stroke-width="3.5"
+          />
+
+          <!-- axis labels -->
+          <text x="6" y="65" fill="#1fd073" font-size="13">100%</text>
+          <text x="14" y="165" fill="#1fd073" font-size="13">50%</text>
+          <text x="22" y="338" fill="#1fd073" font-size="13">0%</text>
+
+          <text x="1360" y="62" fill="#9a7dff" font-size="13">12x</text>
+          <text x="1360" y="165" fill="#9a7dff" font-size="13">6x</text>
+          <text x="1360" y="338" fill="#9a7dff" font-size="13">0x</text>
+
+          <text x="650" y="390" fill="#81879a" font-size="13">Trade #</text>
+        </svg>
+
+        <div class="rolling-legend">
+          <span><i class="line-chip" style="background:#1fd073"></i>Win Rate (left axis)</span>
+          <span><i class="line-chip" style="background:#9a7dff"></i>Profit Factor (right axis)</span>
+          <span><i class="line-chip" style="background:#4f5563"></i>50% / 1.0x baselines</span>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
