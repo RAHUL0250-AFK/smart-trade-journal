@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login | Smart Trade Journal</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08090d;--panel:#101116;--panel2:#14161b;--border:#20232b;
+  --text:#f4f5f7;--muted:#7d818c;--purple:#8357ff;--purple2:#a14cff;
+  --green:#20d080;--red:#ff4e58
+}
+body{
+  font-family:Arial,Helvetica,sans-serif;background:
+  radial-gradient(circle at 20% 15%,rgba(131,87,255,.16),transparent 28%),
+  radial-gradient(circle at 80% 85%,rgba(161,76,255,.10),transparent 28%),
+  var(--bg);
+  color:var(--text);min-height:100vh
+}
+.auth-shell{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr}
+.brand-panel{
+  padding:34px;display:flex;flex-direction:column;justify-content:space-between;
+  border-right:1px solid var(--border);background:rgba(11,12,16,.72)
+}
+.logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800}
+.logo-box{
+  width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#693cff,#a75cff);font-size:12px
+}
+.logo span{color:#ff4c91}
+.hero-copy{max-width:560px}
+.hero-copy h1{font-size:48px;line-height:1.06;margin-bottom:18px}
+.hero-copy h1 em{font-style:normal;color:#9b76ff}
+.hero-copy p{color:var(--muted);font-size:16px;line-height:1.7;max-width:520px}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px}
+.feature{background:#111319;border:1px solid #20232a;border-radius:12px;padding:14px}
+.feature strong{display:block;font-size:13px;margin-bottom:6px}
+.feature span{color:var(--muted);font-size:11px;line-height:1.5}
+.brand-foot{color:#686c76;font-size:11px}
+.form-panel{display:grid;place-items:center;padding:30px}
+.card{
+  width:min(460px,100%);background:rgba(16,17,22,.96);border:1px solid #252833;
+  border-radius:18px;padding:28px;box-shadow:0 28px 80px rgba(0,0,0,.28)
+}
+.card h2{font-size:28px;margin-bottom:8px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:24px;line-height:1.5}
+.notice{
+  padding:10px 12px;background:#171520;border:1px solid #30284c;border-radius:10px;
+  color:#bdb5dd;font-size:11px;line-height:1.5;margin-bottom:18px
+}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:12px;font-weight:700;margin-bottom:8px}
+.input-wrap{position:relative}
+.field input{
+  width:100%;border:1px solid #282b33;background:#17191f;color:#fff;border-radius:10px;
+  padding:12px 42px 12px 13px;outline:none;font-size:13px
+}
+.field input:focus{border-color:#6248b0}
+.eye{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;
+  background:transparent;color:#8a8f99;cursor:pointer;font-size:14px
+}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:3px 0 18px}
+.check{display:flex;align-items:center;gap:8px;color:#8a8e98;font-size:11px}
+.link{color:#a78bff;text-decoration:none;font-size:11px}
+.primary{
+  width:100%;border:none;border-radius:10px;padding:12px 15px;color:#fff;font-weight:800;
+  background:linear-gradient(90deg,#7550ff,#b34df0);cursor:pointer
+}
+.primary:hover{filter:brightness(1.05)}
+.divider{display:flex;align-items:center;gap:12px;color:#6f7480;font-size:10px;margin:18px 0}
+.divider:before,.divider:after{content:"";height:1px;background:#242730;flex:1}
+.secondary{
+  width:100%;border:1px solid #292c34;background:#15171c;color:#fff;border-radius:10px;
+  padding:11px 14px;cursor:pointer
+}
+.switch-copy{text-align:center;color:#7d818c;font-size:12px;margin-top:20px}
+.switch-copy a{color:#a78bff;text-decoration:none;font-weight:700}
+.error{display:none;color:#ff7178;font-size:11px;margin-top:10px}
+.success{display:none;color:#5fe39c;font-size:11px;margin-top:10px}
+@media(max-width:900px){
+  .auth-shell{grid-template-columns:1fr}
+  .brand-panel{display:none}
+  .form-panel{padding:18px}
+}
+</style>
+</head>
+<body>
+<div class="auth-shell">
+  <section class="brand-panel">
+    <div class="logo"><div class="logo-box">ST</div> Smart Trade <span>Journal</span></div>
+    <div class="hero-copy">
+      <h1>Trade smarter.<br><em>Review better.</em></h1>
+      <p>Track performance, review trades, journal your decisions, and keep your trading workflow in one place.</p>
+      <div class="features">
+        <div class="feature"><strong>Analytics</strong><span>See performance and trade statistics.</span></div>
+        <div class="feature"><strong>Journal</strong><span>Document setups, thoughts, and lessons.</span></div>
+        <div class="feature"><strong>Broker Hub</strong><span>Manage connected trading accounts.</span></div>
+      </div>
+    </div>
+    <div class="brand-foot">Smart Trade Journal • Testing build</div>
+  </section>
+
+  <main class="form-panel">
+    <div class="card">
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in to continue to your trading dashboard.</p>
+
+      <div class="notice">Demo login page for the current GitHub Pages build. Real account authentication will be connected later.</div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label>Email</label>
+          <input id="email" type="email" placeholder="you@example.com" required>
+        </div>
+
+        <div class="field">
+          <label>Password</label>
+          <div class="input-wrap">
+            <input id="password" type="password" placeholder="Enter password" required minlength="6">
+            <button class="eye" type="button" data-target="password">Show</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="check"><input type="checkbox"> Remember me</label>
+          <a class="link" href="#">Forgot password?</a>
+        </div>
+
+        <button class="primary" type="submit">Sign In</button>
+        <div class="error" id="error">Please enter a valid email and password.</div>
+        <div class="success" id="success">Demo login successful. Opening dashboard…</div>
+      </form>
+
+      <div class="divider">OR</div>
+      <button class="secondary" type="button" id="demoBtn">Continue in Demo Mode</button>
+
+      <p class="switch-copy">New here? <a href="signup.html">Create an account</a></p>
+    </div>
+  </main>
+</div>
+
+<script>
+document.querySelectorAll(".eye").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const input=document.getElementById(btn.dataset.target);
+    input.type=input.type==="password"?"text":"password";
+    btn.textContent=input.type==="password"?"Show":"Hide";
+  });
+});
+
+const form=document.getElementById("loginForm");
+form.addEventListener("submit",e=>{
+  e.preventDefault();
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+  const error=document.getElementById("error");
+  const success=document.getElementById("success");
+
+  if(!email || !email.includes("@") || password.length<6){
+    error.style.display="block";
+    success.style.display="none";
+    return;
+  }
+
+  error.style.display="none";
+  success.style.display="block";
+  setTimeout(()=>location.href="index.html",700);
+});
+
+document.getElementById("demoBtn").addEventListener("click",()=>{
+  location.href="index.html";
+});
+</script>
+</body>
+</html>
