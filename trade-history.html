@@ -707,14 +707,12 @@ window.stjAuthReady = (async () => {
     <p>Track, manage, and analyze your trading activity</p>
   </div>
 
-  <button class="sync-btn">⟳ Syncing...</button>
+  <button class="sync-btn" id="tradeHistoryRefreshBtn">⟳ Refresh</button>
 
 </section>
 
 
-<div class="sync-strip">
-  ◔ &nbsp; Syncing trades from broker...
-</div>
+<div class="sync-strip" id="tradeHistorySyncStrip">◔ &nbsp; Loading real MT5 history...</div>
 
 
 <section class="metrics">
@@ -723,7 +721,7 @@ window.stjAuthReady = (async () => {
     <div class="metric-icon">$</div>
     <div>
       <small>TOTAL P&amp;L</small>
-      <strong class="pnl-win">$118.72</strong>
+      <strong class="pnl-win" id="historyTotalPnl">—</strong>
     </div>
   </div>
 
@@ -731,7 +729,7 @@ window.stjAuthReady = (async () => {
     <div class="metric-icon yellow">↗</div>
     <div>
       <small>OPEN</small>
-      <strong>0</strong>
+      <strong id="historyOpenTrades">—</strong>
     </div>
   </div>
 
@@ -739,7 +737,7 @@ window.stjAuthReady = (async () => {
     <div class="metric-icon green">◎</div>
     <div>
       <small>WIN RATE</small>
-      <strong>55.9%</strong>
+      <strong id="historyWinRate">—</strong>
     </div>
   </div>
 
@@ -747,7 +745,7 @@ window.stjAuthReady = (async () => {
     <div class="metric-icon">▥</div>
     <div>
       <small>TRADES</small>
-      <strong>136</strong>
+      <strong id="historyTradeCount">—</strong>
     </div>
   </div>
 
@@ -793,7 +791,7 @@ window.stjAuthReady = (async () => {
 
   <div class="trades-title">
     <h2>All Trades</h2>
-    <small>136 trades</small>
+    <small id="historyTitleCount">Loading...</small>
   </div>
 
   <div class="table-wrap">
@@ -813,152 +811,8 @@ window.stjAuthReady = (async () => {
       </tr>
     </thead>
 
-    <tbody>
-
-      <tr>
-        <td>
-          <div class="symbol">
-            <span class="symbol-icon">◆</span>
-            GOLD
-          </div>
-        </td>
-        <td><span class="side long">↗ LONG</span></td>
-        <td><b>$4,182.25</b></td>
-        <td class="muted">$4,225.58</td>
-        <td class="pnl-win">$43.33</td>
-        <td class="muted">Oct 2, 2026</td>
-        <td><span class="closed">● closed</span></td>
-        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
-      </tr>
-
-      <tr>
-        <td>
-          <div class="symbol">
-            <span class="symbol-icon">◆</span>
-            GOLD
-          </div>
-        </td>
-        <td><span class="side long">↗ LONG</span></td>
-        <td><b>$4,185.92</b></td>
-        <td class="muted">$4,178.12</td>
-        <td class="pnl-loss">-$7.80</td>
-        <td class="muted">Oct 2, 2026</td>
-        <td><span class="closed">● closed</span></td>
-        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
-      </tr>
-
-      <tr>
-        <td>
-          <div class="symbol">
-            <span class="symbol-icon">◆</span>
-            GOLD
-          </div>
-        </td>
-        <td><span class="side long">↗ LONG</span></td>
-        <td><b>$4,186.19</b></td>
-        <td class="muted">$4,179.95</td>
-        <td class="pnl-loss">-$6.24</td>
-        <td class="muted">Oct 2, 2026</td>
-        <td><span class="closed">● closed</span></td>
-        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
-      </tr>
-
-      <tr>
-        <td>
-          <div class="symbol">
-            <span class="symbol-icon">◆</span>
-            GOLD
-          </div>
-        </td>
-        <td><span class="side short">↘ SHORT</span></td>
-        <td><b>$4,182.16</b></td>
-        <td class="muted">$4,188.64</td>
-        <td class="pnl-loss">-$6.48</td>
-        <td class="muted">Oct 2, 2026</td>
-        <td><span class="closed">● closed</span></td>
-        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
-      </tr>
-
-      <tr>
-        <td>
-          <div class="symbol">
-            <span class="symbol-icon">◆</span>
-            GOLD
-          </div>
-        </td>
-        <td><span class="side long">↗ LONG</span></td>
-        <td><b>$4,184.93</b></td>
-        <td class="muted">$4,182.19</td>
-        <td class="pnl-loss">-$2.74</td>
-        <td class="muted">Oct 2, 2026</td>
-        <td><span class="closed">● closed</span></td>
-        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
-      </tr>
-
-      <tr>
-        <td>
-          <div class="symbol">
-            <span class="symbol-icon">◆</span>
-            GOLD
-          </div>
-        </td>
-        <td><span class="side long">↗ LONG</span></td>
-        <td><b>$4,165.14</b></td>
-        <td class="muted">$4,171.38</td>
-        <td class="pnl-win">$6.24</td>
-        <td class="muted">Oct 1, 2026</td>
-        <td><span class="closed">● closed</span></td>
-        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
-      </tr>
-
-      <tr>
-        <td>
-          <div class="symbol">
-            <span class="symbol-icon">◆</span>
-            GOLD
-          </div>
-        </td>
-        <td><span class="side long">↗ LONG</span></td>
-        <td><b>$4,170.18</b></td>
-        <td class="muted">$4,164.03</td>
-        <td class="pnl-loss">-$6.15</td>
-        <td class="muted">Oct 1, 2026</td>
-        <td><span class="closed">● closed</span></td>
-        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
-      </tr>
-
-      <tr>
-        <td>
-          <div class="symbol">
-            <span class="symbol-icon index">US</span>
-            US100Cash
-          </div>
-        </td>
-        <td><span class="side short">↘ SHORT</span></td>
-        <td><b>$30,545.93</b></td>
-        <td class="muted">$30,445.33</td>
-        <td class="pnl-win">$10.06</td>
-        <td class="muted">Oct 1, 2026</td>
-        <td><span class="closed">● closed</span></td>
-        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
-      </tr>
-
-      <tr>
-        <td>
-          <div class="symbol">
-            <span class="symbol-icon index">US</span>
-            US100Cash
-          </div>
-        </td>
-        <td><span class="side long">↗ LONG</span></td>
-        <td><b>$30,453.43</b></td>
-        <td class="muted">$30,574.40</td>
-        <td class="pnl-win">$12.10</td>
-        <td class="muted">Sep 30, 2026</td>
-        <td><span class="closed">● closed</span></td>
-        <td><div class="actions"><span>◇</span><span>✎</span><span>◉</span><span>⌘</span></div></td>
-      </tr>
-
+    <tbody id="realTradeHistoryBody">
+      <tr><td colspan="8" class="muted" style="padding:24px">Loading real MT5 trades...</td></tr>
     </tbody>
 
   </table>
@@ -972,29 +826,7 @@ window.stjAuthReady = (async () => {
 </div>
 
 
-<script>
 
-const search = document.getElementById("tradeSearch");
-const rows = document.querySelectorAll("#tradeTable tbody tr");
-
-search.addEventListener("input", function(){
-
-  const value = this.value.toLowerCase();
-
-  rows.forEach(row => {
-
-    const text = row.innerText.toLowerCase();
-
-    row.style.display =
-      text.includes(value)
-      ? ""
-      : "none";
-
-  });
-
-});
-
-</script>
 
 
 <script id="global-sidebar-nav-script">
@@ -1064,6 +896,260 @@ search.addEventListener("input", function(){
   } catch (err) {
     console.error("Could not load user profile:", err);
   }
+})();
+</script>
+
+
+<script id="stj-real-mt5-trade-history">
+(async () => {
+  if (window.stjAuthReady) {
+    const ok = await window.stjAuthReady;
+    if (!ok) return;
+  }
+  if (!window.stjSupabase) return;
+
+  const body = document.getElementById("realTradeHistoryBody");
+  const search = document.getElementById("tradeSearch");
+  const refreshBtn = document.getElementById("tradeHistoryRefreshBtn");
+  const syncStrip = document.getElementById("tradeHistorySyncStrip");
+  const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
+
+  let allTrades = [];
+  let activeFilter = "all";
+  let currency = "USD";
+
+  function esc(value) {
+    return String(value ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+
+  function money(value, signed = false) {
+    const n = Number(value || 0);
+    const abs = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(Math.abs(n));
+    if (!signed) return (n < 0 ? "-" : "") + abs;
+    return (n > 0 ? "+" : n < 0 ? "-" : "") + abs;
+  }
+
+  function price(value) {
+    if (value == null || Number.isNaN(Number(value))) return "—";
+    const n = Number(value);
+    const decimals = n < 10 ? 5 : n < 1000 ? 3 : 2;
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(n);
+  }
+
+  async function fetchAllDeals() {
+    const pageSize = 1000;
+    let from = 0;
+    const all = [];
+
+    while (true) {
+      const { data, error } = await window.stjSupabase
+        .from("mt5_deals")
+        .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
+        .order("time_msc", { ascending: true })
+        .range(from, from + pageSize - 1);
+
+      if (error) throw error;
+      all.push(...(data || []));
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
+      if (from >= 10000) break;
+    }
+    return all;
+  }
+
+  function groupTrades(deals) {
+    const map = new Map();
+
+    for (const d of deals) {
+      if (!d.symbol) continue;
+      if (![0,1].includes(Number(d.deal_type))) continue;
+
+      const key = d.position_id || ("deal-" + d.deal_ticket);
+      if (!map.has(key)) {
+        map.set(key, {
+          positionId: key,
+          symbol: d.symbol,
+          entries: [],
+          exits: [],
+          net: 0,
+          firstTime: null,
+          lastTime: null
+        });
+      }
+
+      const t = map.get(key);
+      t.symbol = t.symbol || d.symbol;
+      t.net += Number(d.profit || 0) + Number(d.commission || 0) +
+               Number(d.swap || 0) + Number(d.fee || 0);
+
+      const dt = new Date(d.deal_time);
+      if (!t.firstTime || dt < t.firstTime) t.firstTime = dt;
+      if (!t.lastTime || dt > t.lastTime) t.lastTime = dt;
+
+      const entryType = Number(d.entry_type);
+      if (entryType === 0) t.entries.push(d);
+      if (entryType === 1 || entryType === 2 || entryType === 3) t.exits.push(d);
+    }
+
+    function weightedPrice(rows) {
+      let vol = 0, pv = 0;
+      rows.forEach(r => {
+        const v = Number(r.volume || 0);
+        vol += v;
+        pv += Number(r.price || 0) * v;
+      });
+      return vol > 0 ? pv / vol : null;
+    }
+
+    return Array.from(map.values()).map(t => {
+      const firstEntry = t.entries[0];
+      const lastExit = t.exits[t.exits.length - 1];
+      let originalSide = firstEntry?.side || "";
+      if (!originalSide && lastExit?.side) {
+        originalSide = lastExit.side === "BUY" ? "SELL" : "BUY";
+      }
+
+      return {
+        ...t,
+        side: originalSide === "BUY" ? "LONG" : originalSide === "SELL" ? "SHORT" : "—",
+        entryPrice: weightedPrice(t.entries),
+        exitPrice: weightedPrice(t.exits),
+        status: t.exits.length ? "closed" : "open",
+        date: t.exits.length
+          ? new Date(t.exits[t.exits.length - 1].deal_time)
+          : t.lastTime
+      };
+    }).sort((a,b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0));
+  }
+
+  function updateMetrics() {
+    const closed = allTrades.filter(t => t.status === "closed");
+    const open = allTrades.filter(t => t.status === "open");
+    const pnl = closed.reduce((s,t) => s+t.net, 0);
+    const wins = closed.filter(t => t.net > 0).length;
+    const winRate = closed.length ? wins / closed.length * 100 : 0;
+
+    const pnlEl = document.getElementById("historyTotalPnl");
+    pnlEl.textContent = money(pnl, true);
+    pnlEl.className = pnl >= 0 ? "pnl-win" : "pnl-loss";
+
+    document.getElementById("historyOpenTrades").textContent = String(open.length);
+    document.getElementById("historyWinRate").textContent = `${winRate.toFixed(1)}%`;
+    document.getElementById("historyTradeCount").textContent = String(closed.length);
+    document.getElementById("historyTitleCount").textContent =
+      `${allTrades.length} grouped trades • ${closed.length} closed`;
+  }
+
+  function render() {
+    const q = (search?.value || "").trim().toLowerCase();
+
+    const rows = allTrades.filter(t => {
+      const filterOk =
+        activeFilter === "all" ||
+        (activeFilter === "open" && t.status === "open") ||
+        (activeFilter === "closed" && t.status === "closed");
+
+      const textOk = !q ||
+        String(t.symbol || "").toLowerCase().includes(q) ||
+        String(t.side || "").toLowerCase().includes(q);
+
+      return filterOk && textOk;
+    });
+
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="8" class="muted" style="padding:24px">No matching MT5 trades.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = rows.map(t => {
+      const isLong = t.side === "LONG";
+      const sideClass = isLong ? "long" : "short";
+      const sideIcon = isLong ? "↗" : "↘";
+      const pnlClass = t.net >= 0 ? "pnl-win" : "pnl-loss";
+      const statusClass = t.status === "closed" ? "closed" : "open";
+      const dateText = t.date
+        ? t.date.toLocaleString(undefined, {
+            year:"numeric", month:"short", day:"numeric",
+            hour:"2-digit", minute:"2-digit"
+          })
+        : "—";
+
+      return `
+        <tr data-status="${esc(t.status)}">
+          <td>
+            <div class="symbol">
+              <span class="symbol-icon">◆</span>
+              ${esc(t.symbol)}
+            </div>
+          </td>
+          <td><span class="side ${sideClass}">${sideIcon} ${esc(t.side)}</span></td>
+          <td><b>${price(t.entryPrice)}</b></td>
+          <td class="muted">${price(t.exitPrice)}</td>
+          <td class="${pnlClass}">${money(t.net, true)}</td>
+          <td class="muted">${esc(dateText)}</td>
+          <td><span class="${statusClass}">● ${esc(t.status)}</span></td>
+          <td><div class="actions"><span title="Position ID">${esc(String(t.positionId).slice(-8))}</span></div></td>
+        </tr>`;
+    }).join("");
+  }
+
+  async function load() {
+    if (refreshBtn) {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = "⟳ Loading...";
+    }
+    syncStrip.textContent = "◔   Loading real MT5 deals from Supabase...";
+
+    try {
+      const { data: userData } = await window.stjSupabase.auth.getUser();
+      currency = userData?.user?.user_metadata?.default_currency || "USD";
+
+      const deals = await fetchAllDeals();
+      allTrades = groupTrades(deals);
+      updateMetrics();
+      render();
+
+      syncStrip.textContent =
+        `● MT5 history connected • ${deals.length} raw deals • ${allTrades.length} grouped trades`;
+    } catch (e) {
+      console.error("Trade history load failed:", e);
+      body.innerHTML =
+        `<tr><td colspan="8" class="muted" style="padding:24px;color:#ff6670">Could not load MT5 history: ${esc(e.message || "Unknown error")}</td></tr>`;
+      syncStrip.textContent = "⚠ Could not load MT5 history";
+    } finally {
+      if (refreshBtn) {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = "⟳ Refresh";
+      }
+    }
+  }
+
+  search?.addEventListener("input", render);
+
+  filterButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      filterButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeFilter = btn.dataset.filter || "all";
+      render();
+    });
+  });
+
+  refreshBtn?.addEventListener("click", load);
+
+  await load();
 })();
 </script>
 
