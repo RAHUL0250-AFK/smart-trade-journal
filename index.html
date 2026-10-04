@@ -1579,24 +1579,5 @@ if (analyticsMenu && analyticsToggle) {
   });
 }
 </script>
-
-
-<script id="global-sidebar-nav-script">
-(function(){
-  const analyticsMenu = document.getElementById("analyticsMenu");
-  const analyticsToggle = document.getElementById("analyticsToggle");
-  if (!analyticsMenu || !analyticsToggle) return;
-
-  /* Avoid adding a second click listener on pages that already have one. */
-  if (!analyticsToggle.dataset.navReady) {
-    analyticsToggle.dataset.navReady = "1";
-    analyticsToggle.addEventListener("click", function(){
-      analyticsMenu.classList.toggle("open");
-      analyticsToggle.classList.toggle("active", analyticsMenu.classList.contains("open"));
-    });
-  }
-})();
-</script>
-
 </body>
 </html>
