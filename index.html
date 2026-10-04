@@ -840,15 +840,19 @@ const supabaseClient = window.supabase.createClient(
 
 (async () => {
   try {
-    const { data, error } = await supabaseClient.auth.getSession();
+    // getUser() validates the session with Supabase Auth.
+    // This catches users that were deleted from the Supabase dashboard.
+    const { data, error } = await supabaseClient.auth.getUser();
 
-    if (error || !data.session) {
+    if (error || !data.user) {
+      await supabaseClient.auth.signOut({ scope: "local" });
       window.location.replace("login.html");
       return;
     }
 
     document.documentElement.classList.remove("auth-checking");
   } catch (err) {
+    await supabaseClient.auth.signOut({ scope: "local" });
     window.location.replace("login.html");
   }
 })();
