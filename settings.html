@@ -348,7 +348,7 @@ window.stjAuthReady = (async () => {
   <div class="bottom">
     <a href="broker-hub.html">▣ Broker Hub</a>
     <a href="settings.html" class="active">⚙ Settings</a>
-    <a href="login.html" data-stj-logout>↪ Logout</a>
+    <a href="logout.html">↪ Logout</a>
   </div>
 
 </aside>
@@ -583,32 +583,5 @@ document.getElementById("planBtn").addEventListener("click", () => {
   }
 })();
 </script>
-
-
-<script id="stj-real-logout">
-document.querySelectorAll("[data-stj-logout]").forEach(link => {
-  link.addEventListener("click", async event => {
-    event.preventDefault();
-
-    try {
-      if (window.stjAuthReady) {
-        await window.stjAuthReady;
-      }
-      if (window.stjSupabase) {
-        await window.stjSupabase.auth.signOut();
-      }
-    } catch (err) {
-      try {
-        if (window.stjSupabase) {
-          await window.stjSupabase.auth.signOut({ scope: "local" });
-        }
-      } catch (e) {}
-    }
-
-    window.location.replace("login.html");
-  });
-});
-</script>
-
 </body>
 </html>

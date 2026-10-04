@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logging out | Smart Trade Journal</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;display:grid;place-items:center;
+  font-family:Arial,Helvetica,sans-serif;background:#08090d;color:#f4f5f7
+}
+.card{
+  width:min(420px,calc(100% - 32px));padding:28px;text-align:center;
+  background:#101116;border:1px solid #20232b;border-radius:16px
+}
+.spinner{
+  width:34px;height:34px;margin:0 auto 16px;border-radius:50%;
+  border:3px solid #292d36;border-top-color:#8357ff;
+  animation:spin .8s linear infinite
+}
+p{color:#7d818c;font-size:13px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="card">
+  <div class="spinner"></div>
+  <h2>Signing you out…</h2>
+  <p>You’ll be returned to the login page.</p>
+</div>
+
+<script>
+const SUPABASE_URL = "https://vboelobxtkgewkwxllsq.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
+
+(async () => {
+  try {
+    const client = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+    // Clear the current browser session.
+    await client.auth.signOut({ scope: "local" });
+  } catch (e) {}
+
+  // Extra cleanup for any stale Supabase auth data in this browser.
+  try {
+    const projectRef = "vboelobxtkgewkwxllsq";
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && (key.includes(projectRef) || key.startsWith("sb-"))) {
+        localStorage.removeItem(key);
+      }
+    }
+
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key && (key.includes(projectRef) || key.startsWith("sb-"))) {
+        sessionStorage.removeItem(key);
+      }
+    }
+  } catch (e) {}
+
+  window.location.replace("login.html");
+})();
+</script>
+</body>
+</html>
