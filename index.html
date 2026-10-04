@@ -840,11 +840,30 @@ const supabaseClient = window.supabase.createClient(
 
 (async () => {
   try {
-    // getUser() validates the session with Supabase Auth.
-    // This catches users that were deleted from the Supabase dashboard.
-    const { data, error } = await supabaseClient.auth.getUser();
+    const { data: sessionData } = await supabaseClient.auth.getSession();
 
-    if (error || !data.user) {
+    if (!sessionData.session) {
+      window.location.replace("login.html");
+      return;
+    }
+
+    // Force a real refresh on every protected-page visit.
+    // When the user has been deleted in Supabase, the refresh token/session
+    // is no longer valid, so this fails immediately instead of waiting for
+    // the old access-token JWT to expire.
+    const { data: refreshData, error: refreshError } =
+      await supabaseClient.auth.refreshSession();
+
+    if (refreshError || !refreshData.session) {
+      await supabaseClient.auth.signOut({ scope: "local" });
+      window.location.replace("login.html");
+      return;
+    }
+
+    const { data: userData, error: userError } =
+      await supabaseClient.auth.getUser();
+
+    if (userError || !userData.user) {
       await supabaseClient.auth.signOut({ scope: "local" });
       window.location.replace("login.html");
       return;
@@ -852,7 +871,9 @@ const supabaseClient = window.supabase.createClient(
 
     document.documentElement.classList.remove("auth-checking");
   } catch (err) {
-    await supabaseClient.auth.signOut({ scope: "local" });
+    try {
+      await supabaseClient.auth.signOut({ scope: "local" });
+    } catch (e) {}
     window.location.replace("login.html");
   }
 })();
