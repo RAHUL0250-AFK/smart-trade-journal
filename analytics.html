@@ -985,6 +985,47 @@
 /* GLOBAL AUTH GUARD */
 html.auth-checking body{visibility:hidden}
 
+
+/* REAL MT5 ANALYTICS */
+.real-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.real-kpi{background:#0c0e13;border:1px solid #222630;border-radius:11px;padding:12px}
+.real-kpi small{display:block;color:var(--muted);font-size:10px;margin-bottom:6px}
+.real-kpi strong{font-size:16px}
+.real-bars{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.real-bar-row{display:grid;grid-template-columns:105px 1fr 90px;gap:10px;align-items:center;font-size:11px}
+.real-track{height:8px;background:#191c23;border-radius:999px;overflow:hidden}
+.real-fill{height:100%;border-radius:999px;background:var(--green)}
+.real-fill.loss{background:var(--red)}
+.real-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.real-summary .mini-panel strong{display:block;margin-top:6px;font-size:14px}
+.real-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:12px}
+.real-table th,.real-table td{padding:9px 8px;border-bottom:1px solid #20232b;text-align:left}
+.real-table th{color:var(--muted);font-weight:600}
+.real-chart{width:100%;height:250px;margin-top:8px}
+.real-chart text{font-family:Arial,Helvetica,sans-serif}
+.real-empty{color:var(--muted);font-size:12px;padding:20px 0}
+.real-pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.real-pill{font-size:10px;border-radius:999px;padding:5px 8px;background:#171a21;border:1px solid #272b35}
+.real-pill.win{color:var(--green);border-color:#23553b}
+.real-pill.loss{color:var(--red);border-color:#633037}
+.real-heatmap-wrap{overflow-x:auto;margin-top:10px}
+.real-heatmap{display:grid;grid-template-columns:54px repeat(24,28px);gap:3px;min-width:760px;align-items:center}
+.real-heat-label{font-size:9px;color:var(--muted);text-align:center}
+.real-heat-day{font-size:10px;color:var(--muted)}
+.real-heat-cell{width:28px;height:24px;border-radius:4px;background:#111319;border:1px solid #1f2229}
+.real-dist{height:220px;display:flex;align-items:flex-end;gap:5px;margin-top:14px}
+.real-dist-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:6px}
+.real-dist-bar{width:100%;min-height:2px;border-radius:5px 5px 0 0;background:var(--green)}
+.real-dist-bar.loss{background:var(--red)}
+.real-dist-col small{font-size:8px;color:var(--muted);white-space:nowrap}
+.real-note{font-size:10px;color:var(--muted);margin-top:10px;line-height:1.45}
+.real-live-badge{font-size:10px;color:var(--green);border:1px solid #24543b;background:#102419;padding:5px 8px;border-radius:999px}
+@media(max-width:900px){
+  .real-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .real-summary{grid-template-columns:1fr}
+  .real-bar-row{grid-template-columns:80px 1fr 72px}
+}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1831,6 +1872,502 @@ window.stjAuthReady = (async () => {
   } catch (err) {
     console.error("Could not load user profile:", err);
   }
+})();
+</script>
+
+
+<script id="stj-real-analytics">
+(async () => {
+  if (window.stjAuthReady) {
+    const ok = await window.stjAuthReady;
+    if (!ok) return;
+  }
+  if (!window.stjSupabase) return;
+
+  const clamp = (v,min=0,max=100) => Math.max(min,Math.min(max,v));
+  const esc = v => String(v ?? "")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;")
+    .replaceAll(">","&gt;").replaceAll('"',"&quot;");
+
+  function findTitle(title){
+    return [...document.querySelectorAll("h3")].find(h => h.textContent.trim() === title);
+  }
+  function findCard(title){
+    return findTitle(title)?.closest(".card") || null;
+  }
+  function money(v,currency="USD",signed=true){
+    const n=Number(v||0);
+    const abs=new Intl.NumberFormat("en-US",{style:"currency",currency,minimumFractionDigits:2,maximumFractionDigits:2}).format(Math.abs(n));
+    return (signed ? (n>0?"+":n<0?"-":"") : (n<0?"-":"")) + abs;
+  }
+  function pct(v,d=1){ return `${Number(v||0).toFixed(d)}%`; }
+  function mean(a){ return a.length ? a.reduce((s,x)=>s+x,0)/a.length : 0; }
+  function stdev(a){
+    if(a.length<2) return 0;
+    const m=mean(a);
+    return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1));
+  }
+  function dayKey(d){
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+
+  async function fetchAllDeals(){
+    const all=[]; let from=0; const pageSize=1000;
+    while(true){
+      const {data,error}=await window.stjSupabase
+        .from("mt5_deals")
+        .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
+        .order("time_msc",{ascending:true})
+        .range(from,from+pageSize-1);
+      if(error) throw error;
+      all.push(...(data||[]));
+      if(!data || data.length<pageSize) break;
+      from+=pageSize;
+      if(from>=10000) break;
+    }
+    return all;
+  }
+
+  function groupTrades(deals){
+    const map=new Map();
+    for(const d of deals){
+      if(!d.symbol || ![0,1].includes(Number(d.deal_type))) continue;
+      const key=d.position_id || `deal-${d.deal_ticket}`;
+      if(!map.has(key)){
+        map.set(key,{positionId:key,symbol:d.symbol,entries:[],exits:[],deals:[],net:0,firstTime:null,lastTime:null,entryVol:0,exitVol:0});
+      }
+      const t=map.get(key);
+      t.deals.push(d);
+      t.net += Number(d.profit||0)+Number(d.commission||0)+Number(d.swap||0)+Number(d.fee||0);
+      const dt=new Date(d.deal_time);
+      if(!t.firstTime || dt<t.firstTime) t.firstTime=dt;
+      if(!t.lastTime || dt>t.lastTime) t.lastTime=dt;
+      const et=Number(d.entry_type);
+      const vol=Number(d.volume||0);
+      if(et===0){t.entries.push(d); t.entryVol+=vol;}
+      if([1,2,3].includes(et)){t.exits.push(d); t.exitVol+=vol;}
+    }
+
+    function weighted(rows){
+      let v=0,pv=0;
+      for(const r of rows){const x=Number(r.volume||0); v+=x; pv+=Number(r.price||0)*x;}
+      return v>0 ? pv/v : null;
+    }
+
+    return [...map.values()].map(t=>{
+      const first=t.entries[0], last=t.exits[t.exits.length-1];
+      let side=first?.side || "";
+      if(!side && last?.side) side=last.side==="BUY"?"SELL":"BUY";
+      const fullyClosed=t.exits.length>0 && (t.entryVol===0 || t.exitVol+1e-8>=t.entryVol);
+      return {
+        ...t,
+        side:side==="BUY"?"LONG":side==="SELL"?"SHORT":"—",
+        entryPrice:weighted(t.entries),
+        exitPrice:weighted(t.exits),
+        openedAt:first?new Date(first.deal_time):t.firstTime,
+        closedAt:last?new Date(last.deal_time):null,
+        status:fullyClosed?"closed":"open"
+      };
+    });
+  }
+
+  function classAsset(symbol){
+    const s=String(symbol||"").toUpperCase();
+    if(/BTC|ETH|SOL|XRP|LTC|DOGE|ADA/.test(s)) return "Crypto";
+    if(/XAU|GOLD|XAG|SILVER/.test(s)) return "Metals";
+    if(/US100|USTEC|NAS|US30|DJ|US500|SPX|GER40|DE40|UK100|JP225|HK50/.test(s)) return "Indices";
+    if(/OIL|WTI|BRENT|USOIL|UKOIL/.test(s)) return "Energy";
+    if(/^[A-Z]{6}/.test(s)) return "Forex";
+    return "Other";
+  }
+
+  function dailyStats(closed){
+    const m=new Map();
+    for(const t of closed){
+      const k=dayKey(t.closedAt);
+      if(!m.has(k)) m.set(k,{date:new Date(t.closedAt),pnl:0,trades:0,wins:0,losses:0});
+      const d=m.get(k); d.pnl+=t.net; d.trades++;
+      if(t.net>0)d.wins++; else if(t.net<0)d.losses++;
+    }
+    return [...m.values()].sort((a,b)=>a.date-b.date);
+  }
+
+  function streakInfo(closed){
+    const seq=closed.filter(t=>t.net!==0).sort((a,b)=>a.closedAt-b.closedAt);
+    let longW=0,longL=0,rw=0,rl=0;
+    const history=[];
+    for(const t of seq){
+      if(t.net>0){rw++; rl=0; longW=Math.max(longW,rw);}
+      else{rl++; rw=0; longL=Math.max(longL,rl);}
+    }
+    let cur=0,type="";
+    for(let i=seq.length-1;i>=0;i--){
+      const x=seq[i].net>0?"W":"L";
+      if(!type){type=x;cur=1;}
+      else if(type===x)cur++;
+      else break;
+    }
+    let runType="",run=0;
+    for(const t of seq){
+      const x=t.net>0?"W":"L";
+      if(x===runType)run++;
+      else{
+        if(runType) history.push({type:runType,n:run});
+        runType=x;run=1;
+      }
+    }
+    if(runType) history.push({type:runType,n:run});
+    return {longW,longL,cur,type,history:history.slice(-12)};
+  }
+
+  function equityMetrics(closed,currentBalance){
+    const total=closed.reduce((s,t)=>s+t.net,0);
+    const startBalance=Number.isFinite(currentBalance) ? currentBalance-total : 0;
+    let eq=startBalance, peak=eq, maxDd=0,maxDdPct=0,ddDate=null;
+    const points=[{date:closed[0]?.closedAt || new Date(),eq,dd:0}];
+    for(const t of closed){
+      eq+=t.net;
+      if(eq>peak) peak=eq;
+      const dd=peak-eq;
+      const ddPct=peak>0?dd/peak*100:0;
+      if(dd>maxDd){maxDd=dd;maxDdPct=ddPct;ddDate=t.closedAt;}
+      points.push({date:t.closedAt,eq,dd});
+    }
+    return {startBalance,current:eq,peak,maxDd,maxDdPct,ddDate,points,total};
+  }
+
+  function svgLine(values,{width=700,height=240,pad=34,color="#25d67d",zero=false}={}){
+    if(!values.length) return "";
+    let min=Math.min(...values),max=Math.max(...values);
+    if(zero){min=Math.min(min,0);max=Math.max(max,0);}
+    if(max===min){max+=1;min-=1;}
+    const pts=values.map((v,i)=>{
+      const x=pad+(values.length===1?0:i/(values.length-1))*(width-pad*2);
+      const y=pad+(max-v)/(max-min)*(height-pad*2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+    let zeroLine="";
+    if(zero){
+      const zy=pad+(max-0)/(max-min)*(height-pad*2);
+      zeroLine=`<line x1="${pad}" x2="${width-pad}" y1="${zy}" y2="${zy}" stroke="#343842" stroke-dasharray="4 4"/>`;
+    }
+    return `<svg class="real-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+      ${zeroLine}
+      <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="3"/>
+    </svg>`;
+  }
+
+  function title(icon,bg,text,sub=""){
+    return `<div class="card-title"><div class="icon-badge ${bg}">${icon}</div><div><h3>${text}</h3>${sub?`<small>${sub}</small>`:""}</div></div>`;
+  }
+
+  function renderPnl(closed,currency){
+    const c=findCard("P&L"); if(!c)return;
+    const now=new Date(), year=now.getFullYear(), month=now.getMonth();
+    const monthName=new Intl.DateTimeFormat("en-US",{month:"long",year:"numeric"}).format(now);
+    const daysInMonth=new Date(year,month+1,0).getDate();
+    const daily=Array(daysInMonth).fill(0);
+    closed.filter(t=>t.closedAt.getFullYear()===year&&t.closedAt.getMonth()===month)
+      .forEach(t=>daily[t.closedAt.getDate()-1]+=t.net);
+    const total=daily.reduce((a,b)=>a+b,0), maxAbs=Math.max(1,...daily.map(Math.abs));
+    const grossWin=closed.filter(t=>t.net>0).reduce((s,t)=>s+t.net,0);
+    const grossLoss=Math.abs(closed.filter(t=>t.net<0).reduce((s,t)=>s+t.net,0));
+    c.innerHTML=title("▥","purple-bg","P&L",`${monthName} • real synced MT5 trades`) +
+      `<div class="real-kpis">
+        <div class="real-kpi"><small>MONTH P&L</small><strong class="${total>=0?"green":"red"}">${money(total,currency,true)}</strong></div>
+        <div class="real-kpi"><small>TOTAL P&L</small><strong class="${(grossWin-grossLoss)>=0?"green":"red"}">${money(grossWin-grossLoss,currency,true)}</strong></div>
+        <div class="real-kpi"><small>GROSS PROFIT</small><strong class="green">${money(grossWin,currency,true)}</strong></div>
+        <div class="real-kpi"><small>GROSS LOSS</small><strong class="red">${money(-grossLoss,currency,true)}</strong></div>
+      </div>
+      <div style="height:210px;display:flex;align-items:flex-end;gap:3px;margin-top:18px">
+        ${daily.map((v,i)=>`<div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px" title="${i+1}: ${money(v,currency,true)}">
+          <div style="width:100%;max-width:13px;height:${v===0?1:Math.max(4,Math.abs(v)/maxAbs*86)}%;background:${v>=0?"#25d67d":"#ff4f57"};border-radius:4px 4px 0 0"></div>
+          <small style="font-size:8px;color:var(--muted)">${i+1}</small>
+        </div>`).join("")}
+      </div>`;
+  }
+
+  function renderWinLoss(closed){
+    const c=findCard("Win/Loss"); if(!c)return;
+    const wins=closed.filter(t=>t.net>0).length, losses=closed.filter(t=>t.net<0).length, be=closed.length-wins-losses;
+    const wr=closed.length?wins/closed.length*100:0;
+    c.innerHTML=title("◔","purple-bg","Win/Loss","Closed MT5 trades")+
+      `<div style="display:grid;place-items:center;margin:20px 0">
+        <div style="width:160px;height:160px;border-radius:50%;background:conic-gradient(var(--green) 0 ${wr}%,var(--red) ${wr}% 100%);display:grid;place-items:center">
+          <div style="width:112px;height:112px;border-radius:50%;background:#101116;display:grid;place-items:center;text-align:center">
+            <div><strong style="font-size:26px">${wr.toFixed(1)}%</strong><div class="muted" style="font-size:10px">Win Rate</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="real-kpis">
+        <div class="real-kpi"><small>WINS</small><strong class="green">${wins}</strong></div>
+        <div class="real-kpi"><small>LOSSES</small><strong class="red">${losses}</strong></div>
+        <div class="real-kpi"><small>BREAKEVEN</small><strong>${be}</strong></div>
+        <div class="real-kpi"><small>CLOSED</small><strong>${closed.length}</strong></div>
+      </div>`;
+  }
+
+  function renderAsset(closed,currency){
+    const c=findCard("Asset Class Performance"); if(!c)return;
+    const m=new Map();
+    for(const t of closed){
+      const k=classAsset(t.symbol);
+      if(!m.has(k))m.set(k,{pnl:0,n:0,w:0});
+      const x=m.get(k);x.pnl+=t.net;x.n++;if(t.net>0)x.w++;
+    }
+    const rows=[...m.entries()].map(([name,x])=>({name,...x,wr:x.n?x.w/x.n*100:0})).sort((a,b)=>b.pnl-a.pnl);
+    const max=Math.max(1,...rows.map(r=>Math.abs(r.pnl)));
+    c.innerHTML=title("⚖","blue-bg","Asset Class Performance","Grouped from MT5 symbols")+
+      (rows.length?`<div class="real-bars">${rows.map(r=>`<div class="real-bar-row">
+        <span>${esc(r.name)}</span>
+        <div class="real-track"><div class="real-fill ${r.pnl<0?"loss":""}" style="width:${Math.max(3,Math.abs(r.pnl)/max*100)}%"></div></div>
+        <span class="${r.pnl>=0?"green":"red"}">${money(r.pnl,currency,true)}</span>
+      </div>`).join("")}</div>
+      <table class="real-table"><thead><tr><th>Class</th><th>Trades</th><th>Win Rate</th><th>P&L</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.n}</td><td>${r.wr.toFixed(1)}%</td><td class="${r.pnl>=0?"green":"red"}">${money(r.pnl,currency,true)}</td></tr>`).join("")}</tbody></table>`:
+      '<div class="real-empty">No closed trades yet.</div>');
+  }
+
+  function renderTime(closed,currency){
+    const c=findCard("Time of Day Performance"); if(!c)return;
+    const h=Array.from({length:24},(_,i)=>({h:i,pnl:0,n:0,w:0}));
+    closed.forEach(t=>{const x=h[t.closedAt.getHours()];x.pnl+=t.net;x.n++;if(t.net>0)x.w++;});
+    const used=h.filter(x=>x.n).sort((a,b)=>b.pnl-a.pnl);
+    const vals=h.map(x=>x.pnl);
+    const best=used.slice(0,3);
+    c.innerHTML=title("◔","yellow-bg","Time of Day Performance","Based on synced trade close timestamps")+
+      svgLine(vals,{width:700,height:230,pad:35,color:"#4a91ff",zero:true})+
+      `<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:-6px"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div>
+      <div class="real-summary">${best.map((x,i)=>`<div class="mini-panel"><small>#${i+1} Best</small><strong>${String(x.h).padStart(2,"0")}:00</strong><span class="${x.pnl>=0?"green":"red"}">${money(x.pnl,currency,true)}</span><div class="muted" style="font-size:9px;margin-top:4px">${x.n} trades</div></div>`).join("") || '<div class="real-empty">No trade-time data.</div>'}</div>`;
+  }
+
+  function renderDrawdown(closed,currency,eq){
+    const c=findCard("Drawdown Analysis"); if(!c)return;
+    const dd=eq.points.map(p=>-p.dd);
+    c.innerHTML=title("⌁","red-bg","Drawdown Analysis","Calculated from closed-trade equity path")+
+      svgLine(dd,{width:700,height:230,pad:35,color:"#ff4f57",zero:true})+
+      `<div class="real-summary">
+        <div class="mini-panel"><small>Max Drawdown</small><strong class="red">${money(-eq.maxDd,currency,true)}</strong></div>
+        <div class="mini-panel"><small>Max DD %</small><strong class="red">-${eq.maxDdPct.toFixed(1)}%</strong></div>
+        <div class="mini-panel"><small>Date</small><strong>${eq.ddDate?eq.ddDate.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"—"}</strong></div>
+      </div>`;
+  }
+
+  function renderStreak(closed){
+    const c=findCard("Streak Tracking"); if(!c)return;
+    const s=streakInfo(closed);
+    c.innerHTML=title("◔","orange-bg","Streak Tracking")+
+      `<div class="muted" style="font-size:12px">Current Streak</div>
+       <div class="streak-number ${s.type==="W"?"green":"red"}">${s.cur || 0} ${s.type==="W"?"Winning":"Losing"} Streak ${s.type==="W"?"🔥":""}</div>
+       <div class="streak-row">
+        <div class="mini-panel"><small>Longest Win</small><b class="green">${s.longW}</b></div>
+        <div class="mini-panel"><small>Longest Loss</small><b class="red">${s.longL}</b></div>
+       </div>
+       <div class="muted" style="font-size:12px;margin-top:18px">Recent Streak Runs</div>
+       <div class="real-pill-row">${s.history.map(x=>`<span class="real-pill ${x.type==="W"?"win":"loss"}">${x.type}${x.n}</span>`).join("") || '<span class="muted">No streak data yet.</span>'}</div>`;
+  }
+
+  function renderSymbol(closed,currency){
+    const c=findCard("Symbol Performance"); if(!c)return;
+    const m=new Map();
+    for(const t of closed){
+      if(!m.has(t.symbol))m.set(t.symbol,{pnl:0,n:0,w:0});
+      const x=m.get(t.symbol);x.pnl+=t.net;x.n++;if(t.net>0)x.w++;
+    }
+    const rows=[...m.entries()].map(([symbol,x])=>({symbol,...x,wr:x.n?x.w/x.n*100:0})).sort((a,b)=>b.pnl-a.pnl);
+    const best=rows[0], worst=rows.length?[...rows].sort((a,b)=>a.pnl-b.pnl)[0]:null;
+    const most=rows.length?[...rows].sort((a,b)=>b.n-a.n)[0]:null;
+    const max=Math.max(1,...rows.map(r=>Math.abs(r.pnl)));
+    c.innerHTML=title("◎","purple-bg","Symbol Performance","P&L breakdown by real MT5 symbol")+
+      `<div class="real-summary">
+        <div class="summary-box greenbox"><small>↗ Best</small><strong>${esc(best?.symbol||"—")}</strong><span class="green">${best?money(best.pnl,currency,true):"—"}</span></div>
+        <div class="summary-box purplebox"><small>$ Most Traded</small><strong>${esc(most?.symbol||"—")}</strong><span class="muted">${most?`${most.n} trades`:"—"}</span></div>
+        <div class="summary-box redbox"><small>⌁ Worst</small><strong>${esc(worst?.symbol||"—")}</strong><span class="red">${worst?money(worst.pnl,currency,true):"—"}</span></div>
+      </div>
+      ${rows.length?`<div class="real-bars">${rows.map(r=>`<div class="real-bar-row">
+        <span>${esc(r.symbol)}</span>
+        <div class="real-track"><div class="real-fill ${r.pnl<0?"loss":""}" style="width:${Math.max(3,Math.abs(r.pnl)/max*100)}%"></div></div>
+        <span class="${r.pnl>=0?"green":"red"}">${money(r.pnl,currency,true)}</span>
+      </div>`).join("")}</div>
+      <table class="real-table"><thead><tr><th>Symbol</th><th>Trades</th><th>Win Rate</th><th>P&L</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.symbol)}</td><td>${r.n}</td><td>${r.wr.toFixed(1)}%</td><td class="${r.pnl>=0?"green":"red"}">${money(r.pnl,currency,true)}</td></tr>`).join("")}</tbody></table>`:
+      '<div class="real-empty">No symbol data yet.</div>'}`;
+  }
+
+  function renderHeatmap(closed,currency){
+    const c=findCard("Trading Heatmap (Day x Hour)"); if(!c)return;
+    const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const grid=Array.from({length:7},()=>Array.from({length:24},()=>({pnl:0,n:0})));
+    closed.forEach(t=>{const x=grid[t.closedAt.getDay()][t.closedAt.getHours()];x.pnl+=t.net;x.n++;});
+    const maxAbs=Math.max(1,...grid.flat().map(x=>Math.abs(x.pnl)));
+    let html=`<div class="real-heatmap"><div></div>${Array.from({length:24},(_,h)=>`<div class="real-heat-label">${String(h).padStart(2,"0")}</div>`).join("")}`;
+    for(let d=0;d<7;d++){
+      html+=`<div class="real-heat-day">${days[d]}</div>`;
+      for(let h=0;h<24;h++){
+        const x=grid[d][h], intensity=x.n?0.18+0.72*Math.abs(x.pnl)/maxAbs:0;
+        const bg=!x.n?"#111319":x.pnl>=0?`rgba(37,214,125,${intensity})`:`rgba(255,79,87,${intensity})`;
+        html+=`<div class="real-heat-cell" style="background:${bg}" title="${days[d]} ${String(h).padStart(2,"0")}:00 • ${x.n} trades • ${money(x.pnl,currency,true)}"></div>`;
+      }
+    }
+    html+="</div>";
+    c.innerHTML=title("▦","red-bg","Trading Heatmap (Day x Hour)","Hover cells for trade count and P&L")+
+      `<div class="real-heatmap-wrap">${html}</div>
+       <div class="real-note">Green = profitable time slot, red = losing time slot, dark = no closed trades.</div>`;
+  }
+
+  function renderRisk(closed,eq){
+    const h=findTitle("Risk-Adjusted Performance"); if(!h)return;
+    const sec=h.closest("section") || h.parentElement?.parentElement?.parentElement;
+    if(!sec)return;
+    const daily=dailyStats(closed);
+    const denom=Math.abs(eq.startBalance)>0?Math.abs(eq.startBalance):1;
+    const rets=daily.map(d=>d.pnl/denom);
+    const sd=stdev(rets);
+    const sharpe=sd>0?mean(rets)/sd*Math.sqrt(252):0;
+    const downside=rets.filter(r=>r<0);
+    const dsd=stdev(downside);
+    const sortino=dsd>0?mean(rets)/dsd*Math.sqrt(252):(mean(rets)>0?999:0);
+
+    const wins=closed.filter(t=>t.net>0), losses=closed.filter(t=>t.net<0);
+    const p=closed.length?wins.length/closed.length:0;
+    const avgW=mean(wins.map(t=>t.net)), avgL=Math.abs(mean(losses.map(t=>t.net)));
+    const b=avgL>0?avgW/avgL:0;
+    const kelly=b>0?(p-(1-p)/b)*100:0;
+
+    const fmtRatio=x=>Number.isFinite(x)?(Math.abs(x)>99?">99":x.toFixed(2)):"—";
+    sec.innerHTML=`<div class="card-title" style="margin-bottom:14px"><div class="icon-badge purple-bg">⚖</div><div><h3>Risk-Adjusted Performance</h3><small>Daily-return estimates from synced trades</small></div></div>
+      <div class="grid-3">
+        <div class="card risk-box"><div class="muted" style="font-size:12px">SHARPE RATIO</div><div class="risk-value ${sharpe>=1?"green":sharpe<0?"red":"yellow"}">${fmtRatio(sharpe)}</div><div class="muted" style="font-size:12px">Annualized from daily P&L / estimated starting balance.</div></div>
+        <div class="card risk-box"><div class="muted" style="font-size:12px">SORTINO RATIO</div><div class="risk-value ${sortino>=1?"green":sortino<0?"red":"yellow"}">${fmtRatio(sortino)}</div><div class="muted" style="font-size:12px">Uses downside volatility only.</div></div>
+        <div class="card risk-box"><div class="muted" style="font-size:12px">KELLY CRITERION</div><div class="risk-value purple">${kelly>=0?"+":""}${kelly.toFixed(1)}%</div><div class="muted" style="font-size:12px">Mathematical estimate, not a position-size recommendation.</div></div>
+      </div>`;
+  }
+
+  function formatDuration(mins){
+    if(!Number.isFinite(mins)||mins<0)return "—";
+    if(mins<60)return `${Math.round(mins)} min`;
+    const h=Math.floor(mins/60), m=Math.round(mins%60);
+    return `${h}h ${m}m`;
+  }
+
+  function renderHold(closed){
+    const c=findCard("Avg Hold Time: Winners vs Losers"); if(!c)return;
+    const durations=closed.map(t=>({...t,mins:t.openedAt&&t.closedAt?(t.closedAt-t.openedAt)/60000:null})).filter(t=>Number.isFinite(t.mins)&&t.mins>=0);
+    const w=durations.filter(t=>t.net>0).map(t=>t.mins), l=durations.filter(t=>t.net<0).map(t=>t.mins);
+    const aw=mean(w), al=mean(l), max=Math.max(1,aw,al);
+    const note=(w.length&&l.length) ? (al<aw?"You are exiting losers faster than winners.":"Your losing trades are being held as long as or longer than winners.") : "More closed trades are needed for a stronger comparison.";
+    c.innerHTML=title("◔","cyan-bg","Avg Hold Time: Winners vs Losers","Entry-to-final-exit duration")+
+      `<div class="hold-row"><div class="top"><span class="green">Winning Trades</span><span class="green">${formatDuration(aw)}</span></div><div class="hold-track"><span style="width:${aw/max*100}%;background:var(--green)"></span></div></div>
+       <div class="hold-row"><div class="top"><span class="red">Losing Trades</span><span class="red">${formatDuration(al)}</span></div><div class="hold-track"><span style="width:${al/max*100}%;background:var(--red)"></span></div></div>
+       <div class="insight">${esc(note)}</div>`;
+  }
+
+  function renderDistribution(closed,currency){
+    const c=findCard("P&L Distribution"); if(!c)return;
+    const vals=closed.map(t=>t.net);
+    c.innerHTML=title("▥","orange-bg","P&L Distribution","Distribution of closed-trade net P&L");
+    if(!vals.length){c.innerHTML+='<div class="real-empty">No closed trades yet.</div>';return;}
+    let min=Math.min(...vals),max=Math.max(...vals);
+    if(min===max){min-=1;max+=1;}
+    const bins=10, step=(max-min)/bins;
+    const arr=Array.from({length:bins},(_,i)=>({lo:min+i*step,hi:i===bins-1?max:min+(i+1)*step,n:0}));
+    vals.forEach(v=>{
+      let i=Math.floor((v-min)/step); if(i>=bins)i=bins-1;if(i<0)i=0;arr[i].n++;
+    });
+    const maxN=Math.max(1,...arr.map(b=>b.n));
+    c.innerHTML+=`<div class="real-dist">${arr.map(b=>{
+      const mid=(b.lo+b.hi)/2;
+      return `<div class="real-dist-col" title="${money(b.lo,currency,true)} to ${money(b.hi,currency,true)} • ${b.n} trades">
+        <div class="real-dist-bar ${mid<0?"loss":""}" style="height:${Math.max(2,b.n/maxN*90)}%"></div>
+        <small>${money(mid,currency,false)}</small>
+      </div>`;
+    }).join("")}</div>`;
+  }
+
+  function renderRolling(closed){
+    const c=findCard("Rolling Performance"); if(!c)return;
+    const sorted=[...closed].sort((a,b)=>a.closedAt-b.closedAt);
+    const winRates=[],pfs=[];
+    for(let i=0;i<sorted.length;i++){
+      const w=sorted.slice(Math.max(0,i-19),i+1);
+      const wins=w.filter(t=>t.net>0), losses=w.filter(t=>t.net<0);
+      const wr=w.length?wins.length/w.length*100:0;
+      const gp=wins.reduce((s,t)=>s+t.net,0), gl=Math.abs(losses.reduce((s,t)=>s+t.net,0));
+      const pf=gl>0?gp/gl:(gp>0?5:0);
+      winRates.push(wr);pfs.push(Math.min(pf,5));
+    }
+    const width=1000,height=300,pad=36;
+    function pts(vals,min,max){
+      if(!vals.length)return "";
+      return vals.map((v,i)=>{
+        const x=pad+(vals.length===1?0:i/(vals.length-1))*(width-pad*2);
+        const y=pad+(max-v)/(max-min)*(height-pad*2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+    }
+    c.innerHTML=title("∿","purple-bg","Rolling Performance","Up to 20-trade rolling window — current form")+
+      `<svg class="real-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+        <line x1="${pad}" x2="${width-pad}" y1="${pad+(100-50)/100*(height-pad*2)}" y2="${pad+(100-50)/100*(height-pad*2)}" stroke="#25d67d" opacity=".3" stroke-dasharray="5 5"/>
+        <polyline points="${pts(winRates,0,100)}" fill="none" stroke="#25d67d" stroke-width="3"/>
+        <polyline points="${pts(pfs,0,5)}" fill="none" stroke="#9a7dff" stroke-width="3"/>
+      </svg>
+      <div class="rolling-legend">
+        <span><i class="line-chip" style="background:#25d67d"></i>Win Rate (0–100%)</span>
+        <span><i class="line-chip" style="background:#9a7dff"></i>Profit Factor (0–5x, capped visually)</span>
+      </div>`;
+  }
+
+  async function renderBrokerBadge(){
+    try{
+      const {data}=await window.stjSupabase.from("ea_devices")
+        .select("account_id,broker_name,is_active,last_seen_at").eq("is_active",true)
+        .order("created_at",{ascending:false}).limit(1);
+      const d=data?.[0]; if(!d)return;
+      const account=String(d.account_id||"");
+      const masked=account?`••••${account.slice(-4)}`:"";
+      const pill=document.querySelector(".account-pill");
+      if(pill) pill.innerHTML=`● ${esc(d.broker_name||"MT5")} ${masked} <span class="connected">EA Connected</span>`;
+    }catch(e){console.error(e);}
+  }
+
+  async function run(){
+    try{
+      const [{data:userData},deals,snapRes]=await Promise.all([
+        window.stjSupabase.auth.getUser(),
+        fetchAllDeals(),
+        window.stjSupabase.from("mt5_account_snapshots").select("balance,currency,updated_at").order("updated_at",{ascending:false}).limit(1)
+      ]);
+      const currency=snapRes.data?.[0]?.currency || userData?.user?.user_metadata?.default_currency || "USD";
+      const currentBalance=snapRes.data?.[0] ? Number(snapRes.data[0].balance||0) : NaN;
+      const trades=groupTrades(deals);
+      const closed=trades.filter(t=>t.status==="closed" && t.closedAt).sort((a,b)=>a.closedAt-b.closedAt);
+      const eq=equityMetrics(closed,currentBalance);
+
+      renderPnl(closed,currency);
+      renderWinLoss(closed);
+      renderAsset(closed,currency);
+      renderTime(closed,currency);
+      renderDrawdown(closed,currency,eq);
+      renderStreak(closed);
+      renderSymbol(closed,currency);
+      renderHeatmap(closed,currency);
+      renderRisk(closed,eq);
+      renderHold(closed);
+      renderDistribution(closed,currency);
+      renderRolling(closed);
+      renderBrokerBadge();
+
+      const pageTitle=document.querySelector(".page-title p");
+      if(pageTitle){
+        const last=snapRes.data?.[0]?.updated_at ? new Date(snapRes.data[0].updated_at).toLocaleString() : "No live snapshot";
+        pageTitle.innerHTML=`Real MT5 analytics • ${closed.length} closed trades • Last account sync: ${esc(last)} <span class="real-live-badge">LIVE DATA</span>`;
+      }
+    }catch(e){
+      console.error("Real analytics failed:",e);
+      const p=document.querySelector(".page-title p");
+      if(p)p.textContent=`Could not load real MT5 analytics: ${e.message||"Unknown error"}`;
+    }
+  }
+
+  await run();
 })();
 </script>
 
