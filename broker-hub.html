@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broker Hub | Smart Trade Journal</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08090d;--sidebar:#0c0d11;--panel:#101116;--panel2:#14161b;
+  --border:#20232b;--text:#f4f5f7;--muted:#7d818c;--green:#20d080;
+  --red:#ff4e58;--purple:#8357ff;--blue:#4aa3ff;--gold:#f4b400;
+}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:240px;position:fixed;left:0;top:0;bottom:0;background:var(--sidebar);
+  border-right:1px solid var(--border);padding:14px;display:flex;flex-direction:column;z-index:30
+}
+.logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;padding-bottom:22px}
+.logo-box{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:linear-gradient(135deg,#693cff,#a75cff);font-size:12px}
+.logo span{color:#ff4c91}
+.nav{display:flex;flex-direction:column;gap:5px}
+.nav a{color:#80848f;text-decoration:none;border-radius:9px;padding:11px 12px;font-size:13px}
+.nav a:hover{background:#17191f;color:#fff}
+.nav a.active{background:#1a1c22;border:1px solid #2a2d34;color:#fff}
+.analytics-menu{width:100%}
+.analytics-toggle{
+  width:100%;border:none;background:transparent;color:#80848f;border-radius:9px;padding:11px 12px;
+  font-size:13px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;font-family:inherit
+}
+.analytics-toggle:hover,.analytics-toggle.active{background:#17191f;color:#fff}
+.analytics-arrow{transition:transform .25s ease}
+.analytics-menu.open .analytics-arrow{transform:rotate(180deg)}
+.analytics-submenu{
+  margin-left:14px;overflow:hidden;max-height:0;opacity:0;transform:translateY(-7px);
+  transition:max-height .3s ease,opacity .22s ease,transform .22s ease
+}
+.analytics-menu.open .analytics-submenu{max-height:260px;opacity:1;transform:translateY(0);margin-top:5px;margin-bottom:8px}
+.analytics-submenu a{display:block;color:#80848f;text-decoration:none;border-radius:8px;padding:9px 12px;margin-bottom:4px;font-size:12px}
+.analytics-submenu a:hover{background:#17191f;color:#fff}
+.bottom{margin-top:auto}
+.bottom a{display:block;color:#7d818c;text-decoration:none;padding:10px 8px;font-size:13px}
+.bottom a.active{background:#1a1c22;border:1px solid #2a2d34;color:#fff;border-radius:9px}
+.main{margin-left:240px;width:calc(100% - 240px)}
+.topbar{
+  height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;
+  gap:15px;padding:0 26px;background:#090a0e;position:sticky;top:0;z-index:20
+}
+.account{background:#111319;border:1px solid #20232a;border-radius:10px;padding:9px 14px;font-size:12px}
+.connected{color:var(--green)}
+.profile{background:#12141a;border:1px solid #23262e;border-radius:10px;padding:8px 14px;min-width:150px}
+.profile strong{display:block;font-size:12px}
+.profile small{color:var(--muted);font-size:10px}
+.content{padding:26px 28px;max-width:1150px;margin:auto}
+.page-title h1{font-size:26px;margin-bottom:6px}
+.page-title p{color:var(--muted);font-size:13px}
+.summary{
+  margin-top:22px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px
+}
+.summary-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.summary-top h2{font-size:20px;margin-bottom:6px}
+.summary-top p{color:var(--muted);font-size:12px}
+.connected-count{text-align:right}
+.connected-count small{display:block;color:var(--muted);font-size:10px;margin-bottom:4px}
+.connected-count strong{font-size:26px}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.metric{border-radius:11px;padding:16px;border:1px solid #23262e;background:#14161b}
+.metric small{display:block;color:#8b8f99;font-size:10px;margin-bottom:7px}
+.metric strong{font-size:22px}
+.metric.green{background:#0d291d;border-color:#174f37}
+.metric.blue{background:#102230;border-color:#1d4058}
+.metric.purple{background:#271326;border-color:#4b2349}
+.metric .green-text{color:var(--green)}
+.metric .blue-text{color:var(--blue)}
+.account-card{
+  width:380px;max-width:100%;margin-top:20px;background:var(--panel);border:1px solid var(--border);
+  border-radius:14px;padding:16px
+}
+.account-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.broker-id{display:flex;gap:10px;align-items:center}
+.broker-icon{width:40px;height:40px;border-radius:10px;background:#183a2d;display:grid;place-items:center;font-size:19px}
+.broker-id strong{display:inline-block;font-size:15px}
+.live{color:var(--green);font-size:11px;margin-left:5px}
+.broker-id small{display:block;color:var(--muted);font-size:11px;margin-top:5px}
+.ok{color:var(--green);font-size:20px}
+.balance-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.balance-row small{display:block;color:var(--muted);font-size:10px;margin-bottom:6px}
+.balance-row strong{font-size:18px}
+.last-sync{color:var(--muted);font-size:10px;margin-bottom:12px}
+.actions{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:8px}
+.btn{
+  border:1px solid #272a32;background:#111319;color:#fff;border-radius:9px;padding:10px 9px;font-size:11px;
+  cursor:pointer
+}
+.btn:hover{background:#181b21}
+.btn.danger{border-color:#4a1f25;color:#ff626a}
+.connect-section{margin-top:22px}
+.connect-title{font-size:14px;margin-bottom:12px}
+.connect-card{
+  width:180px;min-height:155px;background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  padding:14px;cursor:pointer;transition:.2s
+}
+.connect-card:hover{transform:translateY(-2px);border-color:#393d48}
+.connect-icon{width:35px;height:35px;border-radius:9px;background:#2e2512;display:grid;place-items:center;margin-bottom:13px}
+.connect-card h3{font-size:14px;margin-bottom:7px}
+.connect-card p{color:var(--muted);font-size:11px;line-height:1.4}
+.connect-link{display:flex;justify-content:space-between;color:#f0b90b;font-size:12px;margin-top:22px}
+.help{position:fixed;right:22px;bottom:20px;width:50px;height:50px;border:none;border-radius:50%;background:var(--purple);color:#fff;font-size:22px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);align-items:center;justify-content:center;z-index:100}
+.modal-bg.show{display:flex}
+.modal{width:500px;max-width:calc(100% - 30px);background:#111319;border:1px solid #292c34;border-radius:16px;padding:22px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-head h2{font-size:20px}
+.close{border:none;background:transparent;color:#8a8f99;font-size:24px;cursor:pointer}
+.notice{background:#171520;border:1px solid #30284c;color:#bdb5dd;border-radius:10px;padding:11px 12px;font-size:11px;line-height:1.5;margin-bottom:16px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;margin-bottom:7px}
+.form-group input,.form-group select{
+  width:100%;border:1px solid #282b33;background:#17191f;color:#fff;border-radius:9px;padding:12px;outline:none
+}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.cancel,.connect-btn{border-radius:9px;padding:11px 16px;cursor:pointer}
+.cancel{border:1px solid #2b2e36;background:#181a20;color:#fff}
+.connect-btn{border:none;background:var(--purple);color:#fff}
+@media(max-width:900px){
+  .summary-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:760px){
+  .sidebar{display:none}.main{margin-left:0;width:100%}.content{padding:18px}.summary-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-box">ST</div>
+    Smart Trade <span>Journal</span>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html">▦ Dashboard</a>
+
+    <div class="analytics-menu" id="analyticsMenu">
+      <button class="analytics-toggle" id="analyticsToggle">
+        <span>▥ Analytics</span>
+        <span class="analytics-arrow">⌄</span>
+      </button>
+      <div class="analytics-submenu">
+        <a href="analytics.html">▥ Performance</a>
+        <a href="reports.html">⇩ Reports</a>
+        <a href="strategies.html">▤ Strategies</a>
+        <a href="trade-replay.html">▷ Trade Replay</a>
+        <a href="share-cards.html">⌘ Share Cards</a>
+      </div>
+    </div>
+
+    <a href="trade-history.html">↗ Trade History</a>
+    <a href="journal.html">✎ Journal</a>
+    <a href="#">✦ Smart Journal AI</a>
+    <a href="#">♨ Hot Topics</a>
+    <a href="#">♕ Leaderboard</a>
+  </nav>
+
+  <div class="bottom">
+    <a class="active" href="broker-hub.html">▣ Broker Hub</a>
+    <a href="#">⚙ Settings</a>
+    <a href="#">↪ Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="account">● XM ••••381517 <span class="connected">Connected</span></div>
+    <div>☼</div>
+    <div class="profile">
+      <strong>Smart Trader</strong>
+      <small>Trader</small>
+    </div>
+  </header>
+
+  <div class="content">
+    <section class="page-title">
+      <h1>Broker Hub</h1>
+      <p>Connect and manage your broker accounts</p>
+    </section>
+
+    <section class="summary">
+      <div class="summary-top">
+        <div>
+          <h2>▣ Broker Hub</h2>
+          <p>Connect &amp; sync your trading accounts</p>
+        </div>
+        <div class="connected-count">
+          <small>Connected</small>
+          <strong>1</strong>
+        </div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="metric green">
+          <small>↗ Balance</small>
+          <strong class="green-text">$61.23</strong>
+        </div>
+        <div class="metric blue">
+          <small>⚡ Equity</small>
+          <strong class="blue-text">$61.23</strong>
+        </div>
+        <div class="metric purple">
+          <small>◉ Unrealized</small>
+          <strong class="green-text">+$0.00</strong>
+        </div>
+        <div class="metric">
+          <small>▣ Brokers</small>
+          <strong>1</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="account-card">
+      <div class="account-head">
+        <div class="broker-id">
+          <div class="broker-icon">📈</div>
+          <div>
+            <strong>XM <span class="live">≋ Live</span></strong>
+            <small>XM Global Limited ••••381517</small>
+          </div>
+        </div>
+        <div class="ok">⊙</div>
+      </div>
+
+      <div class="balance-row">
+        <div>
+          <small>Balance</small>
+          <strong>$61.23</strong>
+        </div>
+        <div>
+          <small>Equity</small>
+          <strong>$61.23</strong>
+        </div>
+      </div>
+
+      <div class="last-sync">Last sync: demo mode</div>
+
+      <div class="actions">
+        <button class="btn" id="syncBtn">↻ Sync</button>
+        <button class="btn" id="updatePasswordBtn">🔑 Update Password</button>
+        <button class="btn danger" id="disconnectBtn">↗ Disconnect</button>
+      </div>
+    </section>
+
+    <section class="connect-section">
+      <h3 class="connect-title">🔗 Connect New Broker</h3>
+
+      <div class="connect-card" id="connectCard">
+        <div class="connect-icon">📊</div>
+        <h3>MT5 Direct</h3>
+        <p>Connect an MT5 trading account</p>
+        <div class="connect-link">
+          <span>🔗 Connect</span>
+          <span>→</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+</div>
+
+<button class="help">?</button>
+
+<div class="modal-bg" id="connectModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Connect MT5 Account</h2>
+      <button class="close" id="closeModal">×</button>
+    </div>
+
+    <div class="notice">
+      Prototype only: this form does not connect to MetaTrader yet. Do not enter your real trading password into this demo page.
+    </div>
+
+    <div class="form-group">
+      <label>Broker</label>
+      <select>
+        <option>XM</option>
+        <option>Other MT5 Broker</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>MT5 Account ID</label>
+      <input type="text" placeholder="Enter MT5 account ID">
+    </div>
+
+    <div class="form-group">
+      <label>Broker Server</label>
+      <input type="text" placeholder="Example: XMGlobal-MT5 18">
+    </div>
+
+    <div class="form-group">
+      <label>MT5 Password</label>
+      <input type="password" placeholder="Demo UI only — do not enter real password">
+    </div>
+
+    <div class="modal-actions">
+      <button class="cancel" id="cancelModal">Cancel</button>
+      <button class="connect-btn" id="demoConnect">Connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const analyticsMenu = document.getElementById("analyticsMenu");
+const analyticsToggle = document.getElementById("analyticsToggle");
+analyticsToggle.addEventListener("click", () => {
+  analyticsMenu.classList.toggle("open");
+  analyticsToggle.classList.toggle("active", analyticsMenu.classList.contains("open"));
+});
+
+const connectModal = document.getElementById("connectModal");
+const connectCard = document.getElementById("connectCard");
+const closeModal = document.getElementById("closeModal");
+const cancelModal = document.getElementById("cancelModal");
+const demoConnect = document.getElementById("demoConnect");
+
+connectCard.addEventListener("click", () => connectModal.classList.add("show"));
+closeModal.addEventListener("click", () => connectModal.classList.remove("show"));
+cancelModal.addEventListener("click", () => connectModal.classList.remove("show"));
+connectModal.addEventListener("click", e => {
+  if (e.target === connectModal) connectModal.classList.remove("show");
+});
+demoConnect.addEventListener("click", () => {
+  connectModal.classList.remove("show");
+  alert("Demo only. Real MT5 connection will be added later.");
+});
+
+document.getElementById("syncBtn").addEventListener("click", () => {
+  alert("Demo sync complete. Real MT5 sync will be added later.");
+});
+document.getElementById("updatePasswordBtn").addEventListener("click", () => {
+  connectModal.classList.add("show");
+});
+document.getElementById("disconnectBtn").addEventListener("click", () => {
+  alert("Demo only. Account was not actually disconnected.");
+});
+</script>
+</body>
+</html>
