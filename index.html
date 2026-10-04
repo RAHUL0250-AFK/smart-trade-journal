@@ -1667,6 +1667,19 @@ if (analyticsMenu && analyticsToggle) {
       if (email) el.textContent = email;
     });
 
+    // Dashboard has a simple profile pill without <strong>/<small>.
+    document.querySelectorAll(".profile").forEach(el => {
+      if (!el.querySelector("strong") && !el.querySelector("small")) {
+        el.textContent = fullName + " ▾";
+      }
+    });
+
+    // Dashboard greeting name.
+    const dashboardName = document.querySelector(".hero-left h2");
+    if (dashboardName) {
+      dashboardName.textContent = fullName.toUpperCase();
+    }
+
     // Update Settings page fields/card when present.
     const fullNameInput = document.querySelector('input[type="text"][value="Smart Trader"], input[type="text"][value="Rahul Kumawat"]');
     if (fullNameInput) fullNameInput.value = fullName;
