@@ -1874,8 +1874,10 @@ if (analyticsMenu && analyticsToggle) {
       $("tradeStreak").textContent = streakCount ? `${streakCount}${streakType}` : "—";
       setMoneyClass($("tradeStreak"), streakType === "W" ? 1 : streakType === "L" ? -1 : 0);
 
-      // Balance is intentionally not faked. We'll add live account snapshots next.
-      $("dashboardBalance").textContent = "—";
+      // Balance is filled by the live MT5 snapshot loader below.
+      if (!$("dashboardBalance").textContent || $("dashboardBalance").textContent === "—") {
+        $("dashboardBalance").textContent = "—";
+      }
 
       const list = $("recentTradesList");
       if (!closed.length) {
@@ -1914,9 +1916,40 @@ if (analyticsMenu && analyticsToggle) {
 
   document.getElementById("dashboardSyncBtn")?.addEventListener("click", loadDashboardTrades);
 
+
+  async function loadLiveAccountSnapshot() {
+    try {
+      const { data, error } = await window.stjSupabase
+        .from("mt5_account_snapshots")
+        .select("balance,equity,floating_profit,currency,updated_at,account_id,server")
+        .order("updated_at", { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      const snap = data && data[0];
+      if (!snap) return;
+
+      const userCurrency = snap.currency || "USD";
+      $("dashboardBalance").textContent = money(Number(snap.balance || 0), userCurrency, false);
+
+      const updated = new Date(snap.updated_at);
+      const ageSec = Math.max(0, (Date.now() - updated.getTime()) / 1000);
+      const statusText = ageSec <= 90 ? "EA Live" : "EA Last seen";
+
+      const account = String(snap.account_id || "");
+      const masked = account ? "••••" + account.slice(-4) : "";
+      $("dashboardBrokerStatus").innerHTML =
+        `● MT5 ${masked} <span class="connected">${statusText}</span>`;
+    } catch (e) {
+      console.error("Live MT5 snapshot load failed:", e);
+    }
+  }
+
   await Promise.all([
     loadBrokerStatus(),
-    loadDashboardTrades()
+    loadDashboardTrades(),
+    loadLiveAccountSnapshot()
   ]);
 })();
 </script>
