@@ -928,5 +928,59 @@ window.stjAuthReady = (async () => {
   }
 })();
 </script>
+
+<script id="stj-user-profile">
+(async () => {
+  try {
+    if (window.stjAuthReady) {
+      const ok = await window.stjAuthReady;
+      if (!ok) return;
+    }
+
+    if (!window.stjSupabase) return;
+
+    const { data, error } = await window.stjSupabase.auth.getUser();
+    if (error || !data.user) return;
+
+    const user = data.user;
+    const fullName =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      (user.email ? user.email.split("@")[0] : "Trader");
+
+    const email = user.email || "";
+
+    // Update common top-right profile cards.
+    document.querySelectorAll(".profile strong, .profile-box strong").forEach(el => {
+      el.textContent = fullName;
+    });
+
+    document.querySelectorAll(".profile small, .profile-box small").forEach(el => {
+      if (email) el.textContent = email;
+    });
+
+    // Update Settings page fields/card when present.
+    const fullNameInput = document.querySelector('input[type="text"][value="Smart Trader"], input[type="text"][value="Rahul Kumawat"]');
+    if (fullNameInput) fullNameInput.value = fullName;
+
+    const emailInput = document.querySelector('input[type="email"]');
+    if (emailInput) emailInput.value = email;
+
+    const userMetaStrong = document.querySelector(".user-meta strong");
+    if (userMetaStrong) userMetaStrong.textContent = email || fullName;
+
+    const avatar = document.querySelector(".avatar");
+    if (avatar) {
+      avatar.textContent = (fullName || "T").trim().charAt(0).toUpperCase();
+    }
+
+    // Expose for later features.
+    window.stjCurrentUser = user;
+  } catch (err) {
+    console.error("Could not load user profile:", err);
+  }
+})();
+</script>
+
 </body>
 </html>
