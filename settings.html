@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="auth-checking" lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -250,7 +250,60 @@ body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--tex
   color:#fff;
 }
 
+
+/* GLOBAL AUTH GUARD */
+html.auth-checking body{visibility:hidden}
+
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script id="stj-auth-guard">
+window.STJ_SUPABASE_URL = "https://vboelobxtkgewkwxllsq.supabase.co";
+window.STJ_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
+window.stjSupabase = window.supabase.createClient(
+  window.STJ_SUPABASE_URL,
+  window.STJ_SUPABASE_PUBLISHABLE_KEY
+);
+
+window.stjAuthReady = (async () => {
+  try {
+    const { data: sessionData } = await window.stjSupabase.auth.getSession();
+
+    if (!sessionData.session) {
+      window.location.replace("login.html");
+      return false;
+    }
+
+    const { data: refreshData, error: refreshError } =
+      await window.stjSupabase.auth.refreshSession();
+
+    if (refreshError || !refreshData.session) {
+      await window.stjSupabase.auth.signOut({ scope: "local" });
+      window.location.replace("login.html");
+      return false;
+    }
+
+    const { data: userData, error: userError } =
+      await window.stjSupabase.auth.getUser();
+
+    if (userError || !userData.user) {
+      await window.stjSupabase.auth.signOut({ scope: "local" });
+      window.location.replace("login.html");
+      return false;
+    }
+
+    document.documentElement.classList.remove("auth-checking");
+    return true;
+  } catch (err) {
+    try {
+      await window.stjSupabase.auth.signOut({ scope: "local" });
+    } catch (e) {}
+    window.location.replace("login.html");
+    return false;
+  }
+})();
+</script>
+
 </head>
 <body>
 <div class="app">
@@ -295,7 +348,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--tex
   <div class="bottom">
     <a href="broker-hub.html">▣ Broker Hub</a>
     <a href="settings.html" class="active">⚙ Settings</a>
-    <a href="#">↪ Logout</a>
+    <a href="login.html" data-stj-logout>↪ Logout</a>
   </div>
 
 </aside>
@@ -529,6 +582,32 @@ document.getElementById("planBtn").addEventListener("click", () => {
     });
   }
 })();
+</script>
+
+
+<script id="stj-real-logout">
+document.querySelectorAll("[data-stj-logout]").forEach(link => {
+  link.addEventListener("click", async event => {
+    event.preventDefault();
+
+    try {
+      if (window.stjAuthReady) {
+        await window.stjAuthReady;
+      }
+      if (window.stjSupabase) {
+        await window.stjSupabase.auth.signOut();
+      }
+    } catch (err) {
+      try {
+        if (window.stjSupabase) {
+          await window.stjSupabase.auth.signOut({ scope: "local" });
+        }
+      } catch (e) {}
+    }
+
+    window.location.replace("login.html");
+  });
+});
 </script>
 
 </body>
