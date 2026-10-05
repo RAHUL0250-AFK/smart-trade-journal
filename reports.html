@@ -544,6 +544,40 @@ body{
 /* GLOBAL AUTH GUARD */
 html.auth-checking body{visibility:hidden}
 
+
+.report-live{
+  margin:0 0 16px;
+  padding:10px 12px;
+  border:1px solid #224d39;
+  background:#0d1f17;
+  border-radius:10px;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  font-size:11px;
+  color:#98a1b0;
+}
+.report-live b{color:var(--green)}
+.report-empty{
+  height:100%;
+  min-height:220px;
+  display:grid;
+  place-items:center;
+  color:var(--muted);
+  font-size:12px;
+  text-align:center;
+}
+.report-filter-select{
+  background:#111319;
+  color:#fff;
+  border:1px solid #20232a;
+  border-radius:10px;
+  padding:11px 14px;
+  font-size:13px;
+  min-width:150px;
+}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -648,7 +682,7 @@ window.stjAuthReady = (async () => {
 <main class="main">
 
 <header class="topbar">
-  <div class="account">● XM #430381517 <span class="connected">Connected</span></div>
+  <div class="account" id="reportAccount">● MT5 <span class="connected">Loading...</span></div>
   <div>☼</div>
 
   <div class="profile">
@@ -676,7 +710,12 @@ window.stjAuthReady = (async () => {
     </div>
 
     <div class="tool-row">
-      <button class="filter">▣ &nbsp; All Time &nbsp;⌄</button>
+      <select class="report-filter-select" id="reportRange">
+        <option value="all">All Time</option>
+        <option value="month">This Month</option>
+        <option value="30">Last 30 Days</option>
+        <option value="90">Last 90 Days</option>
+      </select>
       <button class="export">⇩ Export PDF</button>
     </div>
 
@@ -684,6 +723,10 @@ window.stjAuthReady = (async () => {
 
 </section>
 
+<div class="report-live">
+  <span><b>● REAL MT5 REPORT</b> <span id="reportLiveText">Loading active account...</span></span>
+  <span id="reportRefreshText">—</span>
+</div>
 
 <section class="grid2">
 
@@ -693,81 +736,7 @@ window.stjAuthReady = (async () => {
     <div class="select-title">▥ &nbsp; Net P&amp;L – Cumulative &nbsp;⌄</div>
   </div>
 
-  <svg class="chart" viewBox="0 0 700 300" preserveAspectRatio="none">
-
-    <defs>
-      <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#19c98c" stop-opacity=".28"/>
-        <stop offset="100%" stop-color="#19c98c" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-
-    <line class="gridline" x1="55" y1="20" x2="680" y2="20"/>
-    <line class="gridline" x1="55" y1="90" x2="680" y2="90"/>
-    <line class="gridline" x1="55" y1="160" x2="680" y2="160"/>
-    <line class="gridline" x1="55" y1="230" x2="680" y2="230"/>
-
-    <line class="axis" x1="55" y1="20" x2="55" y2="260"/>
-    <line class="axis" x1="55" y1="260" x2="680" y2="260"/>
-
-    <path class="pnl-area"
-    d="
-    M55 190
-    L65 175 L75 200 L85 215 L95 180
-    L105 140 L115 170 L125 150 L135 190
-    L145 175 L155 185 L165 210 L175 180
-    L185 140 L195 120 L205 130 L215 122
-    L225 145 L235 150 L245 170 L255 155
-    L265 175 L275 160 L285 195 L295 200
-    L305 170 L315 160 L325 130 L335 140
-    L345 175 L355 160 L365 165 L375 150
-    L385 170 L395 160 L405 155 L415 205
-    L425 215 L435 200 L445 175 L455 150
-    L465 120 L475 95 L485 115 L495 85
-    L505 100 L515 75 L525 60 L535 80
-    L545 70 L555 45 L565 72 L575 58
-    L585 50 L595 68 L605 55 L615 77
-    L625 57 L635 62 L645 45 L655 75
-    L665 62 L675 42
-    L675 260 L55 260 Z"/>
-
-    <polyline class="pnl-line"
-    points="
-    55,190 65,175 75,200 85,215 95,180
-    105,140 115,170 125,150 135,190
-    145,175 155,185 165,210 175,180
-    185,140 195,120 205,130 215,122
-    225,145 235,150 245,170 255,155
-    265,175 275,160 285,195 295,200
-    305,170 315,160 325,130 335,140
-    345,175 355,160 365,165 375,150
-    385,170 395,160 405,155 415,205
-    425,215 435,200 445,175 455,150
-    465,120 475,95 485,115 495,85
-    505,100 515,75 525,60 535,80
-    545,70 555,45 565,72 575,58
-    585,50 595,68 605,55 615,77
-    625,57 635,62 645,45 655,75
-    665,62 675,42"/>
-
-    <text x="15" y="25">$140</text>
-    <text x="20" y="95">$105</text>
-    <text x="26" y="165">$70</text>
-    <text x="26" y="235">$35</text>
-    <text x="35" y="265">$0</text>
-
-    <text x="52" y="282">Oct 2</text>
-    <text x="115" y="282">Sep 28</text>
-    <text x="190" y="282">Sep 22</text>
-    <text x="260" y="282">Aug 3</text>
-    <text x="325" y="282">Jul 30</text>
-    <text x="390" y="282">Jul 22</text>
-    <text x="455" y="282">Jul 15</text>
-    <text x="520" y="282">Jul 8</text>
-    <text x="590" y="282">Jul 2</text>
-    <text x="650" y="282">Jun 24</text>
-
-  </svg>
+  <div id="cumulativeChart" class="chart"></div>
 
 </div>
 
@@ -778,83 +747,7 @@ window.stjAuthReady = (async () => {
     <div class="select-title">▥ &nbsp; P&amp;L by Hour of Day &nbsp;⌄</div>
   </div>
 
-  <div class="hour-chart">
-
-    <div class="hour-bars">
-
-      <div class="zero"></div>
-
-      <div class="hour-col">
-        <div class="bar neg" style="height:2%"></div>
-        <span class="hour-label">7:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar pos" style="height:6%"></div>
-        <span class="hour-label">8:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar pos" style="height:14%"></div>
-        <span class="hour-label">9:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar pos" style="height:10%"></div>
-        <span class="hour-label">11:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar neg" style="height:12%"></div>
-        <span class="hour-label">12:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar neg" style="height:20%"></div>
-        <span class="hour-label">13:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar neg" style="height:8%"></div>
-        <span class="hour-label">14:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar neg" style="height:7%"></div>
-        <span class="hour-label">16:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar pos" style="height:63%"></div>
-        <span class="hour-label">17:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar pos" style="height:5%"></div>
-        <span class="hour-label">18:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar pos" style="height:74%"></div>
-        <span class="hour-label">19:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar pos" style="height:18%"></div>
-        <span class="hour-label">20:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar neg" style="height:3%"></div>
-        <span class="hour-label">21:00</span>
-      </div>
-
-      <div class="hour-col">
-        <div class="bar pos" style="height:23%"></div>
-        <span class="hour-label">22:00</span>
-      </div>
-
-    </div>
+  <div class="hour-chart"><div class="hour-bars" id="hourBars"></div></div>
 
   </div>
 
@@ -867,42 +760,42 @@ window.stjAuthReady = (async () => {
 
 <div class="metric">
   <small>$ &nbsp; Net P&amp;L</small>
-  <strong class="green">$118.72</strong>
+  <strong class="green"><span id="reportNetPnl">—</span></strong>
 </div>
 
 <div class="metric">
   <small>% &nbsp; Win %</small>
-  <strong>55.9%</strong>
+  <strong><span id="reportWinRate">—</span></strong>
 </div>
 
 <div class="metric">
   <small>◎ &nbsp; Profit Factor</small>
-  <strong>1.37</strong>
+  <strong><span id="reportProfitFactor">—</span></strong>
 </div>
 
 <div class="metric">
   <small>⌁ &nbsp; Total Trades</small>
-  <strong>136</strong>
+  <strong><span id="reportTotalTrades">—</span></strong>
 </div>
 
 <div class="metric">
   <small>↗ &nbsp; Avg Win</small>
-  <strong class="green">$5.84</strong>
+  <strong class="green"><span id="reportAvgWin">—</span></strong>
 </div>
 
 <div class="metric">
   <small>↘ &nbsp; Avg Loss</small>
-  <strong class="red">$5.41</strong>
+  <strong class="red"><span id="reportAvgLoss">—</span></strong>
 </div>
 
 <div class="metric">
   <small>♙ &nbsp; W/L Ratio</small>
-  <strong>1.08</strong>
+  <strong><span id="reportWLRatio">—</span></strong>
 </div>
 
 <div class="metric">
   <small>◷ &nbsp; Avg Hold Time</small>
-  <strong>37m</strong>
+  <strong><span id="reportAvgHold">—</span></strong>
 </div>
 
 </section>
@@ -979,6 +872,356 @@ window.stjAuthReady = (async () => {
   } catch (err) {
     console.error("Could not load user profile:", err);
   }
+})();
+</script>
+
+
+<script id="stj-real-reports">
+(async () => {
+  if (window.stjAuthReady) {
+    const ok = await window.stjAuthReady;
+    if (!ok) return;
+  }
+  if (!window.stjSupabase) return;
+
+  const $ = id => document.getElementById(id);
+  const esc = v => String(v ?? "")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;")
+    .replaceAll(">","&gt;").replaceAll('"',"&quot;");
+
+  let allClosedTrades = [];
+  let currentCurrency = "USD";
+  let activeDevice = null;
+  let refreshBusy = false;
+
+  function money(v, signed=true) {
+    const n = Number(v || 0);
+    const abs = new Intl.NumberFormat("en-US", {
+      style:"currency",
+      currency:currentCurrency,
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }).format(Math.abs(n));
+    return (signed ? (n>0?"+":n<0?"-":"") : "") + abs;
+  }
+
+  function formatDuration(minutes) {
+    if (!Number.isFinite(minutes) || minutes < 0) return "—";
+    if (minutes < 60) return `${Math.round(minutes)}m`;
+    const h = Math.floor(minutes / 60);
+    const m = Math.round(minutes % 60);
+    return `${h}h ${m}m`;
+  }
+
+  async function getActiveContext() {
+    const {data:userData,error:userError} = await window.stjSupabase.auth.getUser();
+    if (userError || !userData.user) throw userError || new Error("Not signed in.");
+
+    const user = userData.user;
+    const storageKey = `stj_active_mt5_device_${user.id}`;
+
+    const {data:devices,error:deviceError} = await window.stjSupabase
+      .from("ea_devices")
+      .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at")
+      .eq("is_active", true)
+      .order("created_at", {ascending:false});
+
+    if (deviceError) throw deviceError;
+
+    const list = devices || [];
+    const preferred = localStorage.getItem(storageKey) || "";
+    const device = list.find(d => d.id === preferred) || list[0] || null;
+
+    if (device && device.id !== preferred) {
+      localStorage.setItem(storageKey, device.id);
+    }
+
+    return {user,device};
+  }
+
+  async function fetchDeals(deviceId) {
+    const all = [];
+    let from = 0;
+    const pageSize = 1000;
+
+    while (true) {
+      const {data,error} = await window.stjSupabase
+        .from("mt5_deals")
+        .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
+        .eq("device_id", deviceId)
+        .order("time_msc", {ascending:true})
+        .range(from, from + pageSize - 1);
+
+      if (error) throw error;
+      all.push(...(data || []));
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
+      if (from >= 10000) break;
+    }
+    return all;
+  }
+
+  function groupClosedTrades(deals) {
+    const map = new Map();
+
+    for (const d of deals) {
+      if (!d.symbol || ![0,1].includes(Number(d.deal_type))) continue;
+      const key = d.position_id || `deal-${d.deal_ticket}`;
+
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          entries:[],
+          exits:[],
+          net:0,
+          entryVol:0,
+          exitVol:0,
+          firstTime:null,
+          lastTime:null
+        });
+      }
+
+      const t = map.get(key);
+      const dt = new Date(d.deal_time);
+      const et = Number(d.entry_type);
+      const vol = Number(d.volume || 0);
+
+      t.net += Number(d.profit || 0) +
+               Number(d.commission || 0) +
+               Number(d.swap || 0) +
+               Number(d.fee || 0);
+
+      if (!t.firstTime || dt < t.firstTime) t.firstTime = dt;
+      if (!t.lastTime || dt > t.lastTime) t.lastTime = dt;
+
+      if (et === 0) {
+        t.entries.push(d);
+        t.entryVol += vol;
+      }
+
+      if ([1,2,3].includes(et)) {
+        t.exits.push(d);
+        t.exitVol += vol;
+      }
+    }
+
+    return [...map.values()]
+      .filter(t => t.exits.length && (t.entryVol === 0 || t.exitVol + 1e-8 >= t.entryVol))
+      .map(t => ({
+        ...t,
+        openedAt:t.entries.length ? new Date(t.entries[0].deal_time) : t.firstTime,
+        closedAt:new Date(t.exits[t.exits.length - 1].deal_time)
+      }))
+      .sort((a,b) => a.closedAt - b.closedAt);
+  }
+
+  function filteredTrades() {
+    const range = $("reportRange")?.value || "all";
+    const now = new Date();
+
+    if (range === "all") return allClosedTrades;
+
+    if (range === "month") {
+      return allClosedTrades.filter(t =>
+        t.closedAt.getFullYear() === now.getFullYear() &&
+        t.closedAt.getMonth() === now.getMonth()
+      );
+    }
+
+    const days = Number(range);
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() - days);
+
+    return allClosedTrades.filter(t => t.closedAt >= cutoff);
+  }
+
+  function renderMetrics(trades) {
+    const wins = trades.filter(t => t.net > 0);
+    const losses = trades.filter(t => t.net < 0);
+
+    const net = trades.reduce((s,t) => s + t.net, 0);
+    const winRate = trades.length ? wins.length / trades.length * 100 : 0;
+
+    const grossProfit = wins.reduce((s,t) => s + t.net, 0);
+    const grossLoss = Math.abs(losses.reduce((s,t) => s + t.net, 0));
+    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? Infinity : 0);
+
+    const avgWin = wins.length ? grossProfit / wins.length : 0;
+    const avgLoss = losses.length ? grossLoss / losses.length : 0;
+    const wlRatio = avgLoss > 0 ? avgWin / avgLoss : (avgWin > 0 ? Infinity : 0);
+
+    const holds = trades
+      .map(t => t.openedAt && t.closedAt ? (t.closedAt - t.openedAt) / 60000 : null)
+      .filter(x => Number.isFinite(x) && x >= 0);
+
+    const avgHold = holds.length ? holds.reduce((a,b)=>a+b,0) / holds.length : NaN;
+
+    $("reportNetPnl").textContent = money(net,true);
+    $("reportWinRate").textContent = `${winRate.toFixed(1)}%`;
+    $("reportProfitFactor").textContent = Number.isFinite(profitFactor) ? profitFactor.toFixed(2) : "∞";
+    $("reportTotalTrades").textContent = String(trades.length);
+    $("reportAvgWin").textContent = money(avgWin,false);
+    $("reportAvgLoss").textContent = money(avgLoss,false);
+    $("reportWLRatio").textContent = Number.isFinite(wlRatio) ? wlRatio.toFixed(2) : "∞";
+    $("reportAvgHold").textContent = formatDuration(avgHold);
+  }
+
+  function renderCumulative(trades) {
+    const box = $("cumulativeChart");
+    if (!box) return;
+
+    if (!trades.length) {
+      box.innerHTML = '<div class="report-empty">No closed trades in this date range.</div>';
+      return;
+    }
+
+    let running = 0;
+    const values = trades.map(t => {
+      running += t.net;
+      return running;
+    });
+
+    const width = 700, height = 300, padL = 58, padR = 20, padT = 22, padB = 38;
+    const min = Math.min(0, ...values);
+    const max = Math.max(0, ...values);
+    const span = Math.max(1e-9, max - min);
+
+    const points = values.map((v,i) => {
+      const x = padL + (values.length === 1 ? 0 : i/(values.length-1)) * (width-padL-padR);
+      const y = padT + (max-v)/span * (height-padT-padB);
+      return [x,y];
+    });
+
+    const line = points.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+    const area = `M ${points[0][0]} ${points[0][1]} ` +
+      points.slice(1).map(p => `L ${p[0]} ${p[1]}`).join(" ") +
+      ` L ${points[points.length-1][0]} ${height-padB} L ${points[0][0]} ${height-padB} Z`;
+
+    const zeroY = padT + (max-0)/span * (height-padT-padB);
+    const firstDate = trades[0].closedAt.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+    const lastDate = trades[trades.length-1].closedAt.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+
+    box.innerHTML = `
+      <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="width:100%;height:100%">
+        <defs>
+          <linearGradient id="realGreenGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#19c98c" stop-opacity=".28"/>
+            <stop offset="100%" stop-color="#19c98c" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <line x1="${padL}" y1="${zeroY}" x2="${width-padR}" y2="${zeroY}" stroke="#464b56"/>
+        <path d="${area}" fill="url(#realGreenGradient)"/>
+        <polyline points="${line}" fill="none" stroke="#16c98b" stroke-width="3"/>
+
+        <text x="${padL}" y="${height-10}" fill="#797f8c" font-size="11">${esc(firstDate)}</text>
+        <text x="${width-padR-70}" y="${height-10}" fill="#797f8c" font-size="11">${esc(lastDate)}</text>
+        <text x="8" y="${padT+5}" fill="#797f8c" font-size="11">${esc(money(max,true))}</text>
+        <text x="8" y="${height-padB}" fill="#797f8c" font-size="11">${esc(money(min,true))}</text>
+      </svg>`;
+  }
+
+  function renderHourly(trades) {
+    const box = $("hourBars");
+    if (!box) return;
+
+    const hours = Array.from({length:24},(_,h)=>({h,pnl:0,n:0}));
+    trades.forEach(t => {
+      const h = t.closedAt.getHours();
+      hours[h].pnl += t.net;
+      hours[h].n++;
+    });
+
+    const used = hours.filter(x => x.n);
+    if (!used.length) {
+      box.innerHTML = '<div class="report-empty" style="width:100%">No hourly data in this range.</div>';
+      return;
+    }
+
+    const maxAbs = Math.max(1, ...used.map(x => Math.abs(x.pnl)));
+
+    box.innerHTML = '<div class="zero"></div>' + used.map(x => {
+      const h = Math.max(2, Math.abs(x.pnl)/maxAbs * 46);
+      const cls = x.pnl >= 0 ? "pos" : "neg";
+      return `
+        <div class="hour-col" title="${String(x.h).padStart(2,"0")}:00 • ${money(x.pnl,true)} • ${x.n} trades">
+          <div class="bar ${cls}" style="height:${h}%"></div>
+          <span class="hour-label">${String(x.h).padStart(2,"0")}:00</span>
+        </div>`;
+    }).join("");
+  }
+
+  function renderAll() {
+    const trades = filteredTrades();
+    renderMetrics(trades);
+    renderCumulative(trades);
+    renderHourly(trades);
+
+    const rangeText = $("reportRange")?.selectedOptions?.[0]?.textContent || "All Time";
+    $("reportLiveText").textContent =
+      `${activeDevice ? "••••" + String(activeDevice.account_id || "").slice(-4) : ""} • ${rangeText} • ${trades.length} closed trades`;
+  }
+
+  async function refresh() {
+    if (refreshBusy) return;
+    refreshBusy = true;
+
+    try {
+      const ctx = await getActiveContext();
+      activeDevice = ctx.device;
+
+      if (!activeDevice) {
+        $("reportAccount").innerHTML = '● MT5 <span class="connected">No active account</span>';
+        $("reportLiveText").textContent = "No MT5 account selected. Choose one in Broker Hub.";
+        allClosedTrades = [];
+        renderAll();
+        return;
+      }
+
+      const [{data:snapshots}, deals] = await Promise.all([
+        window.stjSupabase
+          .from("mt5_account_snapshots")
+          .select("currency")
+          .eq("device_id", activeDevice.id)
+          .limit(1),
+        fetchDeals(activeDevice.id)
+      ]);
+
+      currentCurrency =
+        snapshots?.[0]?.currency ||
+        ctx.user?.user_metadata?.default_currency ||
+        "USD";
+
+      allClosedTrades = groupClosedTrades(deals);
+
+      const masked = "••••" + String(activeDevice.account_id || "").slice(-4);
+      $("reportAccount").innerHTML =
+        `● ${esc(activeDevice.broker_name || "MT5")} ${masked} <span class="connected">ACTIVE</span>`;
+
+      renderAll();
+      $("reportRefreshText").textContent = `Updated ${new Date().toLocaleTimeString()}`;
+    } catch (error) {
+      console.error("Reports refresh failed:", error);
+      $("reportLiveText").textContent = `Could not load report: ${error.message || "Unknown error"}`;
+    } finally {
+      refreshBusy = false;
+    }
+  }
+
+  $("reportRange")?.addEventListener("change", renderAll);
+
+  document.querySelector(".export")?.addEventListener("click", () => {
+    window.print();
+  });
+
+  await refresh();
+  const timer = setInterval(refresh, 15000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refresh();
+  });
+
+  window.addEventListener("beforeunload", () => clearInterval(timer));
 })();
 </script>
 
