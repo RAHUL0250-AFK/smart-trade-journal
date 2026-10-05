@@ -1029,6 +1029,34 @@ html.auth-checking body{visibility:hidden}
   .real-bar-row{grid-template-columns:80px 1fr 72px}
 }
 
+
+.pnl-month-nav{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-left:auto;
+}
+.pnl-month-nav button{
+  border:1px solid #303541;
+  background:#161922;
+  color:#eef1f6;
+  min-width:30px;
+  height:30px;
+  padding:0 9px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:11px;
+}
+.pnl-month-nav button:hover{
+  border-color:#5a5fff;
+}
+.pnl-month-label{
+  min-width:120px;
+  text-align:center;
+  font-size:11px;
+  color:#b8bfca;
+}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1910,6 +1938,10 @@ window.stjAuthReady = (async () => {
     .replaceAll("&","&amp;").replaceAll("<","&lt;")
     .replaceAll(">","&gt;").replaceAll('"',"&quot;");
 
+  let pnlSelectedDate = new Date();
+  pnlSelectedDate.setDate(1);
+
+
   function findTitle(title){
     return [...document.querySelectorAll("h3")].find(h => h.textContent.trim() === title);
   }
@@ -2125,11 +2157,11 @@ async function stjUseMt5Account(deviceId) {
   function renderPnl(closed,currency){
     const c=findCard("P&L"); if(!c)return;
 
-    const now=new Date(), year=now.getFullYear(), month=now.getMonth();
-    const monthName=new Intl.DateTimeFormat("en-US",{month:"long",year:"numeric"}).format(now);
+    const year=pnlSelectedDate.getFullYear();
+    const month=pnlSelectedDate.getMonth();
+    const monthName=new Intl.DateTimeFormat("en-US",{month:"long",year:"numeric"}).format(pnlSelectedDate);
     const daysInMonth=new Date(year,month+1,0).getDate();
 
-    // Keep every metric inside this card on the SAME date range.
     const monthTrades=closed.filter(t =>
       t.closedAt.getFullYear()===year &&
       t.closedAt.getMonth()===month
@@ -2152,10 +2184,25 @@ async function stjUseMt5Account(deviceId) {
 
     const maxAbs=Math.max(1,...daily.map(Math.abs));
 
-    c.innerHTML=title("▥","purple-bg","P&L",`${monthName} • current-month closed MT5 trades only`) +
-      `<div class="real-kpis">
+    c.innerHTML=`
+      <div class="card-title" style="display:flex;align-items:center;width:100%">
+        <div class="icon-badge purple-bg">▥</div>
+        <div>
+          <h3>P&amp;L</h3>
+          <small>${monthName} • closed MT5 trades only</small>
+        </div>
+
+        <div class="pnl-month-nav">
+          <button id="pnlPrevMonth" title="Previous month">←</button>
+          <span class="pnl-month-label">${monthName}</span>
+          <button id="pnlCurrentMonth" title="Current month">Today</button>
+          <button id="pnlNextMonth" title="Next month">→</button>
+        </div>
+      </div>
+
+      <div class="real-kpis">
         <div class="real-kpi">
-          <small>MONTH P&L</small>
+          <small>MONTH P&amp;L</small>
           <strong class="${monthPnl>=0?"green":"red"}">${money(monthPnl,currency,true)}</strong>
         </div>
         <div class="real-kpi">
@@ -2188,9 +2235,24 @@ async function stjUseMt5Account(deviceId) {
       </div>
 
       <div class="real-note">
-        Top cards (Win Rate / Profit Factor / Expectancy / Total P&amp;L) are all-time for the active account.
-        This P&amp;L chart and all four boxes above are ${monthName} only.
+        Use ← / → to browse previous or next months. Top cards above remain all-time for the active account.
       </div>`;
+
+    document.getElementById("pnlPrevMonth")?.addEventListener("click",()=>{
+      pnlSelectedDate.setMonth(pnlSelectedDate.getMonth()-1);
+      renderPnl(closed,currency);
+    });
+
+    document.getElementById("pnlNextMonth")?.addEventListener("click",()=>{
+      pnlSelectedDate.setMonth(pnlSelectedDate.getMonth()+1);
+      renderPnl(closed,currency);
+    });
+
+    document.getElementById("pnlCurrentMonth")?.addEventListener("click",()=>{
+      pnlSelectedDate=new Date();
+      pnlSelectedDate.setDate(1);
+      renderPnl(closed,currency);
+    });
   }
 
   function renderWinLoss(closed){
