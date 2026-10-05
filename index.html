@@ -1440,7 +1440,7 @@ window.stjAuthReady = (async () => {
 
 </div>
 
-<h3 class="month-title" id="calendarMonthTitle">—</h3>
+<h3 class="month-title" id="calendarMonthTitle">—</h3><span style="font-size:9px;color:var(--muted);margin-left:7px">ACCOUNT FILTERED</span>
 
 <div class="calendar-layout">
 
@@ -2082,6 +2082,7 @@ async function stjUseMt5Account(deviceId) {
       const {data, error} = await window.stjSupabase
         .from("mt5_deals")
         .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
+        .eq("device_id", deviceId)
         .order("time_msc", {ascending:true})
         .range(from, from + pageSize - 1);
       if (error) throw error;
@@ -2477,10 +2478,58 @@ async function stjUseMt5Account(deviceId) {
     }
   }
 
+  function renderNoAccountState() {
+    const title = document.getElementById("calendarMonthTitle");
+    const pnl = document.getElementById("calendarMonthPnl");
+    const grid = document.getElementById("tradingCalendarGrid");
+    const weeks = document.getElementById("calendarWeekSummary");
+
+    if (title) title.textContent = "No Active MT5 Account";
+    if (pnl) {
+      pnl.textContent = "—";
+      pnl.className = "";
+    }
+
+    if (grid) {
+      grid.innerHTML = `
+        <div style="
+          grid-column:1/-1;
+          min-height:240px;
+          display:grid;
+          place-items:center;
+          text-align:center;
+          color:var(--muted);
+          border:1px dashed #2a2e36;
+          border-radius:12px;
+          padding:24px;">
+          <div>
+            <div style="font-size:28px;margin-bottom:10px">🔌</div>
+            <strong style="display:block;color:#e8ebf2;font-size:13px;margin-bottom:6px">
+              No MT5 account connected
+            </strong>
+            <span style="font-size:11px">
+              Connect or select an account in Broker Hub to load Trading Calendar data.
+            </span>
+          </div>
+        </div>`;
+    }
+
+    if (weeks) weeks.innerHTML = "";
+
+    const activityTitle = document.getElementById("activityTitle");
+    if (activityTitle) activityTitle.textContent = "No active MT5 account";
+
+    const score = document.getElementById("tradeScoreNumber");
+    if (score) score.textContent = "—";
+  }
+
   async function run() {
     try {
       const ctx = await stjGetActiveMt5Context();
-      if (!ctx.device) throw new Error("No active MT5 account selected.");
+      if (!ctx.device) {
+        renderNoAccountState();
+        return;
+      }
 
       const deals = await fetchDeals(ctx.device.id);
       const currency = ctx.user?.user_metadata?.default_currency || "USD";
@@ -2501,6 +2550,31 @@ async function stjUseMt5Account(deviceId) {
   await run();
   document.getElementById("dashboardSyncBtn")?.addEventListener("click", () => setTimeout(run, 350));
 })();
+</script>
+
+
+<script id="stj-calendar-preclear">
+document.addEventListener("DOMContentLoaded", () => {
+  const grid = document.getElementById("tradingCalendarGrid");
+  const title = document.getElementById("calendarMonthTitle");
+  const pnl = document.getElementById("calendarMonthPnl");
+
+  if (grid) {
+    grid.innerHTML = `
+      <div style="
+        grid-column:1/-1;
+        min-height:220px;
+        display:grid;
+        place-items:center;
+        color:var(--muted);
+        font-size:11px;">
+        Loading active MT5 account...
+      </div>`;
+  }
+
+  if (title) title.textContent = "Loading...";
+  if (pnl) pnl.textContent = "—";
+});
 </script>
 
 </body>
