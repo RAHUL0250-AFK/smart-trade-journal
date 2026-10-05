@@ -99,7 +99,7 @@ body{
         <div class="feature"><strong>Broker Hub</strong><span>Manage connected trading accounts.</span></div>
       </div>
     </div>
-    <div class="brand-foot">Smart Trade Journal • Testing build</div>
+    <div class="brand-foot">Smart Trade Journal • Public Beta</div>
   </section>
 
   <a href="index.html" style="position:fixed;top:18px;left:20px;color:#9da6b5;font:12px Arial,sans-serif;text-decoration:none;z-index:20">← Back to Smart Trade Journal</a>
@@ -124,20 +124,18 @@ body{
           </div>
         </div>
 
-        <div class="row">
-          <label class="check"><input type="checkbox"> Remember me</label>
-          <a class="link" href="#">Forgot password?</a>
+        <div class="row" style="justify-content:flex-end">
+          <a class="link" href="reset-password.html">Forgot password?</a>
         </div>
 
         <button class="primary" type="submit">Sign In</button>
         <div class="error" id="error">Please enter a valid email and password.</div>
-        <div class="success" id="success">Demo login successful. Opening dashboard…</div>
+        <div class="success" id="success">Login successful. Opening dashboard…</div>
       </form>
 
-      <div class="divider">OR</div>
-      <button class="secondary" type="button" id="demoBtn">Continue in Demo Mode</button>
 
       <p class="switch-copy">New here? <a href="signup.html">Create an account</a></p>
+<p class="switch-copy" style="margin-top:10px;font-size:10px"><a href="terms.html">Terms</a> &nbsp;•&nbsp; <a href="privacy.html">Privacy</a></p>
     </div>
   </main>
 </div>
@@ -295,9 +293,6 @@ form.addEventListener("submit", async e => {
   }
 });
 
-document.getElementById("demoBtn").addEventListener("click", () => {
-  location.href = "dashboard.html";
-});
 
 redirectIfLoggedIn();
 </script>

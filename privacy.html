@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy Policy — Smart Trade Journal</title>
+<style>
+:root{--bg:#090b10;--panel:#11151d;--line:#222834;--text:#eef2f8;--muted:#8f99aa;--violet:#7657ff;--green:#31d58a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
+a{color:#a997ff;text-decoration:none} a:hover{text-decoration:underline}
+.top{height:62px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;background:rgba(9,11,16,.94);backdrop-filter:blur(10px)}
+.brand{font-weight:800;color:var(--text);text-decoration:none}.brand span{color:#9b87ff}
+.wrap{width:min(900px,calc(100% - 32px));margin:48px auto 80px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:30px}
+.tag{display:inline-block;border:1px solid #3d356c;background:#17132c;color:#b8aaff;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700}
+h1{font-size:38px;margin:14px 0 8px}h2{font-size:18px;margin:30px 0 10px}p,li{color:var(--muted);font-size:13px;line-height:1.75}
+.note{padding:14px;border:1px solid #3c4136;background:#14170f;border-radius:10px;color:#cbd5b8;font-size:12px;line-height:1.6}
+.footer{margin-top:24px;color:#6f7888;font-size:11px}
+</style>
+</head>
+<body>
+<header class="top"><a class="brand" href="index.html">Smart Trade <span>Journal</span></a><a href="signup.html">Create account</a></header>
+<main class="wrap"><article class="card">
+<span class="tag">PUBLIC BETA</span>
+<h1>Privacy Policy</h1>
+<p>Effective: October 2026</p>
+<div class="note">This beta privacy notice describes the product's current technical design. It should receive jurisdiction-specific legal review before a full commercial launch.</div>
+
+<h2>1. Information used by the service</h2>
+<p>Smart Trade Journal can process account-profile information such as name and email, synchronized MT5 account identifiers and broker/server details, trade/deal history, account snapshots, open-position data, journal entries, and product settings.</p>
+
+<h2>2. Authentication</h2>
+<p>Account authentication is handled through Supabase Auth. The website does not store your plaintext login password in its page code. The current MT5 integration uses a temporary pairing code and a device token rather than your MT5 trading password.</p>
+
+<h2>3. Why information is used</h2>
+<p>Information is used to provide account access, synchronize supported MT5 data, calculate trading analytics, display trade history, support journal features, isolate connected accounts and maintain product functionality.</p>
+
+<h2>4. Storage and service providers</h2>
+<p>Smart Trade Journal currently uses Supabase for authentication and application data storage and GitHub Pages for static website hosting. Those providers process technical information according to their own service terms and privacy practices.</p>
+
+<h2>5. Account isolation</h2>
+<p>The application is designed to restrict authenticated data access to the relevant user and active connected device/account. No internet-connected system can be guaranteed perfectly secure, so users should protect their login and device environment.</p>
+
+<h2>6. Data retention</h2>
+<p>Trading and journal data may remain stored while your account and connected-account records are active. Product controls may allow individual MT5 connections and synchronized data to be removed. Broader account-deletion controls may be expanded during the beta.</p>
+
+<h2>7. Cookies and local storage</h2>
+<p>The service may use browser storage required for authentication, session handling and remembering the active MT5 account. The current beta does not rely on advertising cookies.</p>
+
+<h2>8. Sharing and selling</h2>
+<p>Smart Trade Journal is not designed to sell users' trading data to advertisers. Information may be processed by infrastructure providers needed to operate the service or where disclosure is legally required.</p>
+
+<h2>9. Your choices</h2>
+<p>You can stop using the service, sign out, remove supported MT5 connections, and delete synchronized account data through available product controls. Additional privacy controls may be added as the beta develops.</p>
+
+<h2>10. Changes</h2>
+<p>This notice may change as features, infrastructure or legal requirements evolve. The effective date should be updated when material changes are published.</p>
+
+<div class="footer"><a href="terms.html">Terms of Use</a> · <a href="index.html">Back to home</a></div>
+</article></main>
+</body></html>
