@@ -297,6 +297,32 @@ html.auth-checking body{visibility:hidden}
 }
 .ea-actions button:disabled{opacity:.55;cursor:not-allowed}
 
+
+.account-switcher{
+  margin-top:16px;background:#101218;border:1px solid #262a33;border-radius:14px;padding:16px;
+}
+.account-switcher h3{font-size:14px;margin:0 0 5px}
+.account-switcher .hint{font-size:10px;color:var(--muted);line-height:1.45;margin-bottom:12px}
+.account-list{display:flex;flex-direction:column;gap:8px}
+.account-row{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;
+  padding:12px;border:1px solid #252932;border-radius:11px;background:#0c0e13;
+}
+.account-row.active{border-color:#315e48;background:#0d1b15}
+.account-row-title{font-size:12px;font-weight:700}
+.account-row-meta{font-size:10px;color:var(--muted);margin-top:4px}
+.account-row-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.account-row button{
+  border:1px solid #303541;background:#161922;color:#eef1f6;
+  padding:7px 9px;border-radius:8px;cursor:pointer;font-size:10px;
+}
+.account-row button.primary{background:#5b5df0;border-color:#5b5df0}
+.account-row button.danger{color:#ff8a93;border-color:#5c2c31;background:#241315}
+.account-active-pill{
+  color:#66e6a1;font-size:9px;border:1px solid #24543b;background:#102419;
+  border-radius:999px;padding:3px 6px;margin-left:6px
+}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -444,7 +470,19 @@ window.stjAuthReady = (async () => {
       </div>
     </section>
 
-    <section class="account-card" id="brokerAccountCard" style="display:none">
+    
+    <section class="account-switcher">
+      <h3>🗂 Connected MT5 Accounts</h3>
+      <div class="hint">
+        Har MT5 account ka trades, balance aur analytics alag rahega.
+        <b>Use Account</b> se Dashboard / Performance / Trade History ka active account select karo.
+      </div>
+      <div class="account-list" id="mt5AccountList">
+        <div class="hint">Loading accounts...</div>
+      </div>
+    </section>
+
+<section class="account-card" id="brokerAccountCard" style="display:none">
       <div class="account-head">
         <div class="broker-id">
           <div class="broker-icon">📈</div>
@@ -575,7 +613,48 @@ const brokerNameInput = document.getElementById("brokerName");
 const accountIdInput = document.getElementById("mt5AccountId");
 const serverInput = document.getElementById("brokerServer");
 
+
+async function stjGetActiveMt5Context() {
+  const { data: userData, error: userError } = await window.stjSupabase.auth.getUser();
+  if (userError || !userData.user) {
+    throw userError || new Error("User not signed in.");
+  }
+
+  const user = userData.user;
+  const storageKey = `stj_active_mt5_device_${user.id}`;
+
+  const { data: devices, error: deviceError } = await window.stjSupabase
+    .from("ea_devices")
+    .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at,updated_at")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (deviceError) throw deviceError;
+
+  const list = devices || [];
+  let activeId = localStorage.getItem(storageKey) || "";
+  let device = list.find(d => d.id === activeId) || list[0] || null;
+
+  if (device && device.id !== activeId) {
+    activeId = device.id;
+    localStorage.setItem(storageKey, activeId);
+  }
+
+  return { user, storageKey, devices: list, device };
+}
+
+async function stjUseMt5Account(deviceId) {
+  const { user, storageKey, devices } = await stjGetActiveMt5Context();
+  if (!devices.some(d => d.id === deviceId)) {
+    throw new Error("That MT5 account is not available.");
+  }
+  localStorage.setItem(storageKey, deviceId);
+  return true;
+}
+
 let currentBrokerAccount = null;
+let stjBrokerDevices = [];
+let stjActiveDeviceId = "";
 
 function maskAccountId(value) {
   const id = String(value || "");
@@ -629,26 +708,127 @@ async function getLoggedInUser() {
   return data.user;
 }
 
-async function loadBrokerAccounts() {
+async function stjSetActiveAccount(deviceId) {
   try {
-    const user = await getLoggedInUser();
-    if (!user) return;
-
-    const { data, error } = await window.stjSupabase
-      .from("ea_devices")
-      .select("id,user_id,broker_name,account_id,server,is_active,last_seen_at,created_at,updated_at")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    const accounts = data || [];
-    setBrokerUI(accounts[0] || null, accounts.length);
+    await stjUseMt5Account(deviceId);
+    stjActiveDeviceId = deviceId;
+    await loadBrokerAccounts();
   } catch (error) {
-    console.error("Broker load error:", error);
-    alert("Could not load broker account: " + (error.message || "Unknown error"));
+    alert(error.message || "Could not switch MT5 account.");
   }
 }
+
+async function stjResetAccountData(deviceId) {
+  const device = stjBrokerDevices.find(d => d.id === deviceId);
+  const masked = device ? maskAccountId(device.account_id) : "";
+
+  const ok = confirm(
+    `Reset synced data for ${masked}?\\n\\n` +
+    `Only this MT5 account's synced deals/balance will be cleared. ` +
+    `Pairing remains. Open this exact MT5 account with EA running to sync it fresh.`
+  );
+
+  if (!ok) return;
+
+  const { data, error } = await window.stjSupabase
+    .rpc("clear_mt5_device_data", { p_device_id: deviceId });
+
+  if (error) {
+    alert("Reset failed: " + error.message);
+    return;
+  }
+
+  if (data !== true) {
+    alert("Reset was not allowed.");
+    return;
+  }
+
+  alert("Account data cleared. Now open this exact MT5 account with EA running for a clean re-sync.");
+  await loadBrokerAccounts();
+}
+
+function renderAccountList(devices, activeId, snapshots) {
+  const list = document.getElementById("mt5AccountList");
+  if (!list) return;
+
+  if (!devices.length) {
+    list.innerHTML = '<div class="hint">No paired MT5 accounts yet.</div>';
+    return;
+  }
+
+  const snapMap = new Map((snapshots || []).map(s => [s.device_id, s]));
+
+  list.innerHTML = devices.map(d => {
+    const active = d.id === activeId;
+    const snap = snapMap.get(d.id);
+    const broker = d.broker_name || "MT5";
+    const masked = maskAccountId(d.account_id);
+
+    const balanceText = snap
+      ? new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: snap.currency || "USD",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(Number(snap.balance || 0))
+      : "No live snapshot";
+
+    const seen = d.last_seen_at
+      ? new Date(d.last_seen_at).toLocaleString()
+      : "Never";
+
+    return `
+      <div class="account-row ${active ? "active" : ""}">
+        <div>
+          <div class="account-row-title">
+            ${broker} ${masked}
+            ${active ? '<span class="account-active-pill">ACTIVE</span>' : ''}
+          </div>
+          <div class="account-row-meta">
+            ${d.server || "—"} • ${balanceText} • Last seen ${seen}
+          </div>
+        </div>
+        <div class="account-row-actions">
+          ${active ? '' : `<button class="primary" onclick="stjSetActiveAccount('${d.id}')">Use Account</button>`}
+          <button class="danger" onclick="stjResetAccountData('${d.id}')">Reset Data</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+async function loadBrokerAccounts() {
+  try {
+    const ctx = await stjGetActiveMt5Context();
+    stjBrokerDevices = ctx.devices || [];
+    stjActiveDeviceId = ctx.device?.id || "";
+
+    let snapshots = [];
+    const ids = stjBrokerDevices.map(d => d.id);
+
+    if (ids.length) {
+      const { data, error } = await window.stjSupabase
+        .from("mt5_account_snapshots")
+        .select("device_id,currency,balance,equity,floating_profit,updated_at")
+        .in("device_id", ids);
+
+      if (error) throw error;
+      snapshots = data || [];
+    }
+
+    renderAccountList(stjBrokerDevices, stjActiveDeviceId, snapshots);
+    setBrokerUI(ctx.device || null, stjBrokerDevices.length);
+
+    if (ctx.device) {
+      await loadLiveAccountState(ctx.device.id);
+    }
+  } catch (error) {
+    console.error("Broker load error:", error);
+    alert("Could not load MT5 accounts: " + (error.message || "Unknown error"));
+  }
+}
+
+window.stjSetActiveAccount = stjSetActiveAccount;
+window.stjResetAccountData = stjResetAccountData;
 
 connectCard.addEventListener("click", () => {
   accountIdInput.value = "";
@@ -715,7 +895,7 @@ saveAccountBtn.addEventListener("click", async () => {
 });
 
 document.getElementById("syncBtn").addEventListener("click", async () => {
-  await Promise.all([loadBrokerAccounts(), loadLiveAccountState()]);
+  await loadBrokerAccounts();
 });
 
 document.getElementById("disconnectBtn").addEventListener("click", () => {
@@ -725,11 +905,12 @@ document.getElementById("disconnectBtn").addEventListener("click", () => {
 
 
 
-async function loadLiveAccountState() {
+async function loadLiveAccountState(deviceId = stjActiveDeviceId) {
   try {
     const { data: snapshots, error } = await window.stjSupabase
       .from("mt5_account_snapshots")
-      .select("account_id,server,currency,balance,equity,floating_profit,updated_at")
+      .select("device_id,account_id,server,currency,balance,equity,floating_profit,updated_at")
+      .eq("device_id", deviceId)
       .order("updated_at", { ascending: false })
       .limit(1);
 
@@ -960,7 +1141,6 @@ revokeEaCodeBtn.addEventListener("click", async () => {
 
 loadBrokerAccounts();
 loadEaConnection();
-loadLiveAccountState();
 </script>
 <script id="stj-user-profile">
 (async () => {
