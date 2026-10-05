@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="auth-checking" lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -621,7 +621,93 @@ body{
   color:#fff;
 }
 
+
+/* GLOBAL AUTH GUARD */
+html.auth-checking body{visibility:hidden}
+
+
+.replay-live{
+  margin:-6px 0 18px;
+  padding:10px 12px;
+  border:1px solid #224d39;
+  background:#0d1f17;
+  border-radius:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  color:#98a1b0;
+  font-size:11px;
+}
+.replay-live b{color:var(--green)}
+.replay-note{
+  font-size:9px;
+  color:var(--muted);
+  margin-top:10px;
+  line-height:1.45;
+}
+.trade-empty{
+  padding:28px 18px;
+  color:var(--muted);
+  text-align:center;
+  font-size:11px;
+  line-height:1.5;
+}
+.replay-info{
+  grid-template-columns:repeat(6,minmax(0,1fr));
+}
+@media(max-width:1100px){
+  .replay-info{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script id="stj-auth-guard">
+window.STJ_SUPABASE_URL = "https://vboelobxtkgewkwxllsq.supabase.co";
+window.STJ_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
+window.stjSupabase = window.supabase.createClient(
+  window.STJ_SUPABASE_URL,
+  window.STJ_SUPABASE_PUBLISHABLE_KEY
+);
+
+window.stjAuthReady = (async () => {
+  try {
+    const { data: sessionData } = await window.stjSupabase.auth.getSession();
+
+    if (!sessionData.session) {
+      window.location.replace("login.html");
+      return false;
+    }
+
+    const { data: refreshData, error: refreshError } =
+      await window.stjSupabase.auth.refreshSession();
+
+    if (refreshError || !refreshData.session) {
+      await window.stjSupabase.auth.signOut({ scope: "local" });
+      window.location.replace("login.html");
+      return false;
+    }
+
+    const { data: userData, error: userError } =
+      await window.stjSupabase.auth.getUser();
+
+    if (userError || !userData.user) {
+      await window.stjSupabase.auth.signOut({ scope: "local" });
+      window.location.replace("login.html");
+      return false;
+    }
+
+    document.documentElement.classList.remove("auth-checking");
+    return true;
+  } catch (err) {
+    try { await window.stjSupabase.auth.signOut({ scope: "local" }); } catch (e) {}
+    window.location.replace("login.html");
+    return false;
+  }
+})();
+</script>
+
 </head>
 
 <body>
@@ -678,10 +764,7 @@ body{
 
 <header class="topbar">
 
-  <div class="account">
-    ● XM #430381517
-    <span class="connected">Connected</span>
-  </div>
+  <div class="account" id="replayAccount">● MT5 <span class="connected">Loading...</span></div>
 
   <div>☼</div>
 
@@ -701,11 +784,15 @@ body{
 
   <div>
     <h1>Trade Replay</h1>
-    <p>Replay your trades with real market data</p>
+    <p>Review synced MT5 trades, entry/exit, P&amp;L and trade timing</p>
   </div>
 
 </section>
 
+<div class="replay-live">
+  <span><b>● REAL MT5 TRADES</b> <span id="replayLiveText">Loading active account...</span></span>
+  <span id="replayRefreshText">—</span>
+</div>
 
 <section class="replay-layout">
 
@@ -713,149 +800,13 @@ body{
 
   <div class="trades-panel">
 
-    <div class="trades-header">
-      RECENT TRADES (100)
-    </div>
+    <div class="trades-header" id="replayTradesHeader">RECENT TRADES</div>
 
-    <div class="trades-list">
-
-      <div
-        class="trade"
-        data-symbol="GOLD"
-        data-side="SELL"
-        data-date="Oct 2, 2026"
-        data-pnl="+$43.33"
-        data-entry="4,225.58"
-        data-exit="4,182.25"
-      >
-        <div class="trade-top">
-          <div class="trade-symbol">
-            GOLD
-            <span class="badge sell">SELL</span>
-          </div>
-          <div class="profit">+$43.33</div>
-        </div>
-        <div class="date">Oct 2, 2026</div>
-      </div>
-
-      <div
-        class="trade"
-        data-symbol="GOLD"
-        data-side="SELL"
-        data-date="Oct 2, 2026"
-        data-pnl="-$7.80"
-        data-entry="4,178.12"
-        data-exit="4,185.92"
-      >
-        <div class="trade-top">
-          <div class="trade-symbol">
-            GOLD
-            <span class="badge sell">SELL</span>
-          </div>
-          <div class="loss">-$7.80</div>
-        </div>
-        <div class="date">Oct 2, 2026</div>
-      </div>
-
-      <div
-        class="trade"
-        data-symbol="GOLD"
-        data-side="SELL"
-        data-date="Oct 2, 2026"
-        data-pnl="-$6.24"
-        data-entry="4,179.95"
-        data-exit="4,186.19"
-      >
-        <div class="trade-top">
-          <div class="trade-symbol">
-            GOLD
-            <span class="badge sell">SELL</span>
-          </div>
-          <div class="loss">-$6.24</div>
-        </div>
-        <div class="date">Oct 2, 2026</div>
-      </div>
-
-      <div
-        class="trade"
-        data-symbol="GOLD"
-        data-side="SELL"
-        data-date="Oct 2, 2026"
-        data-pnl="-$6.48"
-        data-entry="4,182.16"
-        data-exit="4,188.64"
-      >
-        <div class="trade-top">
-          <div class="trade-symbol">
-            GOLD
-            <span class="badge sell">SELL</span>
-          </div>
-          <div class="loss">-$6.48</div>
-        </div>
-        <div class="date">Oct 2, 2026</div>
-      </div>
-
-      <div
-        class="trade"
-        data-symbol="GOLD"
-        data-side="SELL"
-        data-date="Oct 2, 2026"
-        data-pnl="-$2.74"
-        data-entry="4,182.19"
-        data-exit="4,184.93"
-      >
-        <div class="trade-top">
-          <div class="trade-symbol">
-            GOLD
-            <span class="badge sell">SELL</span>
-          </div>
-          <div class="loss">-$2.74</div>
-        </div>
-        <div class="date">Oct 2, 2026</div>
-      </div>
-
-      <div
-        class="trade"
-        data-symbol="GOLD"
-        data-side="BUY"
-        data-date="Oct 1, 2026"
-        data-pnl="+$6.24"
-        data-entry="4,165.14"
-        data-exit="4,171.38"
-      >
-        <div class="trade-top">
-          <div class="trade-symbol">
-            GOLD
-            <span class="badge buy">BUY</span>
-          </div>
-          <div class="profit">+$6.24</div>
-        </div>
-        <div class="date">Oct 1, 2026</div>
-      </div>
-
-      <div
-        class="trade"
-        data-symbol="US100Cash"
-        data-side="BUY"
-        data-date="Sep 30, 2026"
-        data-pnl="+$12.10"
-        data-entry="30,453.43"
-        data-exit="30,574.40"
-      >
-        <div class="trade-top">
-          <div class="trade-symbol">
-            US100Cash
-            <span class="badge buy">BUY</span>
-          </div>
-          <div class="profit">+$12.10</div>
-        </div>
-        <div class="date">Sep 30, 2026</div>
-      </div>
-
+    <div class="trades-list" id="replayTradesList">
+      <div class="trade-empty">Loading real closed trades...</div>
     </div>
 
   </div>
-
 
   <!-- RIGHT PANEL -->
 
@@ -870,8 +821,7 @@ body{
         <h2>Select a trade to replay</h2>
 
         <p>
-          Choose a trade from the list to replay it with real market
-          data, entry/exit markers, and playback controls
+          Choose a synced MT5 trade from the list to review entry, exit, P&amp;L and timing.
         </p>
 
       </div>
@@ -1002,9 +952,23 @@ body{
 
         <div class="info-box">
           <small>EXIT</small>
-          <strong id="infoExit">$4,225.58</strong>
+          <strong id="infoExit">—</strong>
         </div>
 
+        <div class="info-box">
+          <small>OPENED</small>
+          <strong id="infoOpened">—</strong>
+        </div>
+
+        <div class="info-box">
+          <small>DURATION</small>
+          <strong id="infoDuration">—</strong>
+        </div>
+
+      </div>
+
+      <div class="replay-note">
+        Replay line is a trade-path preview built from the real entry/exit direction. Historical candle-by-candle market replay will require a separate candle-data feed.
       </div>
 
     </div>
@@ -1022,151 +986,435 @@ body{
 <button class="help">?</button>
 
 
-<script>
-const trades = Array.from(document.querySelectorAll(".trade"));
-const emptyState = document.getElementById("emptyState");
-const activeReplay = document.getElementById("activeReplay");
-const replayTitle = document.getElementById("replayTitle");
-const replayDate = document.getElementById("replayDate");
-const replayPnl = document.getElementById("replayPnl");
-const infoSymbol = document.getElementById("infoSymbol");
-const infoSide = document.getElementById("infoSide");
-const infoEntry = document.getElementById("infoEntry");
-const infoExit = document.getElementById("infoExit");
-const playButton = document.getElementById("playButton");
-const firstTradeBtn = document.getElementById("firstTradeBtn");
-const prevTradeBtn = document.getElementById("prevTradeBtn");
-const nextTradeBtn = document.getElementById("nextTradeBtn");
-const lastTradeBtn = document.getElementById("lastTradeBtn");
-const speedButton = document.getElementById("speedButton");
-const pricePath = document.getElementById("pricePath");
-const entryLabel = document.getElementById("entryLabel");
-const exitLabel = document.getElementById("exitLabel");
 
-let activeTradeIndex = -1;
-let speed = 1;
+<script id="stj-real-trade-replay">
+(async () => {
+  if (window.stjAuthReady) {
+    const ok = await window.stjAuthReady;
+    if (!ok) return;
+  }
+  if (!window.stjSupabase) return;
 
-const risingPoints = `
-0,160 50,150 90,170 135,142 175,148 220,112 260,122
-310,98 350,107 400,82 445,93 485,71 525,88 570,59
-615,69 660,48 710,62 755,38 805,49 850,29 900,42`;
+  const $ = id => document.getElementById(id);
+  const esc = v => String(v ?? "")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;")
+    .replaceAll(">","&gt;").replaceAll('"',"&quot;");
 
-const fallingPoints = `
-0,55 50,68 90,58 135,88 175,78 220,106 260,94
-310,122 350,111 400,139 445,126 485,151 525,136
-570,166 615,151 660,176 710,160 755,188 805,170
-850,197 900,184`;
+  let trades = [];
+  let activeTradeIndex = -1;
+  let speed = 1;
+  let activeDevice = null;
+  let currency = "USD";
+  let refreshBusy = false;
 
-function isWinningTrade(trade){
-  return !String(trade.dataset.pnl || "").includes("-");
-}
+  const emptyState = $("emptyState");
+  const activeReplay = $("activeReplay");
+  const replayTitle = $("replayTitle");
+  const replayDate = $("replayDate");
+  const replayPnl = $("replayPnl");
+  const infoSymbol = $("infoSymbol");
+  const infoSide = $("infoSide");
+  const infoEntry = $("infoEntry");
+  const infoExit = $("infoExit");
+  const infoOpened = $("infoOpened");
+  const infoDuration = $("infoDuration");
+  const playButton = $("playButton");
+  const firstTradeBtn = $("firstTradeBtn");
+  const prevTradeBtn = $("prevTradeBtn");
+  const nextTradeBtn = $("nextTradeBtn");
+  const lastTradeBtn = $("lastTradeBtn");
+  const speedButton = $("speedButton");
+  const pricePath = $("pricePath");
+  const entryLabel = $("entryLabel");
+  const exitLabel = $("exitLabel");
 
-function useFallingChart(trade){
-  const side = String(trade.dataset.side || "").toUpperCase();
-  const winning = isWinningTrade(trade);
-  return (side === "SELL" && winning) || (side === "BUY" && !winning);
-}
+  function money(v, signed=true) {
+    const n = Number(v || 0);
+    const abs = new Intl.NumberFormat("en-US", {
+      style:"currency",
+      currency,
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }).format(Math.abs(n));
+    return (signed ? (n>0?"+":n<0?"-":"") : "") + abs;
+  }
 
-function updateChartForTrade(trade){
-  if(!pricePath) return;
+  function price(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "—";
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits:2,
+      maximumFractionDigits:5
+    }).format(n);
+  }
 
-  const falling = useFallingChart(trade);
-  pricePath.setAttribute("points", falling ? fallingPoints : risingPoints);
+  function durationText(opened, closed) {
+    if (!opened || !closed) return "—";
+    const mins = Math.max(0, (closed - opened) / 60000);
+    if (mins < 60) return `${Math.round(mins)}m`;
+    if (mins < 1440) {
+      const h = Math.floor(mins/60);
+      const m = Math.round(mins%60);
+      return `${h}h ${m}m`;
+    }
+    const d = Math.floor(mins/1440);
+    const h = Math.round((mins%1440)/60);
+    return `${d}d ${h}h`;
+  }
 
-  if(entryLabel && exitLabel){
-    if(falling){
-      entryLabel.style.left = "22%";
-      entryLabel.style.top = "24%";
-      exitLabel.style.right = "14%";
-      exitLabel.style.top = "70%";
-    }else{
-      entryLabel.style.left = "22%";
-      entryLabel.style.top = "66%";
-      exitLabel.style.right = "14%";
-      exitLabel.style.top = "20%";
+  async function getActiveContext() {
+    const {data:userData,error:userError} = await window.stjSupabase.auth.getUser();
+    if (userError || !userData.user) throw userError || new Error("Not signed in.");
+
+    const user = userData.user;
+    const storageKey = `stj_active_mt5_device_${user.id}`;
+
+    const {data:devices,error:deviceError} = await window.stjSupabase
+      .from("ea_devices")
+      .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at")
+      .eq("is_active", true)
+      .order("created_at", {ascending:false});
+
+    if (deviceError) throw deviceError;
+
+    const list = devices || [];
+    const preferred = localStorage.getItem(storageKey) || "";
+    const device = list.find(d => d.id === preferred) || list[0] || null;
+
+    if (device && device.id !== preferred) {
+      localStorage.setItem(storageKey, device.id);
+    }
+
+    return {user,device};
+  }
+
+  async function fetchDeals(deviceId) {
+    const all = [];
+    const pageSize = 1000;
+    let from = 0;
+
+    while (true) {
+      const {data,error} = await window.stjSupabase
+        .from("mt5_deals")
+        .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
+        .eq("device_id", deviceId)
+        .order("time_msc", {ascending:true})
+        .range(from, from + pageSize - 1);
+
+      if (error) throw error;
+      all.push(...(data || []));
+
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
+      if (from >= 10000) break;
+    }
+
+    return all;
+  }
+
+  function weightedPrice(rows) {
+    let vol = 0, pv = 0;
+    for (const r of rows) {
+      const v = Number(r.volume || 0);
+      vol += v;
+      pv += Number(r.price || 0) * v;
+    }
+    return vol > 0 ? pv / vol : null;
+  }
+
+  function groupClosedTrades(deals) {
+    const map = new Map();
+
+    for (const d of deals) {
+      if (!d.symbol || ![0,1].includes(Number(d.deal_type))) continue;
+      const key = d.position_id || `deal-${d.deal_ticket}`;
+
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          symbol:d.symbol,
+          entries:[],
+          exits:[],
+          net:0,
+          entryVol:0,
+          exitVol:0,
+          firstTime:null,
+          lastTime:null
+        });
+      }
+
+      const t = map.get(key);
+      const dt = new Date(d.deal_time);
+      const et = Number(d.entry_type);
+      const vol = Number(d.volume || 0);
+
+      t.net += Number(d.profit || 0) +
+               Number(d.commission || 0) +
+               Number(d.swap || 0) +
+               Number(d.fee || 0);
+
+      if (!t.firstTime || dt < t.firstTime) t.firstTime = dt;
+      if (!t.lastTime || dt > t.lastTime) t.lastTime = dt;
+
+      if (et === 0) {
+        t.entries.push(d);
+        t.entryVol += vol;
+      }
+
+      if ([1,2,3].includes(et)) {
+        t.exits.push(d);
+        t.exitVol += vol;
+      }
+    }
+
+    return [...map.values()]
+      .filter(t => t.exits.length && (t.entryVol === 0 || t.exitVol + 1e-8 >= t.entryVol))
+      .map(t => {
+        const first = t.entries[0];
+        const last = t.exits[t.exits.length - 1];
+
+        let side = first?.side || "";
+        if (!side && last?.side) side = last.side === "BUY" ? "SELL" : "BUY";
+
+        return {
+          ...t,
+          side:side === "BUY" ? "BUY" : side === "SELL" ? "SELL" : "—",
+          entryPrice:weightedPrice(t.entries),
+          exitPrice:weightedPrice(t.exits),
+          openedAt:first ? new Date(first.deal_time) : t.firstTime,
+          closedAt:new Date(last.deal_time)
+        };
+      })
+      .sort((a,b) => b.closedAt - a.closedAt);
+  }
+
+  function renderTradeList() {
+    const list = $("replayTradesList");
+    const header = $("replayTradesHeader");
+    if (!list || !header) return;
+
+    const recent = trades.slice(0,100);
+    header.textContent = `RECENT TRADES (${recent.length})`;
+
+    if (!recent.length) {
+      list.innerHTML = '<div class="trade-empty">No closed trades for the active MT5 account.</div>';
+      return;
+    }
+
+    list.innerHTML = recent.map((t,index) => {
+      const pnlClass = t.net >= 0 ? "profit" : "loss";
+      const badgeClass = t.side === "BUY" ? "buy" : "sell";
+      const dt = t.closedAt.toLocaleString(undefined,{
+        month:"short",day:"numeric",year:"numeric",
+        hour:"numeric",minute:"2-digit"
+      });
+
+      return `
+        <div class="trade" data-index="${index}">
+          <div class="trade-top">
+            <div class="trade-symbol">
+              ${esc(t.symbol)}
+              <span class="badge ${badgeClass}">${esc(t.side)}</span>
+            </div>
+            <div class="${pnlClass}">${esc(money(t.net,true))}</div>
+          </div>
+          <div class="date">${esc(dt)}</div>
+        </div>`;
+    }).join("");
+
+    list.querySelectorAll(".trade").forEach(el => {
+      el.addEventListener("click", () => selectTrade(Number(el.dataset.index)));
+    });
+  }
+
+  function buildPreviewPoints(trade) {
+    const start = Number(trade.entryPrice);
+    const end = Number(trade.exitPrice);
+
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start === end) {
+      return "0,130 70,125 140,135 210,120 280,128 350,112 420,118 490,104 560,111 630,94 700,100 780,86 900,92";
+    }
+
+    const rising = end > start;
+    const base = rising
+      ? [165,154,160,143,148,128,136,116,124,102,110,88,96,75,82,62,70,48,55]
+      : [55,68,60,82,75,98,90,112,103,128,118,145,134,160,149,176,164,190,180];
+
+    return base.map((y,i) => {
+      const x = i * (900/(base.length-1));
+      return `${x.toFixed(0)},${y}`;
+    }).join(" ");
+  }
+
+  function updateChartForTrade(trade) {
+    if (!pricePath) return;
+
+    pricePath.setAttribute("points", buildPreviewPoints(trade));
+    pricePath.setAttribute("stroke", trade.net >= 0 ? "#31d58a" : "#ff5d66");
+
+    const rising = Number(trade.exitPrice) >= Number(trade.entryPrice);
+
+    if (entryLabel && exitLabel) {
+      if (rising) {
+        entryLabel.style.left = "18%";
+        entryLabel.style.top = "68%";
+        exitLabel.style.right = "12%";
+        exitLabel.style.top = "18%";
+      } else {
+        entryLabel.style.left = "18%";
+        entryLabel.style.top = "20%";
+        exitLabel.style.right = "12%";
+        exitLabel.style.top = "69%";
+      }
+    }
+
+    pricePath.style.transition = "none";
+    pricePath.style.strokeDasharray = "none";
+    pricePath.style.strokeDashoffset = "0";
+    if (playButton) playButton.textContent = "▶";
+  }
+
+  function selectTrade(index) {
+    if (!trades.length) return;
+
+    const recent = trades.slice(0,100);
+    activeTradeIndex = Math.max(0, Math.min(index, recent.length - 1));
+    const trade = recent[activeTradeIndex];
+
+    document.querySelectorAll(".trade").forEach((el,i) => {
+      el.classList.toggle("active", i === activeTradeIndex);
+    });
+
+    if (emptyState) emptyState.style.display = "none";
+    if (activeReplay) activeReplay.classList.add("show");
+
+    replayTitle.textContent = `${trade.symbol} Replay`;
+    replayDate.textContent = `${trade.openedAt?.toLocaleString() || "—"} → ${trade.closedAt?.toLocaleString() || "—"}`;
+
+    replayPnl.textContent = money(trade.net,true);
+    replayPnl.classList.remove("profit","loss");
+    replayPnl.classList.add(trade.net >= 0 ? "profit" : "loss");
+
+    infoSymbol.textContent = trade.symbol || "—";
+    infoSide.textContent = trade.side || "—";
+    infoEntry.textContent = price(trade.entryPrice);
+    infoExit.textContent = price(trade.exitPrice);
+    infoOpened.textContent = trade.openedAt
+      ? trade.openedAt.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})
+      : "—";
+    infoDuration.textContent = durationText(trade.openedAt,trade.closedAt);
+
+    updateChartForTrade(trade);
+  }
+
+  function playReplay() {
+    if (activeTradeIndex < 0) selectTrade(0);
+    if (!pricePath || !playButton) return;
+
+    const length = pricePath.getTotalLength();
+    const duration = Math.max(700, 2600 / speed);
+
+    pricePath.style.transition = "none";
+    pricePath.style.strokeDasharray = `${length} ${length}`;
+    pricePath.style.strokeDashoffset = String(length);
+    pricePath.getBoundingClientRect();
+
+    playButton.textContent = "❚❚";
+
+    requestAnimationFrame(() => {
+      pricePath.style.transition = `stroke-dashoffset ${duration}ms linear`;
+      pricePath.style.strokeDashoffset = "0";
+    });
+
+    window.setTimeout(() => {
+      playButton.textContent = "▶";
+    }, duration);
+  }
+
+  async function refresh() {
+    if (refreshBusy) return;
+    refreshBusy = true;
+
+    try {
+      const ctx = await getActiveContext();
+      activeDevice = ctx.device;
+
+      if (!activeDevice) {
+        trades = [];
+        $("replayAccount").innerHTML = '● MT5 <span class="connected">No active account</span>';
+        $("replayLiveText").textContent = "No active MT5 account. Select one in Broker Hub.";
+        renderTradeList();
+        if (emptyState) emptyState.style.display = "flex";
+        if (activeReplay) activeReplay.classList.remove("show");
+        return;
+      }
+
+      const [{data:snapshots}, deals] = await Promise.all([
+        window.stjSupabase
+          .from("mt5_account_snapshots")
+          .select("currency")
+          .eq("device_id", activeDevice.id)
+          .limit(1),
+        fetchDeals(activeDevice.id)
+      ]);
+
+      currency =
+        snapshots?.[0]?.currency ||
+        ctx.user?.user_metadata?.default_currency ||
+        "USD";
+
+      trades = groupClosedTrades(deals);
+
+      const masked = "••••" + String(activeDevice.account_id || "").slice(-4);
+      $("replayAccount").innerHTML =
+        `● ${esc(activeDevice.broker_name || "MT5")} ${masked} <span class="connected">ACTIVE</span>`;
+
+      $("replayLiveText").textContent =
+        `${masked} • ${trades.length} closed trades available`;
+      $("replayRefreshText").textContent =
+        `Updated ${new Date().toLocaleTimeString()}`;
+
+      const oldKey = activeTradeIndex >= 0 ? trades.slice(0,100)[activeTradeIndex]?.key : null;
+
+      renderTradeList();
+
+      if (oldKey) {
+        const idx = trades.slice(0,100).findIndex(t => t.key === oldKey);
+        if (idx >= 0) selectTrade(idx);
+      }
+    } catch (error) {
+      console.error("Trade Replay refresh failed:", error);
+      $("replayLiveText").textContent =
+        `Could not load trades: ${error.message || "Unknown error"}`;
+    } finally {
+      refreshBusy = false;
     }
   }
 
-  pricePath.style.transition = "none";
-  pricePath.style.strokeDasharray = "none";
-  pricePath.style.strokeDashoffset = "0";
-  if(playButton) playButton.textContent = "▶";
-}
+  if (playButton) playButton.addEventListener("click", playReplay);
+  if (firstTradeBtn) firstTradeBtn.addEventListener("click", () => selectTrade(0));
+  if (lastTradeBtn) lastTradeBtn.addEventListener("click", () => selectTrade(Math.min(99,trades.length-1)));
+  if (prevTradeBtn) prevTradeBtn.addEventListener("click", () => selectTrade(activeTradeIndex <= 0 ? 0 : activeTradeIndex - 1));
+  if (nextTradeBtn) nextTradeBtn.addEventListener("click", () => selectTrade(activeTradeIndex < 0 ? 0 : Math.min(activeTradeIndex + 1, Math.min(99,trades.length-1))));
 
-function selectTrade(index){
-  if(!trades.length) return;
+  if (speedButton) {
+    speedButton.addEventListener("click", () => {
+      speed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
+      speedButton.textContent = speed + "x";
+    });
+  }
 
-  activeTradeIndex = Math.max(0, Math.min(index, trades.length - 1));
-  const trade = trades[activeTradeIndex];
+  await refresh();
+  const timer = setInterval(refresh,15000);
 
-  trades.forEach(t => t.classList.remove("active"));
-  trade.classList.add("active");
-
-  if(emptyState) emptyState.style.display = "none";
-  if(activeReplay) activeReplay.classList.add("show");
-
-  const symbol = trade.dataset.symbol || "-";
-  const side = trade.dataset.side || "-";
-  const date = trade.dataset.date || "-";
-  const pnl = trade.dataset.pnl || "$0.00";
-  const entry = trade.dataset.entry || "0";
-  const exit = trade.dataset.exit || "0";
-
-  replayTitle.textContent = symbol + " Replay";
-  replayDate.textContent = date;
-  replayPnl.textContent = pnl;
-  replayPnl.classList.remove("profit","loss");
-  replayPnl.classList.add(pnl.includes("-") ? "loss" : "profit");
-
-  infoSymbol.textContent = symbol;
-  infoSide.textContent = side;
-  infoEntry.textContent = "$" + entry;
-  infoExit.textContent = "$" + exit;
-
-  updateChartForTrade(trade);
-}
-
-trades.forEach((trade, index) => {
-  trade.addEventListener("click", () => selectTrade(index));
-});
-
-function playReplay(){
-  if(activeTradeIndex < 0) selectTrade(0);
-  if(!pricePath || !playButton) return;
-
-  const length = pricePath.getTotalLength();
-  const duration = Math.max(700, 2600 / speed);
-
-  pricePath.style.transition = "none";
-  pricePath.style.strokeDasharray = `${length} ${length}`;
-  pricePath.style.strokeDashoffset = String(length);
-  pricePath.getBoundingClientRect();
-
-  playButton.textContent = "❚❚";
-
-  requestAnimationFrame(() => {
-    pricePath.style.transition = `stroke-dashoffset ${duration}ms linear`;
-    pricePath.style.strokeDashoffset = "0";
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refresh();
   });
 
-  window.setTimeout(() => {
-    playButton.textContent = "▶";
-  }, duration);
-}
-
-if(playButton) playButton.addEventListener("click", playReplay);
-if(firstTradeBtn) firstTradeBtn.addEventListener("click", () => selectTrade(0));
-if(lastTradeBtn) lastTradeBtn.addEventListener("click", () => selectTrade(trades.length - 1));
-if(prevTradeBtn) prevTradeBtn.addEventListener("click", () => selectTrade(activeTradeIndex <= 0 ? 0 : activeTradeIndex - 1));
-if(nextTradeBtn) nextTradeBtn.addEventListener("click", () => selectTrade(activeTradeIndex < 0 ? 0 : Math.min(activeTradeIndex + 1, trades.length - 1)));
-
-if(speedButton){
-  speedButton.addEventListener("click", () => {
-    speed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
-    speedButton.textContent = speed + "x";
-  });
-}
+  window.addEventListener("beforeunload", () => clearInterval(timer));
+})();
 </script>
+
 
 
 <script id="global-sidebar-nav-script">
