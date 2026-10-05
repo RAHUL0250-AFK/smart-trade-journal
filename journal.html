@@ -838,6 +838,56 @@ body{
 /* GLOBAL AUTH GUARD */
 html.auth-checking body{visibility:hidden}
 
+
+.day.loss-day{
+  background:#351418;
+  border-color:#6b2b31;
+}
+.day.loss-day .day-data strong{
+  color:var(--red);
+}
+.day.journal-day{
+  box-shadow:inset 0 0 0 2px var(--purple);
+}
+.day.profit-day.journal-day,
+.day.loss-day.journal-day{
+  box-shadow:inset 0 0 0 2px var(--purple);
+}
+.journal-live{
+  margin:-6px 0 18px;
+  padding:10px 12px;
+  border:1px solid #224d39;
+  background:#0d1f17;
+  border-radius:10px;
+  font-size:11px;
+  color:#9ca4b1;
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+}
+.journal-live b{color:var(--green)}
+.journal-entry-card{
+  margin-top:14px;
+  background:#14161b;
+  border:1px solid #252932;
+  border-radius:11px;
+  padding:16px;
+}
+.journal-entry-card h3{font-size:14px;margin-bottom:12px}
+.journal-entry-row{margin-top:11px}
+.journal-entry-row small{display:block;color:var(--muted);font-size:10px;margin-bottom:5px}
+.journal-entry-row p{font-size:12px;line-height:1.55;white-space:pre-wrap}
+.journal-mood{
+  display:inline-block;
+  padding:5px 8px;
+  border-radius:999px;
+  background:#21183e;
+  border:1px solid #453273;
+  color:#c8b9ff;
+  font-size:10px;
+}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -944,10 +994,7 @@ window.stjAuthReady = (async () => {
 
 <header class="topbar">
 
-  <div class="account">
-    ● XM #430381517
-    <span class="connected">Connected</span>
-  </div>
+  <div class="account" id="journalAccount">● MT5 <span class="connected">Loading...</span></div>
 
   <div>☼</div>
 
@@ -966,7 +1013,7 @@ window.stjAuthReady = (async () => {
 
   <div>
     <h1>Trading Journal</h1>
-    <p>Document your thoughts and track your progress</p>
+    <p>Real MT5 trading activity + your daily journal notes</p>
   </div>
 
   <button class="new-entry" id="openEntry">
@@ -975,6 +1022,10 @@ window.stjAuthReady = (async () => {
 
 </section>
 
+<div class="journal-live">
+  <span><b>● LIVE JOURNAL</b> <span id="journalLiveText">Loading active MT5 account...</span></span>
+  <span id="journalLastRefresh">—</span>
+</div>
 
 <div class="view-toggle">
 
@@ -997,7 +1048,7 @@ window.stjAuthReady = (async () => {
 
     <div>
       <small>MONTH P&amp;L</small>
-      <strong class="green">$30.22</strong>
+      <strong class="green" id="journalMonthPnl">—</strong>
     </div>
 
   </div>
@@ -1009,7 +1060,7 @@ window.stjAuthReady = (async () => {
 
     <div>
       <small>TOTAL TRADES</small>
-      <strong>8</strong>
+      <strong id="journalTotalTrades">—</strong>
     </div>
 
   </div>
@@ -1021,7 +1072,7 @@ window.stjAuthReady = (async () => {
 
     <div>
       <small>WINNING DAYS</small>
-      <strong class="green">2</strong>
+      <strong class="green" id="journalWinningDays">—</strong>
     </div>
 
   </div>
@@ -1033,7 +1084,7 @@ window.stjAuthReady = (async () => {
 
     <div>
       <small>LOSING DAYS</small>
-      <strong class="red">0</strong>
+      <strong class="red" id="journalLosingDays">—</strong>
     </div>
 
   </div>
@@ -1114,37 +1165,28 @@ window.stjAuthReady = (async () => {
 
 <section class="day-view" id="dayView">
 
-  <h2 class="day-view-title">
-    October 2, 2026
-  </h2>
+  <h2 class="day-view-title" id="dayViewTitle">Select a day</h2>
 
   <div class="day-summary">
 
     <div class="day-box">
       <small>P&amp;L</small>
-      <strong class="green">+$20.07</strong>
+      <strong class="green" id="dayViewPnl">—</strong>
     </div>
 
     <div class="day-box">
       <small>Trades</small>
-      <strong>5</strong>
+      <strong id="dayViewTrades">—</strong>
     </div>
 
     <div class="day-box">
       <small>Win Rate</small>
-      <strong>60%</strong>
+      <strong id="dayViewWinRate">—</strong>
     </div>
 
   </div>
 
-  <div class="no-journal">
-    <div>
-      <h3>No journal entry yet</h3>
-      <p style="margin-top:7px;">
-        Click New Entry to document your trading day.
-      </p>
-    </div>
-  </div>
+  <div id="dayJournalContent" class="no-journal"><div><h3>Select a day</h3><p style="margin-top:7px;">Choose a calendar day to view its trading summary and notes.</p></div></div>
 
 </section>
 
@@ -1179,10 +1221,7 @@ window.stjAuthReady = (async () => {
 
     <label>Date</label>
 
-    <input
-      type="date"
-      value="2026-10-04"
-    >
+    <input type="date" id="journalEntryDate">
 
   </div>
 
@@ -1191,7 +1230,7 @@ window.stjAuthReady = (async () => {
 
     <label>Mood</label>
 
-    <select>
+    <select id="journalMood">
 
       <option>Confident</option>
       <option>Calm</option>
@@ -1208,9 +1247,7 @@ window.stjAuthReady = (async () => {
 
     <label>What went well?</label>
 
-    <textarea
-      placeholder="Write what worked well today..."
-    ></textarea>
+    <textarea id="journalWentWell" placeholder="Write what worked well today..."></textarea>
 
   </div>
 
@@ -1219,9 +1256,7 @@ window.stjAuthReady = (async () => {
 
     <label>What can improve?</label>
 
-    <textarea
-      placeholder="Write mistakes or improvements..."
-    ></textarea>
+    <textarea id="journalImprove" placeholder="Write mistakes or improvements..."></textarea>
 
   </div>
 
@@ -1243,331 +1278,546 @@ window.stjAuthReady = (async () => {
 </div>
 
 
-<script>
 
-/* ANALYTICS DROPDOWN */
-
-const analyticsMenu =
-document.getElementById("analyticsMenu");
-
-const analyticsToggle =
-document.getElementById("analyticsToggle");
-
-analyticsToggle.addEventListener(
-"click",
-() => {
-
-  analyticsMenu.classList.toggle("open");
-
-});
-
-
-/* CALENDAR */
-
-const calendar =
-document.getElementById("calendar");
-
-const monthTitle =
-document.getElementById("monthTitle");
-
-let month = 9;
-let year = 2026;
-
-const tradeDays = {
-  "2026-10-01":{
-    pnl:"$10.15",
-    trades:"3 trades"
-  },
-
-  "2026-10-02":{
-    pnl:"$20.07",
-    trades:"5 trades"
+<script id="stj-real-journal">
+(async () => {
+  if (window.stjAuthReady) {
+    const ok = await window.stjAuthReady;
+    if (!ok) return;
   }
-};
+  if (!window.stjSupabase) return;
 
+  const $ = id => document.getElementById(id);
+  const escapeHtml = value => String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;");
 
-function renderCalendar(){
+  let activeContext = null;
+  let allClosedTrades = [];
+  let allEntries = [];
+  let selectedDateKey = "";
+  let month = new Date().getMonth();
+  let year = new Date().getFullYear();
+  let refreshing = false;
 
-  calendar.innerHTML = `
-    <div class="weekday">Sun</div>
-    <div class="weekday">Mon</div>
-    <div class="weekday">Tue</div>
-    <div class="weekday">Wed</div>
-    <div class="weekday">Thu</div>
-    <div class="weekday">Fri</div>
-    <div class="weekday">Sat</div>
-  `;
-
-  const first =
-  new Date(year,month,1);
-
-  const totalDays =
-  new Date(year,month+1,0).getDate();
-
-  const monthName =
-  first.toLocaleDateString(
-    "en-US",
-    {
-      month:"long",
-      year:"numeric"
-    }
-  );
-
-  monthTitle.textContent =
-  monthName;
-
-
-  for(let i=0;i<first.getDay();i++){
-
-    const blank =
-    document.createElement("div");
-
-    blank.className =
-    "day blank";
-
-    calendar.appendChild(blank);
-
+  function dateKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   }
 
+  function parseDateKey(key) {
+    const [y,m,d] = key.split("-").map(Number);
+    return new Date(y, m-1, d);
+  }
 
-  for(let day=1;day<=totalDays;day++){
+  function money(value, currency="USD", signed=true) {
+    const n = Number(value || 0);
+    const abs = new Intl.NumberFormat("en-US", {
+      style:"currency",
+      currency,
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }).format(Math.abs(n));
 
-    const date =
-    new Date(year,month,day);
+    return (signed ? (n > 0 ? "+" : n < 0 ? "-" : "") : (n < 0 ? "-" : "")) + abs;
+  }
 
-    const key =
-    `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+  async function getActiveContext() {
+    const { data:userData, error:userError } = await window.stjSupabase.auth.getUser();
+    if (userError || !userData.user) throw userError || new Error("User not signed in.");
 
-    const box =
-    document.createElement("div");
+    const user = userData.user;
+    const storageKey = `stj_active_mt5_device_${user.id}`;
 
-    box.className =
-    "day";
+    const { data:devices, error:deviceError } = await window.stjSupabase
+      .from("ea_devices")
+      .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at")
+      .eq("is_active", true)
+      .order("created_at", {ascending:false});
 
-    if(
-      year === 2026 &&
-      month === 9 &&
-      day === 4
-    ){
-      box.classList.add("today");
+    if (deviceError) throw deviceError;
+
+    const list = devices || [];
+    const preferred = localStorage.getItem(storageKey) || "";
+    const device = list.find(d => d.id === preferred) || list[0] || null;
+
+    if (device && device.id !== preferred) {
+      localStorage.setItem(storageKey, device.id);
     }
 
-    if(tradeDays[key]){
-      box.classList.add("profit-day");
+    return {user, device};
+  }
+
+  async function fetchAllDeals(deviceId) {
+    const all = [];
+    const pageSize = 1000;
+    let from = 0;
+
+    while (true) {
+      const {data,error} = await window.stjSupabase
+        .from("mt5_deals")
+        .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
+        .eq("device_id", deviceId)
+        .order("time_msc", {ascending:true})
+        .range(from, from + pageSize - 1);
+
+      if (error) throw error;
+      all.push(...(data || []));
+
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
+      if (from >= 10000) break;
+    }
+    return all;
+  }
+
+  function groupClosedTrades(deals) {
+    const map = new Map();
+
+    for (const d of deals) {
+      if (!d.symbol || ![0,1].includes(Number(d.deal_type))) continue;
+
+      const key = d.position_id || `deal-${d.deal_ticket}`;
+
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          symbol:d.symbol,
+          entries:[],
+          exits:[],
+          net:0,
+          entryVol:0,
+          exitVol:0,
+          firstTime:null,
+          lastTime:null
+        });
+      }
+
+      const t = map.get(key);
+      const dt = new Date(d.deal_time);
+      const et = Number(d.entry_type);
+      const vol = Number(d.volume || 0);
+
+      t.net += Number(d.profit || 0) +
+               Number(d.commission || 0) +
+               Number(d.swap || 0) +
+               Number(d.fee || 0);
+
+      if (!t.firstTime || dt < t.firstTime) t.firstTime = dt;
+      if (!t.lastTime || dt > t.lastTime) t.lastTime = dt;
+
+      if (et === 0) {
+        t.entries.push(d);
+        t.entryVol += vol;
+      }
+
+      if ([1,2,3].includes(et)) {
+        t.exits.push(d);
+        t.exitVol += vol;
+      }
     }
 
-    box.innerHTML = `
-      <div class="day-num">${day}</div>
+    return [...map.values()]
+      .filter(t => t.exits.length && (t.entryVol === 0 || t.exitVol + 1e-8 >= t.entryVol))
+      .map(t => ({
+        ...t,
+        closedAt:new Date(t.exits[t.exits.length - 1].deal_time)
+      }))
+      .sort((a,b) => a.closedAt - b.closedAt);
+  }
+
+  async function fetchEntries(deviceId) {
+    const {data,error} = await window.stjSupabase
+      .from("journal_entries")
+      .select("id,entry_date,mood,went_well,improve,created_at,updated_at")
+      .eq("device_id", deviceId)
+      .order("entry_date", {ascending:true});
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  function dailyTradingMap() {
+    const map = new Map();
+
+    for (const t of allClosedTrades) {
+      const key = dateKey(t.closedAt);
+
+      if (!map.has(key)) {
+        map.set(key, {pnl:0,trades:0,wins:0,losses:0});
+      }
+
+      const d = map.get(key);
+      d.pnl += t.net;
+      d.trades++;
+
+      if (t.net > 0) d.wins++;
+      if (t.net < 0) d.losses++;
+    }
+
+    return map;
+  }
+
+  function entriesMap() {
+    return new Map(allEntries.map(e => [e.entry_date, e]));
+  }
+
+  function renderAccount() {
+    if (!activeContext?.device) {
+      $("journalAccount").innerHTML = '● MT5 <span class="connected">No account</span>';
+      return;
+    }
+
+    const d = activeContext.device;
+    const masked = "••••" + String(d.account_id || "").slice(-4);
+    $("journalAccount").innerHTML =
+      `● ${escapeHtml(d.broker_name || "MT5")} ${masked} <span class="connected">ACTIVE</span>`;
+  }
+
+  function renderStats() {
+    const daily = dailyTradingMap();
+    const monthTrades = allClosedTrades.filter(t =>
+      t.closedAt.getFullYear() === year &&
+      t.closedAt.getMonth() === month
+    );
+
+    const monthPnl = monthTrades.reduce((s,t) => s+t.net, 0);
+
+    let winningDays = 0;
+    let losingDays = 0;
+
+    for (const [key, d] of daily.entries()) {
+      const dt = parseDateKey(key);
+      if (dt.getFullYear() !== year || dt.getMonth() !== month) continue;
+
+      if (d.pnl > 0) winningDays++;
+      if (d.pnl < 0) losingDays++;
+    }
+
+    const currency =
+      activeContext?.user?.user_metadata?.default_currency || "USD";
+
+    $("journalMonthPnl").textContent = money(monthPnl, currency, true);
+    $("journalMonthPnl").className = monthPnl >= 0 ? "green" : "red";
+    $("journalTotalTrades").textContent = String(monthTrades.length);
+    $("journalWinningDays").textContent = String(winningDays);
+    $("journalLosingDays").textContent = String(losingDays);
+  }
+
+  function renderCalendar() {
+    const calendar = $("calendar");
+    const daily = dailyTradingMap();
+    const journals = entriesMap();
+    const currency =
+      activeContext?.user?.user_metadata?.default_currency || "USD";
+
+    calendar.innerHTML = `
+      <div class="weekday">Sun</div>
+      <div class="weekday">Mon</div>
+      <div class="weekday">Tue</div>
+      <div class="weekday">Wed</div>
+      <div class="weekday">Thu</div>
+      <div class="weekday">Fri</div>
+      <div class="weekday">Sat</div>
     `;
 
-    if(tradeDays[key]){
+    const first = new Date(year, month, 1);
+    const totalDays = new Date(year, month + 1, 0).getDate();
 
-      box.innerHTML += `
-        <div class="day-data">
-          <strong>
-            ${tradeDays[key].pnl}
-          </strong>
+    $("monthTitle").textContent =
+      first.toLocaleDateString("en-US", {month:"long",year:"numeric"});
 
-          <small>
-            ${tradeDays[key].trades}
-          </small>
-        </div>
-      `;
-
+    for (let i=0; i<first.getDay(); i++) {
+      const blank = document.createElement("div");
+      blank.className = "day blank";
+      calendar.appendChild(blank);
     }
 
-    box.addEventListener(
-    "click",
-    () => {
+    const todayKey = dateKey(new Date());
 
-      calendarTab.classList.remove("active");
+    for (let day=1; day<=totalDays; day++) {
+      const key = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+      const trading = daily.get(key);
+      const journal = journals.get(key);
 
-      dayTab.classList.add("active");
+      const box = document.createElement("div");
+      box.className = "day";
 
-      calendarView.style.display =
-      "none";
+      if (key === todayKey) box.classList.add("today");
+      if (trading?.pnl > 0) box.classList.add("profit-day");
+      if (trading?.pnl < 0) box.classList.add("loss-day");
+      if (journal) box.classList.add("journal-day");
 
-      dayView.classList.add("show");
+      box.innerHTML = `<div class="day-num">${day}</div>`;
 
-    });
+      if (trading) {
+        box.innerHTML += `
+          <div class="day-data">
+            <strong>${money(trading.pnl,currency,true)}</strong>
+            <small>${trading.trades} trade${trading.trades===1?"":"s"}</small>
+          </div>
+        `;
+      } else if (journal) {
+        box.innerHTML += `
+          <div class="day-data">
+            <strong style="color:#a989ff">Journal</strong>
+            <small>${escapeHtml(journal.mood || "Entry saved")}</small>
+          </div>
+        `;
+      }
 
-    calendar.appendChild(box);
+      box.addEventListener("click", () => {
+        selectedDateKey = key;
+        showDayView(key);
+      });
 
+      calendar.appendChild(box);
+    }
   }
 
-}
+  function showDayView(key) {
+    selectedDateKey = key;
 
+    $("calendarTab").classList.remove("active");
+    $("dayTab").classList.add("active");
+    $("calendarView").style.display = "none";
+    $("dayView").classList.add("show");
 
-renderCalendar();
+    const date = parseDateKey(key);
+    const trading = dailyTradingMap().get(key);
+    const journal = entriesMap().get(key);
+    const currency =
+      activeContext?.user?.user_metadata?.default_currency || "USD";
 
+    $("dayViewTitle").textContent =
+      date.toLocaleDateString("en-US", {
+        weekday:"long",
+        month:"long",
+        day:"numeric",
+        year:"numeric"
+      });
 
-document
-.getElementById("prevMonth")
-.addEventListener(
-"click",
-() => {
+    const pnl = trading?.pnl || 0;
+    $("dayViewPnl").textContent = money(pnl,currency,true);
+    $("dayViewPnl").className = pnl >= 0 ? "green" : "red";
+    $("dayViewTrades").textContent = String(trading?.trades || 0);
 
-  month--;
+    const decided = (trading?.wins || 0) + (trading?.losses || 0);
+    const winRate = decided ? (trading.wins / decided) * 100 : 0;
+    $("dayViewWinRate").textContent = `${winRate.toFixed(1)}%`;
 
-  if(month < 0){
-    month = 11;
-    year--;
+    if (!journal) {
+      $("dayJournalContent").className = "no-journal";
+      $("dayJournalContent").innerHTML = `
+        <div>
+          <h3>No journal entry yet</h3>
+          <p style="margin-top:7px;">Click New Entry to document this trading day.</p>
+        </div>
+      `;
+      return;
+    }
+
+    $("dayJournalContent").className = "journal-entry-card";
+    $("dayJournalContent").innerHTML = `
+      <h3>Journal Entry</h3>
+      <span class="journal-mood">${escapeHtml(journal.mood || "Neutral")}</span>
+
+      <div class="journal-entry-row">
+        <small>WHAT WENT WELL?</small>
+        <p>${escapeHtml(journal.went_well || "—")}</p>
+      </div>
+
+      <div class="journal-entry-row">
+        <small>WHAT CAN IMPROVE?</small>
+        <p>${escapeHtml(journal.improve || "—")}</p>
+      </div>
+    `;
   }
 
-  renderCalendar();
+  function openEntryModal() {
+    if (!activeContext?.device) {
+      alert("First connect/select an MT5 account in Broker Hub.");
+      return;
+    }
 
-});
+    const key = selectedDateKey || dateKey(new Date());
+    const current = entriesMap().get(key);
 
+    $("journalEntryDate").value = key;
+    $("journalMood").value = current?.mood || "Neutral";
+    $("journalWentWell").value = current?.went_well || "";
+    $("journalImprove").value = current?.improve || "";
 
-document
-.getElementById("nextMonth")
-.addEventListener(
-"click",
-() => {
-
-  month++;
-
-  if(month > 11){
-    month = 0;
-    year++;
+    $("entryModal").classList.add("show");
   }
 
-  renderCalendar();
+  async function saveEntry() {
+    if (!activeContext?.device) return;
 
-});
+    const entryDate = $("journalEntryDate").value;
+    if (!entryDate) {
+      alert("Choose a date.");
+      return;
+    }
 
+    $("saveEntry").disabled = true;
+    $("saveEntry").textContent = "Saving...";
 
-document
-.getElementById("todayMonth")
-.addEventListener(
-"click",
-() => {
+    try {
+      const payload = {
+        user_id:activeContext.user.id,
+        device_id:activeContext.device.id,
+        entry_date:entryDate,
+        mood:$("journalMood").value,
+        went_well:$("journalWentWell").value.trim(),
+        improve:$("journalImprove").value.trim(),
+        updated_at:new Date().toISOString()
+      };
 
-  month = 9;
-  year = 2026;
+      const {error} = await window.stjSupabase
+        .from("journal_entries")
+        .upsert(payload, {
+          onConflict:"user_id,device_id,entry_date"
+        });
 
-  renderCalendar();
+      if (error) throw error;
 
-});
+      allEntries = await fetchEntries(activeContext.device.id);
+      selectedDateKey = entryDate;
 
-
-/* CALENDAR / DAY VIEW */
-
-const calendarTab =
-document.getElementById("calendarTab");
-
-const dayTab =
-document.getElementById("dayTab");
-
-const calendarView =
-document.getElementById("calendarView");
-
-const dayView =
-document.getElementById("dayView");
-
-
-calendarTab.addEventListener(
-"click",
-() => {
-
-  calendarTab.classList.add("active");
-
-  dayTab.classList.remove("active");
-
-  calendarView.style.display =
-  "block";
-
-  dayView.classList.remove("show");
-
-});
-
-
-dayTab.addEventListener(
-"click",
-() => {
-
-  dayTab.classList.add("active");
-
-  calendarTab.classList.remove("active");
-
-  calendarView.style.display =
-  "none";
-
-  dayView.classList.add("show");
-
-});
-
-
-/* NEW ENTRY */
-
-const entryModal =
-document.getElementById("entryModal");
-
-const openEntry =
-document.getElementById("openEntry");
-
-const closeEntry =
-document.getElementById("closeEntry");
-
-const cancelEntry =
-document.getElementById("cancelEntry");
-
-const saveEntry =
-document.getElementById("saveEntry");
-
-
-openEntry.addEventListener(
-"click",
-() => {
-
-  entryModal.classList.add("show");
-
-});
-
-
-closeEntry.addEventListener(
-"click",
-() => {
-
-  entryModal.classList.remove("show");
-
-});
-
-
-cancelEntry.addEventListener(
-"click",
-() => {
-
-  entryModal.classList.remove("show");
-
-});
-
-
-saveEntry.addEventListener(
-"click",
-() => {
-
-  entryModal.classList.remove("show");
-
-  alert("Journal entry saved in demo mode.");
-
-});
-
-
-entryModal.addEventListener(
-"click",
-event => {
-
-  if(event.target === entryModal){
-
-    entryModal.classList.remove("show");
-
+      $("entryModal").classList.remove("show");
+      renderCalendar();
+      renderStats();
+      showDayView(entryDate);
+    } catch (error) {
+      console.error("Journal save failed:", error);
+      alert(
+        error?.code === "42P01"
+          ? "Journal database table missing. Run 05-journal-real-data.sql in Supabase first."
+          : "Could not save journal entry: " + (error.message || "Unknown error")
+      );
+    } finally {
+      $("saveEntry").disabled = false;
+      $("saveEntry").textContent = "Save Entry";
+    }
   }
 
-});
+  async function refreshData() {
+    if (refreshing) return;
+    refreshing = true;
 
+    try {
+      activeContext = await getActiveContext();
+
+      if (!activeContext.device) {
+        renderAccount();
+        $("journalLiveText").textContent = "No active MT5 account. Select one in Broker Hub.";
+        return;
+      }
+
+      const [deals, entries] = await Promise.all([
+        fetchAllDeals(activeContext.device.id),
+        fetchEntries(activeContext.device.id)
+      ]);
+
+      allClosedTrades = groupClosedTrades(deals);
+      allEntries = entries;
+
+      renderAccount();
+      renderStats();
+      renderCalendar();
+
+      if (selectedDateKey) {
+        showDayView(selectedDateKey);
+      }
+
+      const masked = "••••" + String(activeContext.device.account_id || "").slice(-4);
+      $("journalLiveText").textContent =
+        `${masked} • ${allClosedTrades.length} closed trades • ${allEntries.length} journal entries`;
+      $("journalLastRefresh").textContent =
+        `Updated ${new Date().toLocaleTimeString()}`;
+    } catch (error) {
+      console.error("Journal refresh failed:", error);
+
+      if (error?.code === "42P01") {
+        $("journalLiveText").textContent =
+          "Run 05-journal-real-data.sql in Supabase to enable saved journal notes.";
+      } else {
+        $("journalLiveText").textContent =
+          `Could not refresh: ${error.message || "Unknown error"}`;
+      }
+    } finally {
+      refreshing = false;
+    }
+  }
+
+  // Calendar / day view buttons.
+  $("calendarTab").addEventListener("click", () => {
+    $("calendarTab").classList.add("active");
+    $("dayTab").classList.remove("active");
+    $("calendarView").style.display = "block";
+    $("dayView").classList.remove("show");
+  });
+
+  $("dayTab").addEventListener("click", () => {
+    $("dayTab").classList.add("active");
+    $("calendarTab").classList.remove("active");
+    $("calendarView").style.display = "none";
+    $("dayView").classList.add("show");
+
+    if (!selectedDateKey) {
+      selectedDateKey = dateKey(new Date());
+    }
+    showDayView(selectedDateKey);
+  });
+
+  $("prevMonth").addEventListener("click", () => {
+    month--;
+    if (month < 0) { month = 11; year--; }
+    renderStats();
+    renderCalendar();
+  });
+
+  $("nextMonth").addEventListener("click", () => {
+    month++;
+    if (month > 11) { month = 0; year++; }
+    renderStats();
+    renderCalendar();
+  });
+
+  $("todayMonth").addEventListener("click", () => {
+    const now = new Date();
+    month = now.getMonth();
+    year = now.getFullYear();
+    selectedDateKey = dateKey(now);
+    renderStats();
+    renderCalendar();
+  });
+
+  // Journal modal.
+  $("openEntry").addEventListener("click", openEntryModal);
+  $("closeEntry").addEventListener("click", () => $("entryModal").classList.remove("show"));
+  $("cancelEntry").addEventListener("click", () => $("entryModal").classList.remove("show"));
+  $("saveEntry").addEventListener("click", saveEntry);
+
+  $("entryModal").addEventListener("click", event => {
+    if (event.target === $("entryModal")) {
+      $("entryModal").classList.remove("show");
+    }
+  });
+
+  // Keep journal in sync with the EA's ~15 second cadence.
+  await refreshData();
+  const timer = setInterval(refreshData, 15000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshData();
+  });
+
+  window.addEventListener("beforeunload", () => clearInterval(timer));
+})();
 </script>
-
 
 <script id="global-sidebar-nav-script">
 (function(){
