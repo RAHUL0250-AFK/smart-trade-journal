@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html class="auth-checking" lang="en">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trade Replay | Smart Trade Journal</title>
@@ -790,7 +793,7 @@ window.stjAuthReady = (async () => {
 </section>
 
 <div class="replay-live">
-  <span><b>● REAL MT5 TRADES</b> <span id="replayLiveText">Loading active account...</span></span>
+  <span><b>● REAL MT5 TRADES</b> <span style="color:#7f8793">v2</span> <span id="replayLiveText">Loading active account...</span></span>
   <span id="replayRefreshText">—</span>
 </div>
 
@@ -834,15 +837,11 @@ window.stjAuthReady = (async () => {
       <div class="replay-head">
 
         <div>
-          <h3 id="replayTitle">GOLD Replay</h3>
-          <div class="replay-meta" id="replayDate">
-            Oct 2, 2026
-          </div>
+          <h3 id="replayTitle">Trade Replay</h3>
+          <div class="replay-meta" id="replayDate">—</div>
         </div>
 
-        <strong id="replayPnl" class="profit">
-          +$43.33
-        </strong>
+        <strong id="replayPnl">—</strong>
 
       </div>
 
@@ -863,33 +862,7 @@ window.stjAuthReady = (async () => {
           <line x1="0" y1="190" x2="900" y2="190"
             stroke="#181b20"/>
 
-          <polyline id="pricePath"
-            points="
-            0,160
-            50,150
-            90,170
-            135,142
-            175,148
-            220,112
-            260,122
-            310,98
-            350,107
-            400,82
-            445,93
-            485,71
-            525,88
-            570,59
-            615,69
-            660,48
-            710,62
-            755,38
-            805,49
-            850,29
-            900,42"
-            fill="none"
-            stroke="#31d58a"
-            stroke-width="3"
-          />
+          <polyline id="pricePath" points="0,110 900,110" fill="none" stroke="#4d5563" stroke-width="3"/>
 
         </svg>
 
@@ -937,7 +910,7 @@ window.stjAuthReady = (async () => {
 
         <div class="info-box">
           <small>SYMBOL</small>
-          <strong id="infoSymbol">GOLD</strong>
+          <strong id="infoSymbol">—</strong>
         </div>
 
         <div class="info-box">
@@ -947,7 +920,7 @@ window.stjAuthReady = (async () => {
 
         <div class="info-box">
           <small>ENTRY</small>
-          <strong id="infoEntry">$4,182.25</strong>
+          <strong id="infoEntry">—</strong>
         </div>
 
         <div class="info-box">
@@ -1344,8 +1317,19 @@ window.stjAuthReady = (async () => {
         $("replayAccount").innerHTML = '● MT5 <span class="connected">No active account</span>';
         $("replayLiveText").textContent = "No active MT5 account. Select one in Broker Hub.";
         renderTradeList();
+        activeTradeIndex = -1;
         if (emptyState) emptyState.style.display = "flex";
         if (activeReplay) activeReplay.classList.remove("show");
+        replayTitle.textContent = "Trade Replay";
+        replayDate.textContent = "—";
+        replayPnl.textContent = "—";
+        replayPnl.className = "";
+        infoSymbol.textContent = "—";
+        infoSide.textContent = "—";
+        infoEntry.textContent = "—";
+        infoExit.textContent = "—";
+        infoOpened.textContent = "—";
+        infoDuration.textContent = "—";
         return;
       }
 
@@ -1380,7 +1364,13 @@ window.stjAuthReady = (async () => {
 
       if (oldKey) {
         const idx = trades.slice(0,100).findIndex(t => t.key === oldKey);
-        if (idx >= 0) selectTrade(idx);
+        if (idx >= 0) {
+          selectTrade(idx);
+        } else if (trades.length) {
+          selectTrade(0);
+        }
+      } else if (trades.length) {
+        selectTrade(0);
       }
     } catch (error) {
       console.error("Trade Replay refresh failed:", error);
