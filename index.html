@@ -1,2581 +1,403 @@
-<!DOCTYPE html>
-<html class="auth-checking" lang="en">
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Smart Trade Journal</title>
-
+<meta name="description" content="Track MT5 trades, analyze performance, journal decisions and improve your trading process with Smart Trade Journal.">
 <style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
-
 :root{
-  --bg:#08090c;
-  --panel:#0f1014;
-  --panel2:#131419;
-  --border:#202127;
-  --text:#f5f5f7;
-  --muted:#777985;
-  --green:#23d18b;
-  --red:#ff4d57;
-  --purple:#8557ff;
-  --yellow:#ffc928;
+  --bg:#07090d;
+  --panel:#101319;
+  --panel2:#0c0f14;
+  --line:#222733;
+  --text:#f5f7fb;
+  --muted:#8c96a8;
+  --purple:#7b5cff;
+  --purple2:#a98cff;
+  --green:#25d67d;
+  --blue:#4c9bff;
+  --red:#ff5964;
+  --yellow:#f5b942;
 }
-
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);
+  margin:0;
+  background:
+    radial-gradient(circle at 18% 4%,rgba(123,92,255,.16),transparent 28%),
+    radial-gradient(circle at 80% 18%,rgba(37,214,125,.07),transparent 22%),
+    var(--bg);
   color:var(--text);
-  min-height:100vh;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
-
-.app{
-  display:flex;
-  min-height:100vh;
-}
-
-/* SIDEBAR */
-
-.sidebar{
-  width:220px;
-  position:fixed;
-  left:0;
-  top:0;
-  bottom:0;
-  background:#0c0d10;
-  border-right:1px solid var(--border);
-  padding:14px 12px;
-  display:flex;
-  flex-direction:column;
-  z-index:10;
-}
-
-.logo{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:0 4px 18px;
-  font-weight:800;
-  font-size:17px;
-}
-
-.logo-box{
-  width:34px;
-  height:34px;
-  border-radius:10px;
-  display:grid;
-  place-items:center;
-  background:linear-gradient(135deg,#6e3cff,#a96cff);
-  font-weight:900;
-}
-
-.logo span{
-  color:#ff4fa0;
-}
-
-.nav{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-
-.nav a{
-  text-decoration:none;
-  color:#858791;
-  padding:11px 12px;
-  border-radius:8px;
-  font-size:13px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.nav a:hover,
-.nav a.active{
-  color:#fff;
-  background:#191a20;
-}
-
-.nav a.active{
-  border:1px solid #262830;
-}
-
-.giveaway{
-  margin-top:18px;
-  padding:13px;
-  border:1px solid #5a4000;
-  background:#1f1807;
-  border-radius:11px;
-  font-size:12px;
-}
-
-.giveaway strong{
-  color:#ffd443;
-}
-
-.bottom-nav{
-  margin-top:auto;
-}
-
-.bottom-nav a{
-  display:block;
-  text-decoration:none;
-  color:#777985;
-  padding:9px 8px;
-  font-size:13px;
-}
-
-/* MAIN */
-
-.main{
-  margin-left:220px;
-  width:calc(100% - 220px);
-}
-
+a{text-decoration:none;color:inherit}
+button{font:inherit}
 .topbar{
-  height:58px;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:14px;
-  padding:0 24px;
-  position:sticky;
-  top:0;
-  background:rgba(8,9,12,.94);
-  backdrop-filter:blur(10px);
-  z-index:9;
+  position:sticky;top:0;z-index:20;
+  height:72px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 42px;
+  background:rgba(7,9,13,.82);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
-
-.account-pill{
-  padding:8px 13px;
-  border:1px solid #20232a;
-  border-radius:10px;
-  background:#101216;
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:-.2px}
+.logo{
+  width:38px;height:38px;border-radius:11px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#8f64ff,#5a38ea);
+  box-shadow:0 12px 35px rgba(123,92,255,.25);
   font-size:12px;
 }
-
-.connected{
-  color:var(--green);
+.brand span{font-size:18px}
+.brand b{color:#ff4aa2}
+.nav{display:flex;gap:22px;color:#aab2c0;font-size:13px}
+.nav a:hover{color:#fff}
+.top-actions{display:flex;gap:8px}
+.btn{
+  border:1px solid var(--line);background:#11151b;color:#fff;
+  border-radius:10px;padding:10px 14px;font-size:12px;cursor:pointer;
 }
-
-.profile{
-  background:#111218;
-  border:1px solid #24262d;
-  padding:8px 12px;
-  border-radius:10px;
-  font-size:12px;
+.btn.primary{
+  border-color:#7457ff;background:linear-gradient(135deg,#7d5dff,#5d43e8);
+  box-shadow:0 8px 25px rgba(123,92,255,.24);
 }
-
-.content{
-  padding:22px;
-  max-width:1600px;
-  margin:auto;
+.page{
+  width:min(1440px,calc(100% - 48px));
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 340px;
+  gap:34px;
+  align-items:start;
 }
-
-/* HEADER CARD */
-
+.main{min-width:0}
 .hero{
-  background:linear-gradient(120deg,#101216,#0e0f13);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:25px;
-  display:flex;
-  justify-content:space-between;
+  min-height:560px;
+  display:grid;
+  grid-template-columns:minmax(0,1.12fr) minmax(340px,.88fr);
+  gap:34px;
   align-items:center;
-  min-height:160px;
+  padding:64px 0 44px;
 }
-
-.hero-left small{
-  color:#82848d;
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  color:#cbbfff;background:#171127;border:1px solid #362663;
+  border-radius:999px;padding:7px 10px;font-size:11px;font-weight:700;
 }
-
-.hero-left h2{
-  font-size:23px;
-  margin:5px 0 20px;
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
+h1{
+  margin:18px 0 16px;
+  font-size:clamp(44px,5.1vw,76px);
+  line-height:.98;
+  letter-spacing:-3.6px;
+  max-width:850px;
 }
-
-.pnl-label{
-  color:#81838d;
-  font-size:11px;
-  margin-bottom:5px;
+.gradient{
+  background:linear-gradient(90deg,#fff 0,#b9a7ff 48%,#71e9aa 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
 }
-
-.big-pnl{
-  color:var(--green);
-  font-size:42px;
-  font-weight:800;
+.hero p{
+  max-width:720px;color:#9aa4b5;font-size:16px;line-height:1.72;margin:0 0 26px;
 }
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.hero-actions .btn{padding:13px 18px}
+.trust{display:flex;gap:18px;flex-wrap:wrap;margin-top:26px;color:#7f8998;font-size:11px}
+.trust span:before{content:"✓";color:var(--green);margin-right:6px}
 
-.hero-right{
-  display:flex;
-  gap:10px;
-  align-items:flex-end;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-
-.sync{
-  background:#17191e;
-  color:#fff;
-  border:1px solid #282a31;
-  border-radius:9px;
-  padding:10px 14px;
-  margin-bottom:12px;
-}
-
-.mini-card{
-  min-width:95px;
-  padding:12px;
-  background:#14151a;
-  border:1px solid #24262c;
-  border-radius:10px;
-}
-
-.mini-card small{
-  color:#787b86;
-  font-size:10px;
-}
-
-.mini-card b{
-  display:block;
-  margin-top:7px;
-  font-size:15px;
-}
-
-.green{color:var(--green)!important}
-.red{color:var(--red)!important}
-.yellow{color:var(--yellow)!important}
-.purple{color:var(--purple)!important}
-
-/* METRIC CARDS */
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(6,1fr);
-  gap:12px;
-  margin-top:15px;
-}
-
-.stat{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:16px;
-}
-
-.stat small{
-  color:#777a84;
-  font-size:10px;
-}
-
-.stat strong{
-  font-size:17px;
-  display:block;
-  margin-top:7px;
-}
-
-/* GRID */
-
-.grid2{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:15px;
-  margin-top:15px;
-}
-
-.card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:14px;
+.preview{
+  background:linear-gradient(180deg,#12151b,#0d1015);
+  border:1px solid #252a35;
+  border-radius:22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.34);
   padding:18px;
 }
-
-.card-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:18px;
-}
-
-.card h3{
-  font-size:15px;
-}
-
-.subtitle{
-  color:#757780;
-  font-size:11px;
-  margin-top:4px;
-}
-
-/* RADAR */
-
-.score-wrap{
-  position:relative;
-}
-
-.score-number{
-  position:absolute;
-  right:0;
-  top:0;
-  color:var(--yellow);
-  font-size:30px;
-  font-weight:800;
-}
-
-.radar-area{
-  height:280px;
-  display:grid;
-  place-items:center;
-}
-
-.radar{
-  width:250px;
-  height:250px;
-}
-
-.radar polygon.base{
-  fill:none;
-  stroke:#242630;
-  stroke-width:1;
-}
-
-.radar polygon.data{
-  fill:rgba(123,79,255,.4);
-  stroke:#825cff;
-  stroke-width:2;
-}
-
-.score-details{
-  border-top:1px solid #202127;
-  padding-top:14px;
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  text-align:center;
-  gap:14px;
-  font-size:11px;
-  color:#777a85;
-}
-
-.score-details b{
-  display:block;
-  color:#fff;
-  font-size:14px;
-  margin-bottom:3px;
-}
-
-/* ACTIVITY */
-
-.activity-dots{
-  display:grid;
-  grid-template-columns:repeat(24,10px);
-  gap:4px;
-  margin:30px 0;
-  justify-content:center;
-}
-
-.dot{
-  width:9px;
-  height:9px;
-  border-radius:50%;
-  background:#17191e;
-}
-
-.dot.win{background:#11694f}
-.dot.loss{background:#87373d}
-
-.activity-summary{
-  border-top:1px solid #202127;
-  border-bottom:1px solid #202127;
-  padding:15px 0;
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  text-align:center;
-}
-
-.activity-summary strong{
-  display:block;
-  font-size:20px;
-}
-
-.winbar{
-  margin-top:18px;
-}
-
-.bar{
-  width:100%;
-  height:8px;
-  background:#3f191d;
-  border-radius:10px;
-  overflow:hidden;
-  margin-top:8px;
-}
-
-.bar span{
-  display:block;
-  height:100%;
-  width:71%;
-  background:var(--green);
-}
-
-/* TRADES */
-
-.trade{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:12px;
-  margin-bottom:8px;
-  border-radius:9px;
-  background:#121318;
-}
-
-.trade-info{
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-
-.trade-icon{
-  width:32px;
-  height:32px;
-  display:grid;
-  place-items:center;
-  background:#d9a000;
-  border-radius:50%;
-}
-
-.trade small{
-  display:block;
-  color:#777a84;
-  margin-top:3px;
-}
-
-/* EQUITY */
-
-.equity-metrics{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-bottom:15px;
-}
-
-.eqbox{
-  padding:13px;
-  border-radius:9px;
-  background:#121318;
-}
-
-.eqbox small{
-  color:#777985;
-}
-
-.eqbox strong{
-  display:block;
-  margin-top:7px;
-}
-
-.equity-svg{
-  width:100%;
-  height:260px;
-}
-
-/* BAR CHART */
-
-.day-chart{
-  margin-top:25px;
-}
-
-.day-row{
-  display:grid;
-  grid-template-columns:45px 1fr;
-  gap:10px;
-  align-items:center;
-  margin:16px 0;
-  color:#777985;
-  font-size:11px;
-}
-
-.day-bar{
-  height:18px;
-  position:relative;
-}
-
-.day-bar span{
-  height:100%;
-  display:block;
-  border-radius:3px;
-}
-
-.time-chart{
-  height:230px;
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  border-bottom:1px solid #25262d;
-  padding:25px 10px 0;
-  gap:8px;
-}
-
-.time-col{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  align-items:center;
-  height:100%;
-}
-
-.time-col .v{
-  width:75%;
-  border-radius:4px 4px 0 0;
-  min-height:3px;
-}
-
-.time-label{
-  color:#676a73;
-  font-size:9px;
-  margin-top:8px;
-}
-
-/* CALENDAR */
-
-.calendar-card{
-  margin-top:15px;
-}
-
-.calendar-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-}
-
-.month-title{
-  margin:20px 0;
-}
-
-.calendar-layout{
-  display:grid;
-  grid-template-columns:1fr 180px;
-  gap:20px;
-}
-
-.calendar{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:6px;
-}
-
-.week-name{
-  color:#70737d;
-  font-size:11px;
-  text-align:center;
-  padding:8px;
-}
-
-.day{
-  min-height:105px;
-  background:#0d0e12;
-  border:1px solid transparent;
-  border-radius:8px;
-  padding:10px;
-  font-size:11px;
-}
-
-.day.win-day{
-  background:#0b3324;
-  border-color:#17513d;
-}
-
-.day.active-day{
-  border:2px solid var(--purple);
-}
-
-.day-profit{
-  text-align:center;
-  margin-top:25px;
-}
-
-.day-profit strong{
-  color:var(--green);
-  display:block;
-  margin-top:6px;
-}
-
-.week-summary{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-.weekbox{
-  background:#111217;
-  border:1px solid #202127;
-  border-radius:9px;
-  padding:14px;
-  font-size:11px;
-}
-
-.weekbox.active{
-  background:#0d3023;
-  border-color:#164d38;
-}
-
-.weekbox strong{
-  display:block;
-  margin-top:9px;
-  color:var(--green);
-  font-size:16px;
-}
-
-/* RESPONSIVE */
-
-@media(max-width:1200px){
-  .stats{grid-template-columns:repeat(3,1fr)}
-  .grid2{grid-template-columns:1fr}
-}
-
-@media(max-width:800px){
-  .sidebar{
-    display:none;
-  }
-
-  .main{
-    margin-left:0;
-    width:100%;
-  }
-
-  .stats{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .hero{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:20px;
-  }
-
-  .calendar-layout{
-    grid-template-columns:1fr;
-  }
-
-  .calendar{
-    overflow:auto;
-  }
-}
-
-/* ANALYTICS DROPDOWN */
-.analytics-menu{
-  width:100%;
-}
-
-.analytics-toggle{
-  width:100%;
-  border:none;
-  background:transparent;
-  color:#858791;
-  border-radius:8px;
-  padding:11px 12px;
-  font-size:13px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  cursor:pointer;
-  text-align:left;
-  font-family:inherit;
-}
-
-.analytics-toggle:hover,
-.analytics-toggle.active{
-  color:#fff;
-  background:#191a20;
-}
-
-.analytics-arrow{
-  transition:transform .25s ease;
-}
-
-.analytics-menu.open .analytics-arrow{
-  transform:rotate(180deg);
-}
-
-.analytics-submenu{
-  margin-left:14px;
-  overflow:hidden;
-  max-height:0;
-  opacity:0;
-  transform:translateY(-7px);
-  transition:
-    max-height .32s ease,
-    opacity .25s ease,
-    transform .25s ease;
-}
-
-.analytics-menu.open .analytics-submenu{
-  max-height:260px;
-  opacity:1;
-  transform:translateY(0);
-  margin-top:5px;
-  margin-bottom:8px;
-}
-
-.analytics-submenu a{
-  display:block;
-  color:#858791;
-  text-decoration:none;
-  border-radius:8px;
-  padding:9px 12px;
-  margin-bottom:4px;
-  font-size:12px;
-}
-
-.analytics-submenu a:hover{
-  background:#17191f;
-  color:#fff;
-}
-
-
-/* ===== GLOBAL SIDEBAR NAV FIX ===== */
-.sidebar .nav{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-}
-.sidebar .nav > a,
-.sidebar .analytics-submenu a{
-  text-decoration:none;
-}
-.analytics-menu{width:100%}
-.analytics-toggle{
-  width:100%;
-  border:none;
-  background:transparent;
-  color:#80848f;
-  border-radius:9px;
-  padding:11px 12px;
-  font-size:13px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  cursor:pointer;
-  text-align:left;
-  font-family:inherit;
+.preview-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.preview-title{font-weight:700;font-size:12px}
+.live{color:var(--green);font-size:9px;border:1px solid #24563b;background:#10251a;padding:4px 7px;border-radius:999px}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.metric{background:#0b0e13;border:1px solid #222733;border-radius:12px;padding:14px}
+.metric small{display:block;color:#7e8899;font-size:9px;margin-bottom:6px}
+.metric strong{font-size:20px}
+.green{color:var(--green)}
+.chart{
+  height:190px;margin-top:10px;border:1px solid #202530;border-radius:12px;
+  background:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:100% 38px,55px 100%;
+  position:relative;overflow:hidden;
+}
+.chart svg{position:absolute;inset:12px;width:calc(100% - 24px);height:calc(100% - 24px)}
+.section{padding:54px 0}
+.section-head{display:flex;justify-content:space-between;gap:24px;align-items:end;margin-bottom:22px}
+.section h2{font-size:32px;letter-spacing:-1.3px;margin:0 0 8px}
+.section-head p{margin:0;color:#8791a2;font-size:13px;max-width:600px;line-height:1.6}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.feature{
+  background:rgba(15,18,24,.85);
+  border:1px solid #222731;
+  border-radius:15px;padding:20px;min-height:170px;
+  transition:.2s transform,.2s border-color;
+}
+.feature:hover{transform:translateY(-2px);border-color:#403761}
+.icon{
+  width:37px;height:37px;border-radius:10px;display:grid;place-items:center;
+  margin-bottom:16px;background:#1c1634;color:#b9a6ff;font-size:16px;
+}
+.icon.g{background:#0f2c1e;color:#72e6a6}
+.icon.b{background:#10243d;color:#76b3ff}
+.icon.r{background:#331518;color:#ff8188}
+.icon.y{background:#33280d;color:#ffd36f}
+.feature h3{font-size:14px;margin:0 0 7px}
+.feature p{font-size:11px;line-height:1.6;color:#7f8999;margin:0}
+.workflow{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+}
+.step{
+  position:relative;background:#0e1117;border:1px solid #232833;border-radius:14px;padding:18px;
+}
+.step-num{font-size:10px;color:#ad9cff;margin-bottom:28px}
+.step h3{font-size:13px;margin:0 0 6px}
+.step p{font-size:10px;color:#7e8897;line-height:1.55;margin:0}
+.bottom-cta{
+  margin:40px 0 72px;
+  border:1px solid #322a50;
+  border-radius:20px;padding:30px;
+  background:linear-gradient(135deg,rgba(123,92,255,.12),rgba(37,214,125,.04));
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+}
+.bottom-cta h2{margin:0 0 7px;font-size:24px}
+.bottom-cta p{margin:0;color:#8f98a8;font-size:12px}
+
+.access-wrap{position:sticky;top:96px;padding-top:64px}
+.access-card{
+  background:linear-gradient(180deg,#12151b,#0d1015);
+  border:1px solid #292e39;border-radius:18px;padding:20px;
+  box-shadow:0 24px 70px rgba(0,0,0,.28);
+}
+.access-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.access-head h3{margin:0;font-size:16px}
+.access-head span{font-size:9px;color:#79e4a8;border:1px solid #24563b;background:#10251a;padding:4px 7px;border-radius:999px}
+.access-card>p{color:#858fa0;font-size:11px;line-height:1.55;margin:0 0 17px}
+.access-btn{
+  width:100%;display:flex;justify-content:space-between;align-items:center;
+  padding:12px 13px;border-radius:10px;border:1px solid #292f39;
+  background:#141820;color:#eef2f8;margin-top:8px;font-size:12px;
+}
+.access-btn.primary{background:#6d50ee;border-color:#775aff}
+.access-btn:hover{filter:brightness(1.08)}
+.access-divider{height:1px;background:#252a33;margin:16px 0}
+.mini-list{display:flex;flex-direction:column;gap:10px}
+.mini-row{display:flex;gap:10px;align-items:flex-start}
+.mini-row i{font-style:normal;color:#9b87ff;font-size:11px;margin-top:1px}
+.mini-row strong{display:block;font-size:10px;margin-bottom:2px}
+.mini-row span{display:block;color:#737d8c;font-size:9px;line-height:1.45}
+.coming{opacity:.65}
+.footer{
+  border-top:1px solid #1d222a;padding:25px 0 40px;color:#697383;font-size:10px;
+  display:flex;justify-content:space-between;gap:20px
+}
+@media(max-width:1120px){
+  .page{grid-template-columns:1fr}
+  .access-wrap{position:relative;top:auto;padding-top:0;grid-row:1}
+  .access-card{max-width:none}
+  .hero{padding-top:36px}
+}
+@media(max-width:900px){
+  .topbar{padding:0 18px}
+  .nav{display:none}
+  .page{width:min(100% - 28px,1440px)}
+  .hero{grid-template-columns:1fr}
+  .feature-grid{grid-template-columns:repeat(2,1fr)}
+  .workflow{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:580px){
+  .top-actions{display:none}
+  h1{font-size:46px;letter-spacing:-2.5px}
+  .feature-grid,.workflow{grid-template-columns:1fr}
+  .bottom-cta{align-items:flex-start;flex-direction:column}
+  .footer{flex-direction:column}
 }
-.analytics-toggle:hover,
-.analytics-toggle.active{
-  background:#17191f;
-  color:#fff;
-}
-.analytics-arrow{
-  transition:transform .25s ease;
-}
-.analytics-menu.open .analytics-arrow{
-  transform:rotate(180deg);
-}
-.analytics-submenu{
-  margin-left:14px;
-  overflow:hidden;
-  max-height:0;
-  opacity:0;
-  transform:translateY(-7px);
-  transition:max-height .3s ease,opacity .22s ease,transform .22s ease;
-}
-.analytics-menu.open .analytics-submenu{
-  max-height:280px;
-  opacity:1;
-  transform:translateY(0);
-  margin-top:5px;
-  margin-bottom:8px;
-}
-.analytics-submenu a{
-  display:block;
-  color:#80848f;
-  border-radius:8px;
-  padding:9px 12px;
-  margin-bottom:4px;
-  font-size:12px;
-}
-.analytics-submenu a:hover{
-  background:#17191f;
-  color:#fff;
-}
-.analytics-submenu a.active{
-  background:#1a1c22;
-  border:1px solid #2a2d34;
-  color:#fff;
-}
-.sidebar .bottom{
-  margin-top:auto;
-}
-.sidebar .bottom a{
-  display:block;
-  color:#7d818c;
-  text-decoration:none;
-  padding:10px 8px;
-  font-size:13px;
-  border-radius:9px;
-}
-.sidebar .bottom a:hover,
-.sidebar .bottom a.active{
-  background:#1a1c22;
-  color:#fff;
-}
-
-
-
-/* GLOBAL AUTH GUARD */
-html.auth-checking body{visibility:hidden}
-
-
-.day.loss-day{
-  background:#331114;
-  border-color:#5b2229;
-}
-.day.loss-day .day-profit strong{
-  color:var(--red);
-}
-.score-note{
-  margin-top:8px;
-  font-size:10px;
-  color:var(--muted);
-  text-align:center;
-}
-
 </style>
-
-
-
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script id="stj-auth-guard">
-window.STJ_SUPABASE_URL = "https://vboelobxtkgewkwxllsq.supabase.co";
-window.STJ_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
-window.stjSupabase = window.supabase.createClient(
-  window.STJ_SUPABASE_URL,
-  window.STJ_SUPABASE_PUBLISHABLE_KEY
-);
-
-window.stjAuthReady = (async () => {
-  try {
-    const { data: sessionData } = await window.stjSupabase.auth.getSession();
-
-    if (!sessionData.session) {
-      window.location.replace("login.html");
-      return false;
-    }
-
-    const { data: refreshData, error: refreshError } =
-      await window.stjSupabase.auth.refreshSession();
-
-    if (refreshError || !refreshData.session) {
-      await window.stjSupabase.auth.signOut({ scope: "local" });
-      window.location.replace("login.html");
-      return false;
-    }
-
-    const { data: userData, error: userError } =
-      await window.stjSupabase.auth.getUser();
-
-    if (userError || !userData.user) {
-      await window.stjSupabase.auth.signOut({ scope: "local" });
-      window.location.replace("login.html");
-      return false;
-    }
-
-    document.documentElement.classList.remove("auth-checking");
-    return true;
-  } catch (err) {
-    try {
-      await window.stjSupabase.auth.signOut({ scope: "local" });
-    } catch (e) {}
-    window.location.replace("login.html");
-    return false;
-  }
-})();
-</script>
-
 </head>
-
 <body>
-
-<div class="app">
-
-<aside class="sidebar">
-
-  <div class="logo">
-    <div class="logo-box">ST</div>
-    Smart Trade <span>Journal</span>
-  </div>
-
-  <nav class="nav">
-    <a href="index.html" class="active">▦ Dashboard</a>
-
-    <div class="analytics-menu" id="analyticsMenu">
-      <button class="analytics-toggle" id="analyticsToggle" type="button">
-        <span>▥ Analytics</span>
-        <span class="analytics-arrow">⌄</span>
-      </button>
-
-      <div class="analytics-submenu">
-          <a href="analytics.html">▥ Performance</a>
-          <a href="reports.html">⇩ Reports</a>
-          <a href="strategies.html">▤ Strategies</a>
-          <a href="trade-replay.html">▷ Trade Replay</a>
-          <a href="share-cards.html">⌘ Share Cards</a>
-      </div>
-    </div>
-
-    <a href="trade-history.html">↗ Trade History</a>
-    <a href="journal.html">✎ Journal</a>
-    <a href="#">✦ Smart Journal AI</a>
-    <a href="#">♨ Hot Topics</a>
-    <a href="#">♕ Leaderboard</a>
-  </nav>
-
-  <div class="giveaway">
-    🎁 <strong>Giveaway</strong><br>
-    Win rewards every month
-  </div>
-
-  <div class="bottom">
-    <a href="broker-hub.html">▣ Broker Hub</a>
-    <a href="settings.html">⚙ Settings</a>
-    <a href="logout.html">↪ Logout</a>
-  </div>
-
-</aside>
-
-<main class="main">
-
 <header class="topbar">
-  <div class="account-pill" id="dashboardBrokerStatus">● MT5 <span class="connected">Checking...</span></div>
-  <div>☼</div>
-  <div class="profile">Rahul ▾</div>
+  <a class="brand" href="index.html">
+    <div class="logo">ST</div>
+    <span>Smart Trade <b>Journal</b></span>
+  </a>
+  <nav class="nav">
+    <a href="#features">Features</a>
+    <a href="#workflow">How it works</a>
+    <a href="#analytics">Analytics</a>
+    <a href="#journal">Journal</a>
+  </nav>
+  <div class="top-actions">
+    <a class="btn" href="login.html">Log in</a>
+    <a class="btn primary" href="signup.html">Sign up</a>
+  </div>
 </header>
 
-<div class="content">
-
-<section class="hero">
-
-  <div class="hero-left">
-    <small>Good morning,</small>
-    <h2>RAHUL KUMAWAT</h2>
-
-    <div class="pnl-label">↗ TODAY'S P&amp;L</div>
-    <div class="big-pnl" id="todayPnl">—</div>
-  </div>
-
-  <div class="hero-right">
-
-    <button class="sync" id="dashboardSyncBtn">⟳ Refresh Trades</button>
-
-    <div class="mini-card">
-      <small>BALANCE</small>
-      <b id="dashboardBalance">—</b>
-    </div>
-
-    <div class="mini-card">
-      <small>TOTAL P&amp;L</small>
-      <b class="green" id="totalPnl">—</b>
-    </div>
-
-    <div class="mini-card">
-      <small>BEST DAY</small>
-      <b class="yellow" id="bestDayPnl">—</b>
-    </div>
-
-    <div class="mini-card">
-      <small>STREAK</small>
-      <b class="green" id="tradeStreak">—</b>
-    </div>
-
-  </div>
-
-</section>
-
-
-<section class="stats">
-
-<div class="stat">
-  <small>WIN RATE</small>
-  <strong id="winRate">—</strong>
-</div>
-
-<div class="stat">
-  <small>TOTAL TRADES</small>
-  <strong id="totalTrades">—</strong>
-</div>
-
-<div class="stat">
-  <small>BIGGEST WIN</small>
-  <strong class="green" id="biggestWin">—</strong>
-</div>
-
-<div class="stat">
-  <small>AVG WIN</small>
-  <strong class="green" id="avgWin">—</strong>
-</div>
-
-<div class="stat">
-  <small>AVG LOSS</small>
-  <strong class="red" id="avgLoss">—</strong>
-</div>
-
-<div class="stat">
-  <small>THIS MONTH</small>
-  <strong class="green" id="thisMonthPnl">—</strong>
-</div>
-
-</section>
-
-
-<div class="grid2">
-
-<section class="card score-wrap">
-
-  <div class="card-head">
-    <div>
-      <h3>Trade Score</h3>
-      <div class="subtitle">Your overall trading performance</div>
-    </div>
-  </div>
-
-  <div class="score-number" id="tradeScoreNumber">—</div>
-
-  <div class="radar-area">
-
-    <svg class="radar" viewBox="0 0 300 300">
-
-      <polygon class="base"
-      points="150,35 250,92 250,208 150,265 50,208 50,92"/>
-
-      <polygon class="base"
-      points="150,65 225,108 225,192 150,235 75,192 75,108"/>
-
-      <polygon class="base"
-      points="150,95 200,122 200,178 150,205 100,178 100,122"/>
-
-      <polygon class="data" id="tradeScoreRadar" points="150,150 150,150 150,150 150,150 150,150 150,150"/>
-
-      <circle id="radarPoint0" cx="150" cy="150" r="4" fill="#8c67ff"/>
-      <circle id="radarPoint1" cx="150" cy="150" r="4" fill="#8c67ff"/>
-      <circle id="radarPoint2" cx="150" cy="150" r="4" fill="#8c67ff"/>
-      <circle id="radarPoint3" cx="150" cy="150" r="4" fill="#8c67ff"/>
-      <circle id="radarPoint4" cx="150" cy="150" r="4" fill="#8c67ff"/>
-      <circle id="radarPoint5" cx="150" cy="150" r="4" fill="#8c67ff"/>
-
-    </svg>
-
-  </div>
-
-  <div class="score-details">
-
-    <div>
-      <b class="yellow" id="scoreWinRate">—</b>
-      Win Rate
-    </div>
-
-    <div>
-      <b class="yellow" id="scoreRiskReward">—</b>
-      Risk/Reward
-    </div>
-
-    <div>
-      <b class="green" id="scoreConsistency">—</b>
-      Consistency
-    </div>
-
-    <div>
-      <b class="yellow" id="scoreDrawdown">—</b>
-      Max Drawdown
-    </div>
-
-    <div>
-      <b class="yellow" id="scoreProfitability">—</b>
-      Profitability
-    </div>
-
-    <div>
-      <b class="green" id="scoreRecovery">—</b>
-      Recovery
-    </div>
-
-  </div>
-  <div class="score-note">Calculated from your synced closed MT5 trades.</div>
-
-</section>
-
-
-<section class="card">
-
-  <div class="card-head">
-    <div>
-      <h3>Trading Activity</h3>
-      <div class="subtitle" id="activityTitle">Loading synced activity...</div>
-    </div>
-  </div>
-
-  <div class="activity-dots" id="activityDots"></div>
-
-  <div class="activity-summary">
-
-    <div>
-      <strong class="purple" id="activityDaysTraded">—</strong>
-      <span class="subtitle">Days Traded</span>
-    </div>
-
-    <div>
-      <strong class="green" id="activityGreenDays">—</strong>
-      <span class="subtitle">Green Days</span>
-    </div>
-
-    <div>
-      <strong class="red" id="activityRedDays">—</strong>
-      <span class="subtitle">Red Days</span>
-    </div>
-
-    <div>
-      <strong class="purple" id="activityCurrentStreak">—</strong>
-      <span class="subtitle">Current Streak</span>
-    </div>
-
-    <div>
-      <strong class="purple" id="activityLongestStreak">—</strong>
-      <span class="subtitle">Longest Streak</span>
-    </div>
-
-    <div>
-      <strong class="green" id="activityTotalPnl">—</strong>
-      <span class="subtitle">Total P&amp;L</span>
-    </div>
-
-  </div>
-
-  <div class="winbar">
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:#777985;">
-      <span>Daily Win Rate</span>
-      <span class="green" id="dailyWinRate">—</span>
-    </div>
-
-    <div class="bar"><span id="dailyWinRateBar" style="width:0%"></span></div>
-  </div>
-
-</section>
-
-</div>
-
-
-<div class="grid2">
-
-<section class="card">
-  <div class="card-head">
-    <h3>Recent Trades</h3>
-    <a class="subtitle" href="trade-history.html" style="text-decoration:none">View All →</a>
-  </div>
-  <div id="recentTradesList">
-    <div class="subtitle" style="padding:14px 0">Loading real MT5 trades...</div>
-  </div>
-</section>
-
-
-<section class="card">
-
-  <div class="card-head">
-    <div>
-      <h3>↗ Equity Curve</h3>
-      <div class="subtitle">Account balance over time</div>
-    </div>
-
-    <strong class="green" id="equityReturn">—</strong>
-  </div>
-
-  <div class="equity-metrics">
-
-    <div class="eqbox">
-      <small>Peak</small>
-      <strong id="equityPeak">—</strong>
-    </div>
-
-    <div class="eqbox">
-      <small>Max DD</small>
-      <strong class="yellow" id="equityMaxDd">—</strong>
-    </div>
-
-    <div class="eqbox">
-      <small>Current</small>
-      <strong id="equityCurrent">—</strong>
-    </div>
-
-  </div>
-
-  <svg class="equity-svg" viewBox="0 0 800 280"
-  preserveAspectRatio="none">
-
-    <defs>
-      <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#1fd083" stop-opacity=".25"/>
-        <stop offset="100%" stop-color="#1fd083" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
-
-    <line x1="0" y1="240" x2="800" y2="240"
-    stroke="#45464c"
-    stroke-dasharray="4"/>
-
-    <path id="equityArea"
-    d="
-    M0 245
-    L20 230 L35 250 L50 220
-    L70 235 L90 225 L110 250
-    L130 215 L150 245
-    L170 210 L190 230
-    L210 195 L225 205
-    L240 175 L255 190
-    L275 120 L290 135
-    L310 90 L330 80
-    L350 120 L370 150
-    L390 130 L410 145
-    L430 120 L450 150
-    L470 135 L490 105
-    L510 125 L530 110
-    L550 125 L570 120
-    L590 150 L610 165
-    L630 145 L650 155
-    L670 130 L690 80
-    L710 120 L730 150
-    L750 100 L770 115
-    L790 55
-    L800 75
-    L800 280 L0 280 Z"
-    fill="url(#area)"
-    />
-
-    <polyline id="equityLine"
-    points="
-    0,245 20,230 35,250 50,220
-    70,235 90,225 110,250
-    130,215 150,245
-    170,210 190,230
-    210,195 225,205
-    240,175 255,190
-    275,120 290,135
-    310,90 330,80
-    350,120 370,150
-    390,130 410,145
-    430,120 450,150
-    470,135 490,105
-    510,125 530,110
-    550,125 570,120
-    590,150 610,165
-    630,145 650,155
-    670,130 690,80
-    710,120 730,150
-    750,100 770,115
-    790,55 800,75"
-    fill="none"
-    stroke="#25d482"
-    stroke-width="3"
-    />
-
-  </svg>
-
-</section>
-
-</div>
-
-
-<div class="grid2">
-
-<section class="card">
-
-  <div>
-    <h3>▣ P&amp;L by Day</h3>
-    <div class="subtitle">Net P&amp;L by day of week</div>
-  </div>
-
-  <div class="day-chart" id="pnlByDayChart">
-
-    <div class="day-row">
-      <span>Mon</span>
-      <div class="day-bar">
-        <span style="width:55%;background:#3db75f;"></span>
+<div class="page">
+  <main class="main">
+    <section class="hero">
+      <div>
+        <span class="eyebrow"><i></i> MT5-powered trading journal</span>
+        <h1>Trade less blindly. <span class="gradient">Learn from every trade.</span></h1>
+        <p>
+          Smart Trade Journal connects your MT5 trading activity with a clean dashboard,
+          performance analytics, trading calendar and daily journal so you can understand
+          what is working, what is costing you money, and how your trading changes over time.
+        </p>
+        <div class="hero-actions">
+          <a class="btn primary" href="signup.html">Create free account →</a>
+          <a class="btn" href="login.html">I already have an account</a>
+        </div>
+        <div class="trust">
+          <span>No MT5 password stored</span>
+          <span>Separate multi-account tracking</span>
+          <span>Automatic EA sync</span>
+        </div>
+      </div>
+
+      <div class="preview" id="analytics">
+        <div class="preview-top">
+          <span class="preview-title">Performance Overview</span>
+          <span class="live">● LIVE DATA</span>
+        </div>
+        <div class="metrics">
+          <div class="metric"><small>WIN RATE</small><strong>56.1%</strong></div>
+          <div class="metric"><small>PROFIT FACTOR</small><strong>1.39</strong></div>
+          <div class="metric"><small>EXPECTANCY</small><strong class="green">+$0.94</strong></div>
+          <div class="metric"><small>TOTAL P&amp;L</small><strong class="green">+$130.44</strong></div>
+        </div>
+        <div class="chart">
+          <svg viewBox="0 0 600 180" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="a" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#25d67d" stop-opacity=".32"/>
+                <stop offset="1" stop-color="#25d67d" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0 155 L40 149 L75 140 L110 145 L150 116 L190 123 L230 105 L270 111 L310 78 L345 87 L385 69 L420 72 L460 45 L500 53 L545 30 L600 35 L600 180 L0 180Z" fill="url(#a)"/>
+            <polyline points="0,155 40,149 75,140 110,145 150,116 190,123 230,105 270,111 310,78 345,87 385,69 420,72 460,45 500,53 545,30 600,35" fill="none" stroke="#25d67d" stroke-width="3"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-head">
+        <div>
+          <h2>Everything in one trading workspace.</h2>
+          <p>From MT5 sync to post-trade review, the journal is designed around the full trading feedback loop.</p>
+        </div>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature">
+          <div class="icon">▦</div>
+          <h3>Live Dashboard</h3>
+          <p>Balance, equity, P&amp;L, win rate, recent trades, trade score, activity and your trading calendar in one place.</p>
+        </article>
+        <article class="feature">
+          <div class="icon g">↗</div>
+          <h3>Performance Analytics</h3>
+          <p>Profit factor, expectancy, drawdown, time-of-day performance, symbol analysis, streaks and rolling performance.</p>
+        </article>
+        <article class="feature">
+          <div class="icon b">◎</div>
+          <h3>Multi-Account MT5</h3>
+          <p>Pair multiple MT5 accounts and keep each account's balance, trades, calendar and analytics separate.</p>
+        </article>
+        <article class="feature" id="journal">
+          <div class="icon y">✎</div>
+          <h3>Trading Journal</h3>
+          <p>Review real closed-trade days, write what went well, what needs improvement and track your trading mindset.</p>
+        </article>
+        <article class="feature">
+          <div class="icon r">▤</div>
+          <h3>Trade History</h3>
+          <p>Automatically turn synced MT5 deal history into a readable trade list with entry, exit, side and net P&amp;L.</p>
+        </article>
+        <article class="feature">
+          <div class="icon">◫</div>
+          <h3>Reports &amp; Share Cards</h3>
+          <p>Turn your trading data into review-ready reports and clean visual cards for sharing progress and results.</p>
+        </article>
+        <article class="feature">
+          <div class="icon g">◉</div>
+          <h3>Strategy Tracking</h3>
+          <p>Tag trades by setup or strategy and compare which approaches actually produce the best results over time.</p>
+        </article>
+        <article class="feature">
+          <div class="icon b">▶</div>
+          <h3>Trade Replay</h3>
+          <p>Revisit synced trades, study decisions around entries and exits, and build a repeatable review process.</p>
+        </article>
+        <article class="feature">
+          <div class="icon y">▣</div>
+          <h3>Trading Calendar</h3>
+          <p>See daily and monthly P&amp;L visually, move through previous and future months, and spot patterns quickly.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="workflow">
+      <div class="section-head">
+        <div>
+          <h2>How it works.</h2>
+          <p>A simple workflow: connect, sync, analyze and improve.</p>
+        </div>
+      </div>
+      <div class="workflow">
+        <article class="step"><div class="step-num">01 / CREATE</div><h3>Create your account</h3><p>Sign up and access your private Smart Trade Journal workspace.</p></article>
+        <article class="step"><div class="step-num">02 / CONNECT</div><h3>Pair MT5 with the EA</h3><p>Generate a short-lived connection code in Broker Hub and pair your MT5 account.</p></article>
+        <article class="step"><div class="step-num">03 / SYNC</div><h3>Your trades arrive automatically</h3><p>The EA syncs account state and trade history while that MT5 terminal is running.</p></article>
+        <article class="step"><div class="step-num">04 / REVIEW</div><h3>Analyze and journal</h3><p>Use analytics, calendar, history and journal notes to review your process.</p></article>
+      </div>
+    </section>
+
+    <section class="bottom-cta">
+      <div>
+        <h2>Ready to build a better trading process?</h2>
+        <p>Create your account, connect MT5 and start building a real history of your decisions.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn primary" href="signup.html">Sign up</a>
+        <a class="btn" href="login.html">Log in</a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>© 2026 Smart Trade Journal</span>
+      <span>Trading analytics are informational and do not constitute financial advice.</span>
+    </footer>
+  </main>
+
+  <aside class="access-wrap">
+    <div class="access-card">
+      <div class="access-head">
+        <h3>Access Smart Trade Journal</h3>
+        <span>START HERE</span>
+      </div>
+      <p>New users can create an account. Existing users can sign in and continue directly to their private dashboard.</p>
+
+      <a class="access-btn primary" href="signup.html"><span>Create account</span><b>→</b></a>
+      <a class="access-btn" href="login.html"><span>Log in</span><b>→</b></a>
+      <a class="access-btn" href="#features"><span>Explore features</span><b>↓</b></a>
+      <a class="access-btn coming" href="javascript:void(0)" title="Subscription checkout will be added later"><span>Plans / Cart</span><b>Coming soon</b></a>
+
+      <div class="access-divider"></div>
+
+      <div class="mini-list">
+        <div class="mini-row"><i>●</i><div><strong>MT5 account sync</strong><span>Trades and live account state through your paired EA.</span></div></div>
+        <div class="mini-row"><i>●</i><div><strong>Private workspace</strong><span>Your authenticated pages are separate from this public home page.</span></div></div>
+        <div class="mini-row"><i>●</i><div><strong>Account isolation</strong><span>Choose one active MT5 account at a time across Dashboard, Analytics and Journal.</span></div></div>
       </div>
     </div>
-
-    <div class="day-row">
-      <span>Tue</span>
-      <div class="day-bar">
-        <span style="width:52%;background:#3db75f;"></span>
-      </div>
-    </div>
-
-    <div class="day-row">
-      <span>Wed</span>
-      <div class="day-bar">
-        <span style="width:35%;background:#3db75f;"></span>
-      </div>
-    </div>
-
-    <div class="day-row">
-      <span>Thu</span>
-      <div class="day-bar">
-        <span style="width:58%;background:#3db75f;"></span>
-      </div>
-    </div>
-
-    <div class="day-row">
-      <span>Fri</span>
-      <div class="day-bar">
-        <span style="width:33%;background:#ee5a61;"></span>
-      </div>
-    </div>
-
-  </div>
-
-</section>
-
-
-<section class="card">
-
-  <div>
-    <h3>◷ Performance by Time</h3>
-    <div class="subtitle">P&amp;L by hour of day</div>
-  </div>
-
-  <div class="time-chart" id="performanceByTimeChart">
-
-    <div class="time-col">
-      <div class="v" style="height:3%;background:#ed4d55;"></div>
-      <span class="time-label">07</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:6%;background:#25c86d;"></div>
-      <span class="time-label">08</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:12%;background:#25c86d;"></div>
-      <span class="time-label">09</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:10%;background:#25c86d;"></div>
-      <span class="time-label">11</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:9%;background:#ed4d55;"></div>
-      <span class="time-label">12</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:15%;background:#ed4d55;"></div>
-      <span class="time-label">13</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:6%;background:#ed4d55;"></div>
-      <span class="time-label">14</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:7%;background:#ed4d55;"></div>
-      <span class="time-label">16</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:65%;background:#22c66e;"></div>
-      <span class="time-label">17</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:8%;background:#22c66e;"></div>
-      <span class="time-label">18</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:75%;background:#22c66e;"></div>
-      <span class="time-label">19</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:18%;background:#22c66e;"></div>
-      <span class="time-label">20</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:2%;background:#ed4d55;"></div>
-      <span class="time-label">21</span>
-    </div>
-
-    <div class="time-col">
-      <div class="v" style="height:20%;background:#22c66e;"></div>
-      <span class="time-label">22</span>
-    </div>
-
-  </div>
-
-</section>
-
+  </aside>
 </div>
-
-
-<section class="card calendar-card">
-
-<div class="calendar-top">
-
-  <div>
-    <h3>Trading Calendar</h3>
-    <div class="subtitle">Monthly P&amp;L overview</div>
-  </div>
-
-  <div>
-    <span class="subtitle">Monthly P&amp;L</span>
-    <strong class="green" id="calendarMonthPnl">—</strong>
-  </div>
-
-</div>
-
-<h3 class="month-title" id="calendarMonthTitle">—</h3><span style="font-size:9px;color:var(--muted);margin-left:7px">ACCOUNT FILTERED</span>
-
-<div class="calendar-layout">
-
-<div>
-
-<div class="calendar" id="tradingCalendarGrid">
-
-  <div class="week-name">Sun</div>
-  <div class="week-name">Mon</div>
-  <div class="week-name">Tue</div>
-  <div class="week-name">Wed</div>
-  <div class="week-name">Thu</div>
-  <div class="week-name">Fri</div>
-  <div class="week-name">Sat</div>
-
-  <div class="day"></div>
-  <div class="day"></div>
-  <div class="day"></div>
-  <div class="day"></div>
-
-  <div class="day win-day">
-    1
-    <div class="day-profit">
-      <strong>$10.15</strong>
-      <span class="subtitle">3 trades</span>
-    </div>
-  </div>
-
-  <div class="day win-day">
-    2
-    <div class="day-profit">
-      <strong>$20.07</strong>
-      <span class="subtitle">5 trades</span>
-    </div>
-  </div>
-
-  <div class="day">3</div>
-
-  <div class="day active-day">4</div>
-  <div class="day">5</div>
-  <div class="day">6</div>
-  <div class="day">7</div>
-  <div class="day">8</div>
-  <div class="day">9</div>
-  <div class="day">10</div>
-
-  <div class="day">11</div>
-  <div class="day">12</div>
-  <div class="day">13</div>
-  <div class="day">14</div>
-  <div class="day">15</div>
-  <div class="day">16</div>
-  <div class="day">17</div>
-
-  <div class="day">18</div>
-  <div class="day">19</div>
-  <div class="day">20</div>
-  <div class="day">21</div>
-  <div class="day">22</div>
-  <div class="day">23</div>
-  <div class="day">24</div>
-
-  <div class="day">25</div>
-  <div class="day">26</div>
-  <div class="day">27</div>
-  <div class="day">28</div>
-  <div class="day">29</div>
-  <div class="day">30</div>
-  <div class="day">31</div>
-
-</div>
-
-</div>
-
-<div class="week-summary" id="calendarWeekSummary">
-
-  <div class="weekbox active">
-    Week 1
-    <strong>+$30.22</strong>
-    <span class="subtitle">2 days</span>
-  </div>
-
-  <div class="weekbox">
-    Week 2
-    <div class="subtitle">No trades</div>
-  </div>
-
-  <div class="weekbox">
-    Week 3
-    <div class="subtitle">No trades</div>
-  </div>
-
-  <div class="weekbox">
-    Week 4
-    <div class="subtitle">No trades</div>
-  </div>
-
-  <div class="weekbox">
-    Week 5
-    <div class="subtitle">No trades</div>
-  </div>
-
-</div>
-
-</div>
-
-</section>
-
-</div>
-
-</main>
-
-</div>
-
-<script>
-
-const activity = document.getElementById("activityDots");
-
-for(let i=0;i<168;i++){
-
-  const dot=document.createElement("div");
-  dot.className="dot";
-
-  if(
-    [47,48,69,70,71,72,73,74,75,76,93,94,95,96,97,98,99,100,101,102,121,122,123,124,125,126,127,128].includes(i)
-  ){
-    dot.classList.add("win");
-  }
-
-  if(
-    [68,77,78,103,104,129,130].includes(i)
-  ){
-    dot.classList.add("loss");
-  }
-
-  activity.appendChild(dot);
-}
-
-</script>
-
-
-<script>
-const analyticsMenu = document.getElementById("analyticsMenu");
-const analyticsToggle = document.getElementById("analyticsToggle");
-
-if (analyticsMenu && analyticsToggle) {
-  analyticsToggle.addEventListener("click", () => {
-    analyticsMenu.classList.toggle("open");
-    analyticsToggle.classList.toggle("active", analyticsMenu.classList.contains("open"));
-  });
-}
-</script>
-
-<script id="stj-user-profile">
-(async () => {
-  try {
-    if (window.stjAuthReady) {
-      const ok = await window.stjAuthReady;
-      if (!ok) return;
-    }
-
-    if (!window.stjSupabase) return;
-
-    const { data, error } = await window.stjSupabase.auth.getUser();
-    if (error || !data.user) return;
-
-    const user = data.user;
-    const fullName =
-      user.user_metadata?.full_name ||
-      user.user_metadata?.name ||
-      (user.email ? user.email.split("@")[0] : "Trader");
-
-    const email = user.email || "";
-
-    // Update common top-right profile cards.
-    document.querySelectorAll(".profile strong, .profile-box strong").forEach(el => {
-      el.textContent = fullName;
-    });
-
-    document.querySelectorAll(".profile small, .profile-box small").forEach(el => {
-      if (email) el.textContent = email;
-    });
-
-    // Dashboard has a simple profile pill without <strong>/<small>.
-    document.querySelectorAll(".profile").forEach(el => {
-      if (!el.querySelector("strong") && !el.querySelector("small")) {
-        el.textContent = fullName + " ▾";
-      }
-    });
-
-    // Dashboard greeting name.
-    const dashboardName = document.querySelector(".hero-left h2");
-    if (dashboardName) {
-      dashboardName.textContent = fullName.toUpperCase();
-    }
-
-    // Update Settings page fields/card when present.
-    const fullNameInput = document.querySelector('input[type="text"][value="Smart Trader"], input[type="text"][value="Rahul Kumawat"]');
-    if (fullNameInput) fullNameInput.value = fullName;
-
-    const emailInput = document.querySelector('input[type="email"]');
-    if (emailInput) emailInput.value = email;
-
-    const userMetaStrong = document.querySelector(".user-meta strong");
-    if (userMetaStrong) userMetaStrong.textContent = email || fullName;
-
-    const avatar = document.querySelector(".avatar");
-    if (avatar) {
-      avatar.textContent = (fullName || "T").trim().charAt(0).toUpperCase();
-    }
-
-    // Expose for later features.
-    window.stjCurrentUser = user;
-  } catch (err) {
-    console.error("Could not load user profile:", err);
-  }
-})();
-</script>
-
-
-<script id="stj-real-mt5-dashboard">
-(async () => {
-  if (window.stjAuthReady) {
-    const ok = await window.stjAuthReady;
-    if (!ok) return;
-  }
-  if (!window.stjSupabase) return;
-
-  const $ = id => document.getElementById(id);
-
-
-async function stjGetActiveMt5Context() {
-  const { data: userData, error: userError } = await window.stjSupabase.auth.getUser();
-  if (userError || !userData.user) {
-    throw userError || new Error("User not signed in.");
-  }
-
-  const user = userData.user;
-  const storageKey = `stj_active_mt5_device_${user.id}`;
-
-  const { data: devices, error: deviceError } = await window.stjSupabase
-    .from("ea_devices")
-    .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at,updated_at")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
-
-  if (deviceError) throw deviceError;
-
-  const list = devices || [];
-  let activeId = localStorage.getItem(storageKey) || "";
-  let device = list.find(d => d.id === activeId) || list[0] || null;
-
-  if (device && device.id !== activeId) {
-    activeId = device.id;
-    localStorage.setItem(storageKey, activeId);
-  }
-
-  return { user, storageKey, devices: list, device };
-}
-
-async function stjUseMt5Account(deviceId) {
-  const { user, storageKey, devices } = await stjGetActiveMt5Context();
-  if (!devices.some(d => d.id === deviceId)) {
-    throw new Error("That MT5 account is not available.");
-  }
-  localStorage.setItem(storageKey, deviceId);
-  return true;
-}
-
-
-  function money(value, currency = "USD", signed = false) {
-    const n = Number(value || 0);
-    const abs = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(Math.abs(n));
-    if (!signed) return (n < 0 ? "-" : "") + abs;
-    return (n > 0 ? "+" : n < 0 ? "-" : "") + abs;
-  }
-
-  function setMoneyClass(el, value) {
-    if (!el) return;
-    el.classList.remove("green", "red", "yellow");
-    if (value > 0) el.classList.add("green");
-    else if (value < 0) el.classList.add("red");
-  }
-
-  async function fetchAllDeals(deviceId) {
-    const pageSize = 1000;
-    let from = 0;
-    const all = [];
-
-    while (true) {
-      const { data, error } = await window.stjSupabase
-        .from("mt5_deals")
-        .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
-        .eq("device_id", deviceId)
-        .order("time_msc", { ascending: true })
-        .range(from, from + pageSize - 1);
-
-      if (error) throw error;
-      all.push(...(data || []));
-      if (!data || data.length < pageSize) break;
-      from += pageSize;
-      if (from >= 10000) break;
-    }
-    return all;
-  }
-
-  function groupTrades(deals) {
-    const map = new Map();
-
-    for (const d of deals) {
-      if (!d.symbol) continue;
-      if (![0, 1].includes(Number(d.deal_type))) continue;
-
-      const key = d.position_id || ("deal-" + d.deal_ticket);
-      if (!map.has(key)) {
-        map.set(key, {
-          positionId: key,
-          symbol: d.symbol,
-          entries: [],
-          exits: [],
-          deals: [],
-          net: 0,
-          firstTime: null,
-          lastTime: null
-        });
-      }
-
-      const t = map.get(key);
-      t.deals.push(d);
-      t.symbol = t.symbol || d.symbol;
-      t.net += Number(d.profit || 0) + Number(d.commission || 0) +
-               Number(d.swap || 0) + Number(d.fee || 0);
-
-      const dt = new Date(d.deal_time);
-      if (!t.firstTime || dt < t.firstTime) t.firstTime = dt;
-      if (!t.lastTime || dt > t.lastTime) t.lastTime = dt;
-
-      const entryType = Number(d.entry_type);
-      if (entryType === 0) t.entries.push(d);
-      if (entryType === 1 || entryType === 2 || entryType === 3) t.exits.push(d);
-    }
-
-    function weightedPrice(rows) {
-      let v = 0, pv = 0;
-      rows.forEach(r => {
-        const vol = Number(r.volume || 0);
-        v += vol;
-        pv += Number(r.price || 0) * vol;
-      });
-      return v > 0 ? pv / v : null;
-    }
-
-    return Array.from(map.values()).map(t => {
-      const firstEntry = t.entries[0];
-      const lastExit = t.exits[t.exits.length - 1];
-
-      let originalSide = firstEntry?.side || "";
-      if (!originalSide && lastExit?.side) {
-        originalSide = lastExit.side === "BUY" ? "SELL" : "BUY";
-      }
-
-      return {
-        ...t,
-        side: originalSide === "BUY" ? "LONG" : originalSide === "SELL" ? "SHORT" : "—",
-        entryPrice: weightedPrice(t.entries),
-        exitPrice: weightedPrice(t.exits),
-        status: t.exits.length ? "closed" : "open",
-        closedAt: t.exits.length ? new Date(t.exits[t.exits.length - 1].deal_time) : null
-      };
-    });
-  }
-
-  function localDayKey(date) {
-    if (!date) return "";
-    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
-  }
-
-  async function loadBrokerStatus() {
-    try {
-      const ctx = await stjGetActiveMt5Context();
-      const d = ctx.device;
-
-      if (!d) {
-        $("dashboardBrokerStatus").innerHTML = '● MT5 <span>Not paired</span>';
-        return;
-      }
-
-      const account = String(d.account_id || "");
-      const masked = account ? "••••" + account.slice(-4) : "";
-      const broker = d.broker_name || "MT5";
-
-      $("dashboardBrokerStatus").innerHTML =
-        `● ${broker} ${masked} <span class="connected">ACTIVE</span>`;
-    } catch (e) {
-      console.error("Broker status load failed:", e);
-    }
-  }
-
-  async function loadDashboardTrades() {
-    const btn = $("dashboardSyncBtn");
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "⟳ Loading...";
-    }
-
-    try {
-      const ctx = await stjGetActiveMt5Context();
-      if (!ctx.device) throw new Error("No active MT5 account selected.");
-
-      const currency = ctx.user?.user_metadata?.default_currency || "USD";
-      const deals = await fetchAllDeals(ctx.device.id);
-      const grouped = groupTrades(deals);
-      const closed = grouped
-        .filter(t => t.status === "closed")
-        .sort((a,b) => (b.closedAt?.getTime() || 0) - (a.closedAt?.getTime() || 0));
-
-      const total = closed.reduce((s,t) => s + t.net, 0);
-      const wins = closed.filter(t => t.net > 0);
-      const losses = closed.filter(t => t.net < 0);
-      const winRate = closed.length ? (wins.length / closed.length * 100) : 0;
-      const biggest = wins.length ? Math.max(...wins.map(t => t.net)) : 0;
-      const avgWin = wins.length ? wins.reduce((s,t) => s+t.net, 0) / wins.length : 0;
-      const avgLoss = losses.length ? Math.abs(losses.reduce((s,t) => s+t.net, 0) / losses.length) : 0;
-
-      const now = new Date();
-      const todayKey = localDayKey(now);
-      const todayPnl = closed.filter(t => localDayKey(t.closedAt) === todayKey)
-                             .reduce((s,t) => s+t.net, 0);
-
-      const monthPnl = closed.filter(t =>
-        t.closedAt &&
-        t.closedAt.getFullYear() === now.getFullYear() &&
-        t.closedAt.getMonth() === now.getMonth()
-      ).reduce((s,t) => s+t.net, 0);
-
-      const byDay = new Map();
-      closed.forEach(t => {
-        const k = localDayKey(t.closedAt);
-        byDay.set(k, (byDay.get(k) || 0) + t.net);
-      });
-      const bestDay = byDay.size ? Math.max(...byDay.values()) : 0;
-
-      let streakCount = 0;
-      let streakType = "";
-      for (const t of closed) {
-        const type = t.net > 0 ? "W" : t.net < 0 ? "L" : "";
-        if (!type) continue;
-        if (!streakType) {
-          streakType = type;
-          streakCount = 1;
-        } else if (type === streakType) {
-          streakCount++;
-        } else {
-          break;
-        }
-      }
-
-      const pairs = [
-        ["todayPnl", todayPnl, true],
-        ["totalPnl", total, true],
-        ["bestDayPnl", bestDay, true],
-        ["biggestWin", biggest, true],
-        ["avgWin", avgWin, false],
-        ["avgLoss", -avgLoss, false],
-        ["thisMonthPnl", monthPnl, true]
-      ];
-
-      pairs.forEach(([id,val,signed]) => {
-        const el = $(id);
-        if (!el) return;
-        el.textContent = money(val, currency, signed);
-        setMoneyClass(el, val);
-      });
-
-      $("winRate").textContent = `${winRate.toFixed(1)}%`;
-      $("totalTrades").textContent = String(closed.length);
-      $("tradeStreak").textContent = streakCount ? `${streakCount}${streakType}` : "—";
-      setMoneyClass($("tradeStreak"), streakType === "W" ? 1 : streakType === "L" ? -1 : 0);
-
-      // Balance is filled by the live MT5 snapshot loader below.
-      if (!$("dashboardBalance").textContent || $("dashboardBalance").textContent === "—") {
-        $("dashboardBalance").textContent = "—";
-      }
-
-      const list = $("recentTradesList");
-      if (!closed.length) {
-        list.innerHTML = '<div class="subtitle" style="padding:14px 0">No closed MT5 trades synced yet.</div>';
-      } else {
-        list.innerHTML = closed.slice(0,5).map(t => {
-          const pnlClass = t.net >= 0 ? "green" : "red";
-          const dateText = t.closedAt
-            ? t.closedAt.toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"})
-            : "—";
-          return `
-            <div class="trade">
-              <div class="trade-info">
-                <div class="trade-icon">◆</div>
-                <div>
-                  <b>${t.symbol}</b>
-                  <small>${t.side} • ${dateText}</small>
-                </div>
-              </div>
-              <b class="${pnlClass}">${money(t.net, currency, true)}</b>
-            </div>`;
-        }).join("");
-      }
-    } catch (e) {
-      console.error("Real MT5 dashboard load failed:", e);
-      const list = $("recentTradesList");
-      if (list) list.innerHTML =
-        `<div class="subtitle" style="padding:14px 0;color:#ff6670">Could not load MT5 trades: ${e.message || "Unknown error"}</div>`;
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "⟳ Refresh Trades";
-      }
-    }
-  }
-
-  document.getElementById("dashboardSyncBtn")?.addEventListener("click", loadDashboardTrades);
-
-
-  async function loadLiveAccountSnapshot() {
-    try {
-      const ctx = await stjGetActiveMt5Context();
-      if (!ctx.device) return;
-
-      const { data, error } = await window.stjSupabase
-        .from("mt5_account_snapshots")
-        .select("device_id,balance,equity,floating_profit,currency,updated_at,account_id,server")
-        .eq("device_id", ctx.device.id)
-        .order("updated_at", { ascending: false })
-        .limit(1);
-
-      if (error) throw error;
-
-      const snap = data && data[0];
-      if (!snap) return;
-
-      const userCurrency = snap.currency || "USD";
-      $("dashboardBalance").textContent = money(Number(snap.balance || 0), userCurrency, false);
-
-      const updated = new Date(snap.updated_at);
-      const ageSec = Math.max(0, (Date.now() - updated.getTime()) / 1000);
-      const statusText = ageSec <= 90 ? "EA Live" : "EA Last seen";
-
-      const account = String(snap.account_id || "");
-      const masked = account ? "••••" + account.slice(-4) : "";
-      $("dashboardBrokerStatus").innerHTML =
-        `● MT5 ${masked} <span class="connected">${statusText}</span>`;
-    } catch (e) {
-      console.error("Live MT5 snapshot load failed:", e);
-    }
-  }
-
-  await Promise.all([
-    loadBrokerStatus(),
-    loadDashboardTrades(),
-    loadLiveAccountSnapshot()
-  ]);
-})();
-</script>
-
-
-<script id="stj-real-advanced-dashboard">
-(async () => {
-  if (window.stjAuthReady) {
-    const ok = await window.stjAuthReady;
-    if (!ok) return;
-  }
-  if (!window.stjSupabase) return;
-
-  const byId = id => document.getElementById(id);
-  const clamp = (v, min=0, max=100) => Math.max(min, Math.min(max, v));
-
-
-async function stjGetActiveMt5Context() {
-  const { data: userData, error: userError } = await window.stjSupabase.auth.getUser();
-  if (userError || !userData.user) {
-    throw userError || new Error("User not signed in.");
-  }
-
-  const user = userData.user;
-  const storageKey = `stj_active_mt5_device_${user.id}`;
-
-  const { data: devices, error: deviceError } = await window.stjSupabase
-    .from("ea_devices")
-    .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at,updated_at")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
-
-  if (deviceError) throw deviceError;
-
-  const list = devices || [];
-  let activeId = localStorage.getItem(storageKey) || "";
-  let device = list.find(d => d.id === activeId) || list[0] || null;
-
-  if (device && device.id !== activeId) {
-    activeId = device.id;
-    localStorage.setItem(storageKey, activeId);
-  }
-
-  return { user, storageKey, devices: list, device };
-}
-
-async function stjUseMt5Account(deviceId) {
-  const { user, storageKey, devices } = await stjGetActiveMt5Context();
-  if (!devices.some(d => d.id === deviceId)) {
-    throw new Error("That MT5 account is not available.");
-  }
-  localStorage.setItem(storageKey, deviceId);
-  return true;
-}
-
-
-  function fmtMoney(value, currency="USD", signed=true) {
-    const n = Number(value || 0);
-    const abs = new Intl.NumberFormat("en-US", {
-      style:"currency", currency,
-      minimumFractionDigits:2, maximumFractionDigits:2
-    }).format(Math.abs(n));
-    return (signed ? (n > 0 ? "+" : n < 0 ? "-" : "") : (n < 0 ? "-" : "")) + abs;
-  }
-
-  function dayKey(d) {
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-  }
-
-  async function fetchDeals(deviceId) {
-    const all = [];
-    const pageSize = 1000;
-    let from = 0;
-    while (true) {
-      const {data, error} = await window.stjSupabase
-        .from("mt5_deals")
-        .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
-        .eq("device_id", deviceId)
-        .order("time_msc", {ascending:true})
-        .range(from, from + pageSize - 1);
-      if (error) throw error;
-      all.push(...(data || []));
-      if (!data || data.length < pageSize) break;
-      from += pageSize;
-      if (from >= 10000) break;
-    }
-    return all;
-  }
-
-  function groupClosedTrades(deals) {
-    const map = new Map();
-
-    for (const d of deals) {
-      if (!d.symbol || ![0,1].includes(Number(d.deal_type))) continue;
-      const key = d.position_id || `deal-${d.deal_ticket}`;
-
-      if (!map.has(key)) {
-        map.set(key, {
-          positionId:key, symbol:d.symbol,
-          entries:[], exits:[], net:0,
-          firstTime:null, lastTime:null
-        });
-      }
-
-      const t = map.get(key);
-      t.net += Number(d.profit || 0) + Number(d.commission || 0) +
-               Number(d.swap || 0) + Number(d.fee || 0);
-
-      const dt = new Date(d.deal_time);
-      if (!t.firstTime || dt < t.firstTime) t.firstTime = dt;
-      if (!t.lastTime || dt > t.lastTime) t.lastTime = dt;
-
-      const entryType = Number(d.entry_type);
-      if (entryType === 0) t.entries.push(d);
-      if ([1,2,3].includes(entryType)) t.exits.push(d);
-    }
-
-    return Array.from(map.values())
-      .filter(t => t.exits.length)
-      .map(t => ({
-        ...t,
-        openedAt: t.entries.length ? new Date(t.entries[0].deal_time) : t.firstTime,
-        closedAt: new Date(t.exits[t.exits.length - 1].deal_time)
-      }))
-      .sort((a,b) => a.closedAt - b.closedAt);
-  }
-
-  function buildDaily(closed) {
-    const map = new Map();
-    for (const t of closed) {
-      const k = dayKey(t.closedAt);
-      if (!map.has(k)) map.set(k, {pnl:0, trades:0, date:new Date(t.closedAt)});
-      const d = map.get(k);
-      d.pnl += t.net;
-      d.trades += 1;
-    }
-    return map;
-  }
-
-  function getStreaks(dailyMap) {
-    const days = Array.from(dailyMap.values())
-      .sort((a,b)=>a.date-b.date)
-      .filter(d=>d.pnl !== 0);
-
-    let longest = 0, run = 0, prevType = "";
-    for (const d of days) {
-      const type = d.pnl > 0 ? "W" : "L";
-      if (type === prevType) run++;
-      else { run = 1; prevType = type; }
-      longest = Math.max(longest, run);
-    }
-
-    let current = 0, currentType = "";
-    for (let i = days.length - 1; i >= 0; i--) {
-      const type = days[i].pnl > 0 ? "W" : "L";
-      if (!currentType) { currentType = type; current = 1; }
-      else if (type === currentType) current++;
-      else break;
-    }
-
-    return {
-      current: current ? `${current}${currentType}` : "—",
-      currentType,
-      longest
-    };
-  }
-
-  function renderTradeScore(closed, dailyMap) {
-    const wins = closed.filter(t=>t.net>0);
-    const losses = closed.filter(t=>t.net<0);
-
-    const winRate = closed.length ? wins.length / closed.length * 100 : 0;
-    const avgWin = wins.length ? wins.reduce((s,t)=>s+t.net,0)/wins.length : 0;
-    const avgLoss = losses.length ? Math.abs(losses.reduce((s,t)=>s+t.net,0)/losses.length) : 0;
-    const rr = avgLoss > 0 ? avgWin / avgLoss : (avgWin > 0 ? 2 : 0);
-
-    const greenDays = Array.from(dailyMap.values()).filter(d=>d.pnl>0).length;
-    const redDays = Array.from(dailyMap.values()).filter(d=>d.pnl<0).length;
-    const consistency = (greenDays + redDays) ? greenDays / (greenDays + redDays) * 100 : 0;
-
-    let cumulative = 0, peak = 0, maxDdAbs = 0;
-    for (const t of closed) {
-      cumulative += t.net;
-      peak = Math.max(peak, cumulative);
-      maxDdAbs = Math.max(maxDdAbs, peak - cumulative);
-    }
-
-    const grossWin = wins.reduce((s,t)=>s+t.net,0);
-    const grossLoss = Math.abs(losses.reduce((s,t)=>s+t.net,0));
-    const profitFactor = grossLoss > 0 ? grossWin / grossLoss : (grossWin > 0 ? 3 : 0);
-    const recoveryFactor = maxDdAbs > 0 ? Math.max(0, cumulative) / maxDdAbs : (cumulative > 0 ? 3 : 0);
-
-    // Custom journal score, not an industry-standard rating.
-    const scores = [
-      clamp(winRate),
-      clamp((rr / 2) * 100),
-      clamp(consistency),
-      clamp(100 - Math.min(100, maxDdAbs > 0 && peak > 0 ? (maxDdAbs / peak * 100) * 5 : 0)),
-      clamp((profitFactor / 2) * 100),
-      clamp((recoveryFactor / 3) * 100)
-    ];
-
-    const totalScore = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
-    byId("tradeScoreNumber").textContent = String(totalScore);
-
-    const ids = ["scoreWinRate","scoreRiskReward","scoreConsistency","scoreDrawdown","scoreProfitability","scoreRecovery"];
-    scores.forEach((s,i)=> {
-      const el = byId(ids[i]);
-      if (el) el.textContent = String(Math.round(s));
-    });
-
-    const angles = [-90,-30,30,90,150,210];
-    const pts = scores.map((s,i)=>{
-      const radius = 115 * (s/100);
-      const rad = angles[i] * Math.PI / 180;
-      const x = 150 + Math.cos(rad)*radius;
-      const y = 150 + Math.sin(rad)*radius;
-      const circle = byId(`radarPoint${i}`);
-      if (circle) {
-        circle.setAttribute("cx", x.toFixed(1));
-        circle.setAttribute("cy", y.toFixed(1));
-      }
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    });
-    byId("tradeScoreRadar")?.setAttribute("points", pts.join(" "));
-  }
-
-  function renderActivity(closed, dailyMap, currency) {
-    const activity = byId("activityDots");
-    if (!activity) return;
-    activity.innerHTML = "";
-
-    const now = new Date();
-    const start = new Date(now);
-    start.setHours(0,0,0,0);
-    start.setDate(start.getDate() - 167);
-
-    for (let i=0; i<168; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate()+i);
-      const info = dailyMap.get(dayKey(d));
-
-      const dot = document.createElement("div");
-      dot.className = "dot";
-      if (info?.pnl > 0) dot.classList.add("win");
-      if (info?.pnl < 0) dot.classList.add("loss");
-      if (info) dot.title = `${d.toLocaleDateString()}: ${fmtMoney(info.pnl,currency,true)} • ${info.trades} trades`;
-      activity.appendChild(dot);
-    }
-
-    const days = Array.from(dailyMap.values());
-    const green = days.filter(d=>d.pnl>0).length;
-    const red = days.filter(d=>d.pnl<0).length;
-    const traded = days.length;
-    const streaks = getStreaks(dailyMap);
-    const total = closed.reduce((s,t)=>s+t.net,0);
-    const dailyWin = (green+red) ? green/(green+red)*100 : 0;
-
-    byId("activityTitle").textContent = `${closed.length} closed trades in ${now.getFullYear()}`;
-    byId("activityDaysTraded").textContent = String(traded);
-    byId("activityGreenDays").textContent = String(green);
-    byId("activityRedDays").textContent = String(red);
-    byId("activityCurrentStreak").textContent = streaks.current;
-    byId("activityLongestStreak").textContent = String(streaks.longest || 0);
-    byId("activityTotalPnl").textContent = fmtMoney(total,currency,true);
-    byId("dailyWinRate").textContent = `${dailyWin.toFixed(1)}%`;
-    if (byId("dailyWinRateBar")) byId("dailyWinRateBar").style.width = `${clamp(dailyWin)}%`;
-  }
-
-  async function renderEquity(closed, currency, deviceId) {
-    let currentBalance = null;
-    try {
-      const {data} = await window.stjSupabase
-        .from("mt5_account_snapshots")
-        .select("balance")
-        .eq("device_id", deviceId)
-        .order("updated_at",{ascending:false})
-        .limit(1);
-      if (data?.[0]) currentBalance = Number(data[0].balance || 0);
-    } catch {}
-
-    const totalPnl = closed.reduce((s,t)=>s+t.net,0);
-    const startBalance = currentBalance != null ? currentBalance - totalPnl : 0;
-
-    let running = startBalance;
-    const values = [running];
-    let peak = running;
-    let maxDdPct = 0;
-
-    for (const t of closed) {
-      running += t.net;
-      values.push(running);
-      peak = Math.max(peak, running);
-      if (peak > 0) maxDdPct = Math.max(maxDdPct, (peak-running)/peak*100);
-    }
-
-    const current = values[values.length-1] || 0;
-    const peakValue = Math.max(...values);
-    const ret = Math.abs(startBalance) > 0 ? ((current-startBalance)/Math.abs(startBalance))*100 : 0;
-
-    byId("equityPeak").textContent = fmtMoney(peakValue,currency,false);
-    byId("equityCurrent").textContent = fmtMoney(current,currency,false);
-    byId("equityMaxDd").textContent = `${maxDdPct.toFixed(1)}%`;
-    byId("equityReturn").textContent = `${ret>=0?"+":""}${ret.toFixed(2)}%`;
-    byId("equityReturn").className = ret >= 0 ? "green" : "red";
-
-    const w=800, h=280, topPad=20, bottomPad=35;
-    const minV = Math.min(...values);
-    const maxV = Math.max(...values);
-    const span = Math.max(1e-9, maxV-minV);
-    const pts = values.map((v,i)=>{
-      const x = values.length<=1 ? 0 : (i/(values.length-1))*w;
-      const y = topPad + (maxV-v)/span*(h-topPad-bottomPad);
-      return [x,y];
-    });
-
-    const linePts = pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
-    byId("equityLine")?.setAttribute("points", linePts);
-
-    if (byId("equityArea")) {
-      const d = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)} ` +
-        pts.slice(1).map(p=>`L ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ") +
-        ` L ${w} ${h} L 0 ${h} Z`;
-      byId("equityArea").setAttribute("d", d);
-    }
-  }
-
-  function renderPnlByDay(closed, currency) {
-    const names = ["Mon","Tue","Wed","Thu","Fri"];
-    const totals = [0,0,0,0,0];
-
-    closed.forEach(t=>{
-      const day = t.closedAt.getDay();
-      if (day>=1 && day<=5) totals[day-1] += t.net;
-    });
-
-    const maxAbs = Math.max(1, ...totals.map(v=>Math.abs(v)));
-    const el = byId("pnlByDayChart");
-    if (!el) return;
-
-    el.innerHTML = totals.map((v,i)=>{
-      const width = Math.max(v === 0 ? 0 : 4, Math.abs(v)/maxAbs*100);
-      const color = v >= 0 ? "#3db75f" : "#ee5a61";
-      return `
-        <div class="day-row">
-          <span>${names[i]}</span>
-          <div class="day-bar" title="${fmtMoney(v,currency,true)}">
-            <span style="width:${width.toFixed(1)}%;background:${color};"></span>
-          </div>
-          <b class="${v>=0?"green":"red"}" style="font-size:10px">${fmtMoney(v,currency,true)}</b>
-        </div>`;
-    }).join("");
-  }
-
-  function renderPerformanceByTime(closed, currency) {
-    const totals = Array(24).fill(0);
-    const counts = Array(24).fill(0);
-
-    closed.forEach(t=>{
-      const h = t.closedAt.getHours();
-      totals[h] += t.net;
-      counts[h]++;
-    });
-
-    let hours = totals.map((v,h)=>({h,v,count:counts[h]})).filter(x=>x.count>0);
-    if (!hours.length) hours = [{h:0,v:0,count:0}];
-
-    const maxAbs = Math.max(1, ...hours.map(x=>Math.abs(x.v)));
-    const el = byId("performanceByTimeChart");
-    if (!el) return;
-
-    el.innerHTML = hours.map(x=>{
-      const height = Math.max(x.v===0?3:6, Math.abs(x.v)/maxAbs*90);
-      const color = x.v >= 0 ? "#22c66e" : "#ed4d55";
-      return `
-        <div class="time-col" title="${String(x.h).padStart(2,"0")}:00 • ${fmtMoney(x.v,currency,true)} • ${x.count} trades">
-          <div class="v" style="height:${height.toFixed(1)}%;background:${color};"></div>
-          <span class="time-label">${String(x.h).padStart(2,"0")}</span>
-        </div>`;
-    }).join("");
-  }
-
-  function renderCalendar(closed, currency) {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-
-    const monthTrades = closed.filter(t =>
-      t.closedAt.getFullYear()===year && t.closedAt.getMonth()===month
-    );
-
-    const daily = new Map();
-    monthTrades.forEach(t=>{
-      const day = t.closedAt.getDate();
-      if (!daily.has(day)) daily.set(day,{pnl:0,trades:0});
-      const x = daily.get(day);
-      x.pnl += t.net;
-      x.trades++;
-    });
-
-    const monthPnl = monthTrades.reduce((s,t)=>s+t.net,0);
-    byId("calendarMonthPnl").textContent = fmtMoney(monthPnl,currency,true);
-    byId("calendarMonthPnl").className = monthPnl>=0 ? "green" : "red";
-    byId("calendarMonthTitle").textContent =
-      new Intl.DateTimeFormat("en-US",{month:"long",year:"numeric"}).format(now);
-
-    const grid = byId("tradingCalendarGrid");
-    if (!grid) return;
-
-    const weekNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    let cells = weekNames.map(n=>`<div class="week-name">${n}</div>`);
-
-    const firstDay = new Date(year,month,1).getDay();
-    const daysInMonth = new Date(year,month+1,0).getDate();
-
-    for (let i=0;i<firstDay;i++) cells.push('<div class="day"></div>');
-
-    for (let d=1; d<=daysInMonth; d++) {
-      const info = daily.get(d);
-      const isToday = d===now.getDate();
-      const cls = [
-        "day",
-        info?.pnl>0 ? "win-day" : "",
-        info?.pnl<0 ? "loss-day" : "",
-        isToday ? "active-day" : ""
-      ].filter(Boolean).join(" ");
-
-      cells.push(`
-        <div class="${cls}">
-          ${d}
-          ${info ? `
-            <div class="day-profit">
-              <strong>${fmtMoney(info.pnl,currency,true)}</strong>
-              <span class="subtitle">${info.trades} trade${info.trades===1?"":"s"}</span>
-            </div>` : ""}
-        </div>`);
-    }
-
-    const used = firstDay + daysInMonth;
-    const trailing = (7 - (used % 7)) % 7;
-    for (let i=0;i<trailing;i++) cells.push('<div class="day"></div>');
-    grid.innerHTML = cells.join("");
-
-    const weekCount = Math.ceil((firstDay + daysInMonth)/7);
-    const weeks = Array.from({length:weekCount},(_,i)=>({pnl:0,trades:0,days:new Set(),i}));
-
-    monthTrades.forEach(t=>{
-      const day = t.closedAt.getDate();
-      const wi = Math.floor((firstDay + day - 1)/7);
-      if (weeks[wi]) {
-        weeks[wi].pnl += t.net;
-        weeks[wi].trades++;
-        weeks[wi].days.add(day);
-      }
-    });
-
-    const summary = byId("calendarWeekSummary");
-    if (summary) {
-      summary.innerHTML = weeks.map((w,i)=>{
-        const active = w.trades>0 ? " active" : "";
-        if (!w.trades) {
-          return `<div class="weekbox${active}">Week ${i+1}<div class="subtitle">No trades</div></div>`;
-        }
-        return `
-          <div class="weekbox${active}">
-            Week ${i+1}
-            <strong class="${w.pnl>=0?"green":"red"}">${fmtMoney(w.pnl,currency,true)}</strong>
-            <span class="subtitle">${w.days.size} day${w.days.size===1?"":"s"} • ${w.trades} trades</span>
-          </div>`;
-      }).join("");
-    }
-  }
-
-  function renderNoAccountState() {
-    const title = document.getElementById("calendarMonthTitle");
-    const pnl = document.getElementById("calendarMonthPnl");
-    const grid = document.getElementById("tradingCalendarGrid");
-    const weeks = document.getElementById("calendarWeekSummary");
-
-    if (title) title.textContent = "No Active MT5 Account";
-    if (pnl) {
-      pnl.textContent = "—";
-      pnl.className = "";
-    }
-
-    if (grid) {
-      grid.innerHTML = `
-        <div style="
-          grid-column:1/-1;
-          min-height:240px;
-          display:grid;
-          place-items:center;
-          text-align:center;
-          color:var(--muted);
-          border:1px dashed #2a2e36;
-          border-radius:12px;
-          padding:24px;">
-          <div>
-            <div style="font-size:28px;margin-bottom:10px">🔌</div>
-            <strong style="display:block;color:#e8ebf2;font-size:13px;margin-bottom:6px">
-              No MT5 account connected
-            </strong>
-            <span style="font-size:11px">
-              Connect or select an account in Broker Hub to load Trading Calendar data.
-            </span>
-          </div>
-        </div>`;
-    }
-
-    if (weeks) weeks.innerHTML = "";
-
-    const activityTitle = document.getElementById("activityTitle");
-    if (activityTitle) activityTitle.textContent = "No active MT5 account";
-
-    const score = document.getElementById("tradeScoreNumber");
-    if (score) score.textContent = "—";
-  }
-
-  async function run() {
-    try {
-      const ctx = await stjGetActiveMt5Context();
-      if (!ctx.device) {
-        renderNoAccountState();
-        return;
-      }
-
-      const deals = await fetchDeals(ctx.device.id);
-      const currency = ctx.user?.user_metadata?.default_currency || "USD";
-      const closed = groupClosedTrades(deals);
-      const dailyMap = buildDaily(closed);
-
-      renderTradeScore(closed,dailyMap);
-      renderActivity(closed,dailyMap,currency);
-      await renderEquity(closed,currency,ctx.device.id);
-      renderPnlByDay(closed,currency);
-      renderPerformanceByTime(closed,currency);
-      renderCalendar(closed,currency);
-    } catch (e) {
-      console.error("Advanced dashboard update failed:", e);
-    }
-  }
-
-  await run();
-  document.getElementById("dashboardSyncBtn")?.addEventListener("click", () => setTimeout(run, 350));
-})();
-</script>
-
-
-<script id="stj-calendar-preclear">
-document.addEventListener("DOMContentLoaded", () => {
-  const grid = document.getElementById("tradingCalendarGrid");
-  const title = document.getElementById("calendarMonthTitle");
-  const pnl = document.getElementById("calendarMonthPnl");
-
-  if (grid) {
-    grid.innerHTML = `
-      <div style="
-        grid-column:1/-1;
-        min-height:220px;
-        display:grid;
-        place-items:center;
-        color:var(--muted);
-        font-size:11px;">
-        Loading active MT5 account...
-      </div>`;
-  }
-
-  if (title) title.textContent = "Loading...";
-  if (pnl) pnl.textContent = "—";
-});
-</script>
-
 </body>
 </html>

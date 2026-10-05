@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="auth-checking" lang="en">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -621,60 +621,7 @@ body{
   color:#fff;
 }
 
-
-/* GLOBAL AUTH GUARD */
-html.auth-checking body{visibility:hidden}
-
 </style>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script id="stj-auth-guard">
-window.STJ_SUPABASE_URL = "https://vboelobxtkgewkwxllsq.supabase.co";
-window.STJ_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
-window.stjSupabase = window.supabase.createClient(
-  window.STJ_SUPABASE_URL,
-  window.STJ_SUPABASE_PUBLISHABLE_KEY
-);
-
-window.stjAuthReady = (async () => {
-  try {
-    const { data: sessionData } = await window.stjSupabase.auth.getSession();
-
-    if (!sessionData.session) {
-      window.location.replace("login.html");
-      return false;
-    }
-
-    const { data: refreshData, error: refreshError } =
-      await window.stjSupabase.auth.refreshSession();
-
-    if (refreshError || !refreshData.session) {
-      await window.stjSupabase.auth.signOut({ scope: "local" });
-      window.location.replace("login.html");
-      return false;
-    }
-
-    const { data: userData, error: userError } =
-      await window.stjSupabase.auth.getUser();
-
-    if (userError || !userData.user) {
-      await window.stjSupabase.auth.signOut({ scope: "local" });
-      window.location.replace("login.html");
-      return false;
-    }
-
-    document.documentElement.classList.remove("auth-checking");
-    return true;
-  } catch (err) {
-    try {
-      await window.stjSupabase.auth.signOut({ scope: "local" });
-    } catch (e) {}
-    window.location.replace("login.html");
-    return false;
-  }
-})();
-</script>
-
 </head>
 
 <body>
@@ -689,7 +636,7 @@ window.stjAuthReady = (async () => {
   </div>
 
   <nav class="nav">
-    <a href="index.html">▦ Dashboard</a>
+    <a href="dashboard.html">▦ Dashboard</a>
 
     <div class="analytics-menu open" id="analyticsMenu">
       <button class="analytics-toggle active" id="analyticsToggle" type="button">
@@ -721,7 +668,7 @@ window.stjAuthReady = (async () => {
   <div class="bottom">
     <a href="broker-hub.html">▣ Broker Hub</a>
     <a href="settings.html">⚙ Settings</a>
-    <a href="logout.html">↪ Logout</a>
+    <a href="#">↪ Logout</a>
   </div>
 
 </aside>
@@ -1235,59 +1182,6 @@ if(speedButton){
       analyticsMenu.classList.toggle("open");
       analyticsToggle.classList.toggle("active", analyticsMenu.classList.contains("open"));
     });
-  }
-})();
-</script>
-
-<script id="stj-user-profile">
-(async () => {
-  try {
-    if (window.stjAuthReady) {
-      const ok = await window.stjAuthReady;
-      if (!ok) return;
-    }
-
-    if (!window.stjSupabase) return;
-
-    const { data, error } = await window.stjSupabase.auth.getUser();
-    if (error || !data.user) return;
-
-    const user = data.user;
-    const fullName =
-      user.user_metadata?.full_name ||
-      user.user_metadata?.name ||
-      (user.email ? user.email.split("@")[0] : "Trader");
-
-    const email = user.email || "";
-
-    // Update common top-right profile cards.
-    document.querySelectorAll(".profile strong, .profile-box strong").forEach(el => {
-      el.textContent = fullName;
-    });
-
-    document.querySelectorAll(".profile small, .profile-box small").forEach(el => {
-      if (email) el.textContent = email;
-    });
-
-    // Update Settings page fields/card when present.
-    const fullNameInput = document.querySelector('input[type="text"][value="Smart Trader"], input[type="text"][value="Rahul Kumawat"]');
-    if (fullNameInput) fullNameInput.value = fullName;
-
-    const emailInput = document.querySelector('input[type="email"]');
-    if (emailInput) emailInput.value = email;
-
-    const userMetaStrong = document.querySelector(".user-meta strong");
-    if (userMetaStrong) userMetaStrong.textContent = email || fullName;
-
-    const avatar = document.querySelector(".avatar");
-    if (avatar) {
-      avatar.textContent = (fullName || "T").trim().charAt(0).toUpperCase();
-    }
-
-    // Expose for later features.
-    window.stjCurrentUser = user;
-  } catch (err) {
-    console.error("Could not load user profile:", err);
   }
 })();
 </script>

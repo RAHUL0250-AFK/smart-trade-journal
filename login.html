@@ -102,7 +102,8 @@ body{
     <div class="brand-foot">Smart Trade Journal • Testing build</div>
   </section>
 
-  <main class="form-panel">
+  <a href="index.html" style="position:fixed;top:18px;left:20px;color:#9da6b5;font:12px Arial,sans-serif;text-decoration:none;z-index:20">← Back to Smart Trade Journal</a>
+<main class="form-panel">
     <div class="card">
       <h2>Welcome back</h2>
       <p class="sub">Sign in to continue to your trading dashboard.</p>
@@ -253,7 +254,7 @@ async function redirectIfLoggedIn() {
 
     // Normal case: an already signed-in user opening login.html
     // is returned to the dashboard.
-    location.href = "index.html";
+    location.href = "dashboard.html";
   } catch (err) {
     try {
       await supabaseClient.auth.signOut({ scope: "local" });
@@ -290,12 +291,12 @@ form.addEventListener("submit", async e => {
 
   if (data.session) {
     showSuccess("Login successful. Opening dashboard...");
-    setTimeout(() => location.href = "index.html", 500);
+    setTimeout(() => location.href = "dashboard.html", 500);
   }
 });
 
 document.getElementById("demoBtn").addEventListener("click", () => {
-  location.href = "index.html";
+  location.href = "dashboard.html";
 });
 
 redirectIfLoggedIn();
