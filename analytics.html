@@ -2124,27 +2124,72 @@ async function stjUseMt5Account(deviceId) {
 
   function renderPnl(closed,currency){
     const c=findCard("P&L"); if(!c)return;
+
     const now=new Date(), year=now.getFullYear(), month=now.getMonth();
     const monthName=new Intl.DateTimeFormat("en-US",{month:"long",year:"numeric"}).format(now);
     const daysInMonth=new Date(year,month+1,0).getDate();
+
+    // Keep every metric inside this card on the SAME date range.
+    const monthTrades=closed.filter(t =>
+      t.closedAt.getFullYear()===year &&
+      t.closedAt.getMonth()===month
+    );
+
     const daily=Array(daysInMonth).fill(0);
-    closed.filter(t=>t.closedAt.getFullYear()===year&&t.closedAt.getMonth()===month)
-      .forEach(t=>daily[t.closedAt.getDate()-1]+=t.net);
-    const total=daily.reduce((a,b)=>a+b,0), maxAbs=Math.max(1,...daily.map(Math.abs));
-    const grossWin=closed.filter(t=>t.net>0).reduce((s,t)=>s+t.net,0);
-    const grossLoss=Math.abs(closed.filter(t=>t.net<0).reduce((s,t)=>s+t.net,0));
-    c.innerHTML=title("▥","purple-bg","P&L",`${monthName} • real synced MT5 trades`) +
+    monthTrades.forEach(t => {
+      daily[t.closedAt.getDate()-1] += t.net;
+    });
+
+    const monthPnl=monthTrades.reduce((s,t)=>s+t.net,0);
+    const monthGrossProfit=monthTrades
+      .filter(t=>t.net>0)
+      .reduce((s,t)=>s+t.net,0);
+    const monthGrossLoss=Math.abs(
+      monthTrades
+        .filter(t=>t.net<0)
+        .reduce((s,t)=>s+t.net,0)
+    );
+
+    const maxAbs=Math.max(1,...daily.map(Math.abs));
+
+    c.innerHTML=title("▥","purple-bg","P&L",`${monthName} • current-month closed MT5 trades only`) +
       `<div class="real-kpis">
-        <div class="real-kpi"><small>MONTH P&L</small><strong class="${total>=0?"green":"red"}">${money(total,currency,true)}</strong></div>
-        <div class="real-kpi"><small>TOTAL P&L</small><strong class="${(grossWin-grossLoss)>=0?"green":"red"}">${money(grossWin-grossLoss,currency,true)}</strong></div>
-        <div class="real-kpi"><small>GROSS PROFIT</small><strong class="green">${money(grossWin,currency,true)}</strong></div>
-        <div class="real-kpi"><small>GROSS LOSS</small><strong class="red">${money(-grossLoss,currency,true)}</strong></div>
+        <div class="real-kpi">
+          <small>MONTH P&L</small>
+          <strong class="${monthPnl>=0?"green":"red"}">${money(monthPnl,currency,true)}</strong>
+        </div>
+        <div class="real-kpi">
+          <small>MONTH GROSS PROFIT</small>
+          <strong class="green">${money(monthGrossProfit,currency,true)}</strong>
+        </div>
+        <div class="real-kpi">
+          <small>MONTH GROSS LOSS</small>
+          <strong class="red">${money(-monthGrossLoss,currency,true)}</strong>
+        </div>
+        <div class="real-kpi">
+          <small>MONTH CLOSED TRADES</small>
+          <strong>${monthTrades.length}</strong>
+        </div>
       </div>
+
       <div style="height:210px;display:flex;align-items:flex-end;gap:3px;margin-top:18px">
-        ${daily.map((v,i)=>`<div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px" title="${i+1}: ${money(v,currency,true)}">
-          <div style="width:100%;max-width:13px;height:${v===0?1:Math.max(4,Math.abs(v)/maxAbs*86)}%;background:${v>=0?"#25d67d":"#ff4f57"};border-radius:4px 4px 0 0"></div>
-          <small style="font-size:8px;color:var(--muted)">${i+1}</small>
-        </div>`).join("")}
+        ${daily.map((v,i)=>`
+          <div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px"
+               title="${i+1}: ${money(v,currency,true)}">
+            <div style="
+              width:100%;
+              max-width:13px;
+              height:${v===0?1:Math.max(4,Math.abs(v)/maxAbs*86)}%;
+              background:${v>=0?"#25d67d":"#ff4f57"};
+              border-radius:4px 4px 0 0"></div>
+            <small style="font-size:8px;color:var(--muted)">${i+1}</small>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="real-note">
+        Top cards (Win Rate / Profit Factor / Expectancy / Total P&amp;L) are all-time for the active account.
+        This P&amp;L chart and all four boxes above are ${monthName} only.
       </div>`;
   }
 
