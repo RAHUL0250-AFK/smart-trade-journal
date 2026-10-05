@@ -1671,6 +1671,46 @@ if (analyticsMenu && analyticsToggle) {
 
   const $ = id => document.getElementById(id);
 
+
+async function stjGetActiveMt5Context() {
+  const { data: userData, error: userError } = await window.stjSupabase.auth.getUser();
+  if (userError || !userData.user) {
+    throw userError || new Error("User not signed in.");
+  }
+
+  const user = userData.user;
+  const storageKey = `stj_active_mt5_device_${user.id}`;
+
+  const { data: devices, error: deviceError } = await window.stjSupabase
+    .from("ea_devices")
+    .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at,updated_at")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (deviceError) throw deviceError;
+
+  const list = devices || [];
+  let activeId = localStorage.getItem(storageKey) || "";
+  let device = list.find(d => d.id === activeId) || list[0] || null;
+
+  if (device && device.id !== activeId) {
+    activeId = device.id;
+    localStorage.setItem(storageKey, activeId);
+  }
+
+  return { user, storageKey, devices: list, device };
+}
+
+async function stjUseMt5Account(deviceId) {
+  const { user, storageKey, devices } = await stjGetActiveMt5Context();
+  if (!devices.some(d => d.id === deviceId)) {
+    throw new Error("That MT5 account is not available.");
+  }
+  localStorage.setItem(storageKey, deviceId);
+  return true;
+}
+
+
   function money(value, currency = "USD", signed = false) {
     const n = Number(value || 0);
     const abs = new Intl.NumberFormat("en-US", {
@@ -1690,7 +1730,7 @@ if (analyticsMenu && analyticsToggle) {
     else if (value < 0) el.classList.add("red");
   }
 
-  async function fetchAllDeals() {
+  async function fetchAllDeals(deviceId) {
     const pageSize = 1000;
     let from = 0;
     const all = [];
@@ -1699,6 +1739,7 @@ if (analyticsMenu && analyticsToggle) {
       const { data, error } = await window.stjSupabase
         .from("mt5_deals")
         .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
+        .eq("device_id", deviceId)
         .order("time_msc", { ascending: true })
         .range(from, from + pageSize - 1);
 
@@ -1784,14 +1825,9 @@ if (analyticsMenu && analyticsToggle) {
 
   async function loadBrokerStatus() {
     try {
-      const { data } = await window.stjSupabase
-        .from("ea_devices")
-        .select("account_id,server,broker_name,is_active,last_seen_at")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1);
+      const ctx = await stjGetActiveMt5Context();
+      const d = ctx.device;
 
-      const d = data && data[0];
       if (!d) {
         $("dashboardBrokerStatus").innerHTML = '● MT5 <span>Not paired</span>';
         return;
@@ -1800,8 +1836,9 @@ if (analyticsMenu && analyticsToggle) {
       const account = String(d.account_id || "");
       const masked = account ? "••••" + account.slice(-4) : "";
       const broker = d.broker_name || "MT5";
+
       $("dashboardBrokerStatus").innerHTML =
-        `● ${broker} ${masked} <span class="connected">EA Connected</span>`;
+        `● ${broker} ${masked} <span class="connected">ACTIVE</span>`;
     } catch (e) {
       console.error("Broker status load failed:", e);
     }
@@ -1815,10 +1852,11 @@ if (analyticsMenu && analyticsToggle) {
     }
 
     try {
-      const { data: userData } = await window.stjSupabase.auth.getUser();
-      const currency = userData?.user?.user_metadata?.default_currency || "USD";
+      const ctx = await stjGetActiveMt5Context();
+      if (!ctx.device) throw new Error("No active MT5 account selected.");
 
-      const deals = await fetchAllDeals();
+      const currency = ctx.user?.user_metadata?.default_currency || "USD";
+      const deals = await fetchAllDeals(ctx.device.id);
       const grouped = groupTrades(deals);
       const closed = grouped
         .filter(t => t.status === "closed")
@@ -1932,9 +1970,13 @@ if (analyticsMenu && analyticsToggle) {
 
   async function loadLiveAccountSnapshot() {
     try {
+      const ctx = await stjGetActiveMt5Context();
+      if (!ctx.device) return;
+
       const { data, error } = await window.stjSupabase
         .from("mt5_account_snapshots")
-        .select("balance,equity,floating_profit,currency,updated_at,account_id,server")
+        .select("device_id,balance,equity,floating_profit,currency,updated_at,account_id,server")
+        .eq("device_id", ctx.device.id)
         .order("updated_at", { ascending: false })
         .limit(1);
 
@@ -1979,6 +2021,46 @@ if (analyticsMenu && analyticsToggle) {
   const byId = id => document.getElementById(id);
   const clamp = (v, min=0, max=100) => Math.max(min, Math.min(max, v));
 
+
+async function stjGetActiveMt5Context() {
+  const { data: userData, error: userError } = await window.stjSupabase.auth.getUser();
+  if (userError || !userData.user) {
+    throw userError || new Error("User not signed in.");
+  }
+
+  const user = userData.user;
+  const storageKey = `stj_active_mt5_device_${user.id}`;
+
+  const { data: devices, error: deviceError } = await window.stjSupabase
+    .from("ea_devices")
+    .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at,updated_at")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (deviceError) throw deviceError;
+
+  const list = devices || [];
+  let activeId = localStorage.getItem(storageKey) || "";
+  let device = list.find(d => d.id === activeId) || list[0] || null;
+
+  if (device && device.id !== activeId) {
+    activeId = device.id;
+    localStorage.setItem(storageKey, activeId);
+  }
+
+  return { user, storageKey, devices: list, device };
+}
+
+async function stjUseMt5Account(deviceId) {
+  const { user, storageKey, devices } = await stjGetActiveMt5Context();
+  if (!devices.some(d => d.id === deviceId)) {
+    throw new Error("That MT5 account is not available.");
+  }
+  localStorage.setItem(storageKey, deviceId);
+  return true;
+}
+
+
   function fmtMoney(value, currency="USD", signed=true) {
     const n = Number(value || 0);
     const abs = new Intl.NumberFormat("en-US", {
@@ -1992,7 +2074,7 @@ if (analyticsMenu && analyticsToggle) {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   }
 
-  async function fetchDeals() {
+  async function fetchDeals(deviceId) {
     const all = [];
     const pageSize = 1000;
     let from = 0;
@@ -2191,12 +2273,13 @@ if (analyticsMenu && analyticsToggle) {
     if (byId("dailyWinRateBar")) byId("dailyWinRateBar").style.width = `${clamp(dailyWin)}%`;
   }
 
-  async function renderEquity(closed, currency) {
+  async function renderEquity(closed, currency, deviceId) {
     let currentBalance = null;
     try {
       const {data} = await window.stjSupabase
         .from("mt5_account_snapshots")
         .select("balance")
+        .eq("device_id", deviceId)
         .order("updated_at",{ascending:false})
         .limit(1);
       if (data?.[0]) currentBalance = Number(data[0].balance || 0);
@@ -2396,18 +2479,17 @@ if (analyticsMenu && analyticsToggle) {
 
   async function run() {
     try {
-      const [{data:userData}, deals] = await Promise.all([
-        window.stjSupabase.auth.getUser(),
-        fetchDeals()
-      ]);
+      const ctx = await stjGetActiveMt5Context();
+      if (!ctx.device) throw new Error("No active MT5 account selected.");
 
-      const currency = userData?.user?.user_metadata?.default_currency || "USD";
+      const deals = await fetchDeals(ctx.device.id);
+      const currency = ctx.user?.user_metadata?.default_currency || "USD";
       const closed = groupClosedTrades(deals);
       const dailyMap = buildDaily(closed);
 
       renderTradeScore(closed,dailyMap);
       renderActivity(closed,dailyMap,currency);
-      await renderEquity(closed,currency);
+      await renderEquity(closed,currency,ctx.device.id);
       renderPnlByDay(closed,currency);
       renderPerformanceByTime(closed,currency);
       renderCalendar(closed,currency);
