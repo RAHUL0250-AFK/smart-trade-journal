@@ -1812,7 +1812,8 @@ async function stjUseMt5Account(deviceId) {
         entryPrice: weightedPrice(t.entries),
         exitPrice: weightedPrice(t.exits),
         status: t.exits.length ? "closed" : "open",
-        closedAt: t.exits.length ? new Date(t.exits[t.exits.length - 1].deal_time) : null
+        closedAt: t.exits.length ? new Date(t.exits[t.exits.length - 1].deal_time) : null,
+        closedKey: lastExit ? mt5DayKey(lastExit.deal_time) : ""
       };
     });
   }
@@ -1820,6 +1821,13 @@ async function stjUseMt5Account(deviceId) {
   function localDayKey(date) {
     if (!date) return "";
     return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+  }
+
+  // MT5 deal_time is stored using the broker/server wall-clock value.
+  // Do not convert it through the browser timezone for trading-day grouping.
+  function mt5DayKey(value) {
+    const m = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[1]}-${m[2]}-${m[3]}` : "";
   }
 
   async function loadBrokerStatus() {
@@ -1871,18 +1879,19 @@ async function stjUseMt5Account(deviceId) {
 
       const now = new Date();
       const todayKey = localDayKey(now);
-      const todayPnl = closed.filter(t => localDayKey(t.closedAt) === todayKey)
+      const currentMonthKey = todayKey.slice(0, 7);
+
+      const todayPnl = closed.filter(t => t.closedKey === todayKey)
                              .reduce((s,t) => s+t.net, 0);
 
       const monthPnl = closed.filter(t =>
-        t.closedAt &&
-        t.closedAt.getFullYear() === now.getFullYear() &&
-        t.closedAt.getMonth() === now.getMonth()
+        t.closedKey && t.closedKey.startsWith(currentMonthKey)
       ).reduce((s,t) => s+t.net, 0);
 
       const byDay = new Map();
       closed.forEach(t => {
-        const k = localDayKey(t.closedAt);
+        const k = t.closedKey;
+        if (!k) return;
         byDay.set(k, (byDay.get(k) || 0) + t.net);
       });
       const bestDay = byDay.size ? Math.max(...byDay.values()) : 0;
@@ -2005,6 +2014,13 @@ async function stjUseMt5Account(deviceId) {
     loadDashboardTrades(),
     loadLiveAccountSnapshot()
   ]);
+
+  // Keep the dashboard current while the chart-free MT5 Service is syncing.
+  setInterval(() => {
+    if (document.hidden) return;
+    loadDashboardTrades();
+    loadLiveAccountSnapshot();
+  }, 15000);
 })();
 </script>
 
@@ -2072,6 +2088,22 @@ async function stjUseMt5Account(deviceId) {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   }
 
+  function mt5DayKey(value) {
+    const m = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[1]}-${m[2]}-${m[3]}` : "";
+  }
+
+  function mt5Hour(value) {
+    const m = String(value || "").match(/T(\d{2}):/);
+    return m ? Number(m[1]) : 0;
+  }
+
+  function weekdayFromKey(key) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key || "")) return -1;
+    const [y,m,d] = key.split("-").map(Number);
+    return new Date(Date.UTC(y, m-1, d)).getUTCDay();
+  }
+
   async function fetchDeals(deviceId) {
     const all = [];
     const pageSize = 1000;
@@ -2122,19 +2154,25 @@ async function stjUseMt5Account(deviceId) {
 
     return Array.from(map.values())
       .filter(t => t.exits.length)
-      .map(t => ({
-        ...t,
-        openedAt: t.entries.length ? new Date(t.entries[0].deal_time) : t.firstTime,
-        closedAt: new Date(t.exits[t.exits.length - 1].deal_time)
-      }))
+      .map(t => {
+        const lastExit = t.exits[t.exits.length - 1];
+        return {
+          ...t,
+          openedAt: t.entries.length ? new Date(t.entries[0].deal_time) : t.firstTime,
+          closedAt: new Date(lastExit.deal_time),
+          closedKey: mt5DayKey(lastExit.deal_time),
+          closedHour: mt5Hour(lastExit.deal_time)
+        };
+      })
       .sort((a,b) => a.closedAt - b.closedAt);
   }
 
   function buildDaily(closed) {
     const map = new Map();
     for (const t of closed) {
-      const k = dayKey(t.closedAt);
-      if (!map.has(k)) map.set(k, {pnl:0, trades:0, date:new Date(t.closedAt)});
+      const k = t.closedKey;
+      if (!k) continue;
+      if (!map.has(k)) map.set(k, {pnl:0, trades:0, date:new Date(`${k}T00:00:00`)});
       const d = map.get(k);
       d.pnl += t.net;
       d.trades += 1;
@@ -2335,7 +2373,7 @@ async function stjUseMt5Account(deviceId) {
     const totals = [0,0,0,0,0];
 
     closed.forEach(t=>{
-      const day = t.closedAt.getDay();
+      const day = weekdayFromKey(t.closedKey);
       if (day>=1 && day<=5) totals[day-1] += t.net;
     });
 
@@ -2362,7 +2400,7 @@ async function stjUseMt5Account(deviceId) {
     const counts = Array(24).fill(0);
 
     closed.forEach(t=>{
-      const h = t.closedAt.getHours();
+      const h = t.closedHour;
       totals[h] += t.net;
       counts[h]++;
     });
@@ -2390,13 +2428,14 @@ async function stjUseMt5Account(deviceId) {
     const year = now.getFullYear();
     const month = now.getMonth();
 
+    const monthKey = `${year}-${String(month+1).padStart(2,"0")}`;
     const monthTrades = closed.filter(t =>
-      t.closedAt.getFullYear()===year && t.closedAt.getMonth()===month
+      t.closedKey && t.closedKey.startsWith(monthKey)
     );
 
     const daily = new Map();
     monthTrades.forEach(t=>{
-      const day = t.closedAt.getDate();
+      const day = Number(t.closedKey.slice(8,10));
       if (!daily.has(day)) daily.set(day,{pnl:0,trades:0});
       const x = daily.get(day);
       x.pnl += t.net;
@@ -2450,7 +2489,7 @@ async function stjUseMt5Account(deviceId) {
     const weeks = Array.from({length:weekCount},(_,i)=>({pnl:0,trades:0,days:new Set(),i}));
 
     monthTrades.forEach(t=>{
-      const day = t.closedAt.getDate();
+      const day = Number(t.closedKey.slice(8,10));
       const wi = Math.floor((firstDay + day - 1)/7);
       if (weeks[wi]) {
         weeks[wi].pnl += t.net;
@@ -2547,6 +2586,10 @@ async function stjUseMt5Account(deviceId) {
 
   await run();
   document.getElementById("dashboardSyncBtn")?.addEventListener("click", () => setTimeout(run, 350));
+
+  setInterval(() => {
+    if (!document.hidden) run();
+  }, 15000);
 })();
 </script>
 
@@ -2576,5 +2619,6 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <!-- Smart Trade Journal multi-account persistence fix v1.31 -->
+<!-- STJ dashboard trading-day + 15s auto-refresh fix v1.35 -->
 </body>
 </html>
