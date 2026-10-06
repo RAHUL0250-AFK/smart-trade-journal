@@ -565,7 +565,6 @@ async function stjGetActiveMt5Context() {
   const { data: devices, error: deviceError } = await window.stjSupabase
     .from("ea_devices")
     .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at,updated_at")
-    .eq("is_active", true)
     .order("created_at", { ascending: false });
 
   if (deviceError) throw deviceError;
@@ -632,8 +631,12 @@ function setBrokerUI(account, total = 0) {
   document.getElementById("cardAccountId").textContent = masked;
   document.getElementById("cardServer").textContent = account.server || "—";
 
+  const lastSeenMs = account.last_seen_at ? new Date(account.last_seen_at).getTime() : 0;
+  const ageSec = lastSeenMs ? Math.max(0, (Date.now() - lastSeenMs) / 1000) : Infinity;
+  const connectionLabel = ageSec <= 90 ? "EA Live" : "Saved Account";
+
   top.innerHTML =
-    "● " + broker + " " + masked + ' <span class="connected">EA Connected</span>';
+    "● " + broker + " " + masked + ` <span class="connected">${connectionLabel}</span>`;
 }
 
 async function getLoggedInUser() {
@@ -768,9 +771,10 @@ function renderAccountList(devices, activeId, snapshots) {
         }).format(Number(snap.balance || 0))
       : "No live snapshot";
 
-    const seen = d.last_seen_at
-      ? new Date(d.last_seen_at).toLocaleString()
-      : "Never";
+    const seenDate = d.last_seen_at ? new Date(d.last_seen_at) : null;
+    const seen = seenDate ? seenDate.toLocaleString() : "Never";
+    const ageSec = seenDate ? Math.max(0, (Date.now() - seenDate.getTime()) / 1000) : Infinity;
+    const syncLabel = ageSec <= 90 ? "EA LIVE" : "SAVED";
 
     return `
       <div class="account-row ${active ? "active" : ""}">
@@ -778,6 +782,7 @@ function renderAccountList(devices, activeId, snapshots) {
           <div class="account-row-title">
             ${broker} ${masked}
             ${active ? '<span class="account-active-pill">ACTIVE</span>' : ''}
+            <span class="account-active-pill" style="${syncLabel === 'EA LIVE' ? '' : 'opacity:.65'}">${syncLabel}</span>
           </div>
           <div class="account-row-meta">
             ${d.server || "—"} • ${balanceText} • Last seen ${seen}
@@ -1127,5 +1132,6 @@ loadEaConnection();
 })();
 </script>
 
+<!-- Smart Trade Journal multi-account persistence fix v1.31 -->
 </body>
 </html>

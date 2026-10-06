@@ -1045,7 +1045,6 @@ window.stjAuthReady = (async () => {
     const {data:devices,error:deviceError} = await window.stjSupabase
       .from("ea_devices")
       .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at")
-      .eq("is_active", true)
       .order("created_at", {ascending:false});
 
     if (deviceError) throw deviceError;
@@ -1424,5 +1423,6 @@ window.stjAuthReady = (async () => {
 })();
 </script>
 
+<!-- Smart Trade Journal multi-account persistence fix v1.31 -->
 </body>
 </html>
