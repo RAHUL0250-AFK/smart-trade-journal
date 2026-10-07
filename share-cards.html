@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html class="auth-checking" lang="en">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Share Cards | Smart Trade Journal</title>
@@ -505,142 +508,36 @@ body{
   }
 }
 
-/* ===== GLOBAL SIDEBAR NAV FIX ===== */
-.sidebar .nav{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-}
-.sidebar .nav > a,
-.sidebar .analytics-submenu a{
-  text-decoration:none;
-}
-.analytics-menu{width:100%}
-.analytics-toggle{
-  width:100%;
-  border:none;
-  background:transparent;
-  color:#80848f;
-  border-radius:9px;
-  padding:11px 12px;
-  font-size:13px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  cursor:pointer;
-  text-align:left;
-  font-family:inherit;
-}
-.analytics-toggle:hover,
-.analytics-toggle.active{
-  background:#17191f;
-  color:#fff;
-}
-.analytics-arrow{
-  transition:transform .25s ease;
-}
-.analytics-menu.open .analytics-arrow{
-  transform:rotate(180deg);
-}
-.analytics-submenu{
-  margin-left:14px;
-  overflow:hidden;
-  max-height:0;
-  opacity:0;
-  transform:translateY(-7px);
-  transition:max-height .3s ease,opacity .22s ease,transform .22s ease;
-}
-.analytics-menu.open .analytics-submenu{
-  max-height:280px;
-  opacity:1;
-  transform:translateY(0);
-  margin-top:5px;
-  margin-bottom:8px;
-}
-.analytics-submenu a{
-  display:block;
-  color:#80848f;
-  border-radius:8px;
-  padding:9px 12px;
-  margin-bottom:4px;
-  font-size:12px;
-}
-.analytics-submenu a:hover{
-  background:#17191f;
-  color:#fff;
-}
-.analytics-submenu a.active{
-  background:#1a1c22;
-  border:1px solid #2a2d34;
-  color:#fff;
-}
-.sidebar .bottom{
-  margin-top:auto;
-}
-.sidebar .bottom a{
-  display:block;
-  color:#7d818c;
-  text-decoration:none;
-  padding:10px 8px;
-  font-size:13px;
-  border-radius:9px;
-}
-.sidebar .bottom a:hover,
-.sidebar .bottom a.active{
-  background:#1a1c22;
-  color:#fff;
-}
-
-
-/* GLOBAL AUTH GUARD */
 html.auth-checking body{visibility:hidden}
-
+.today{cursor:pointer}
+.generate:disabled{opacity:.45;cursor:not-allowed}
+.state-note{color:var(--muted);font-size:12px;margin-top:8px}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script id="stj-auth-guard">
 window.STJ_SUPABASE_URL = "https://vboelobxtkgewkwxllsq.supabase.co";
 window.STJ_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
-window.stjSupabase = window.supabase.createClient(
-  window.STJ_SUPABASE_URL,
-  window.STJ_SUPABASE_PUBLISHABLE_KEY
-);
-
+window.stjSupabase = window.supabase.createClient(window.STJ_SUPABASE_URL, window.STJ_SUPABASE_PUBLISHABLE_KEY);
 window.stjAuthReady = (async () => {
   try {
-    const { data: sessionData } = await window.stjSupabase.auth.getSession();
-
-    if (!sessionData.session) {
-      window.location.replace("login.html");
-      return false;
+    const {data:sessionData}=await window.stjSupabase.auth.getSession();
+    if(!sessionData.session){window.location.replace("login.html");return false;}
+    const {data:refreshData,error:refreshError}=await window.stjSupabase.auth.refreshSession();
+    if(refreshError || !refreshData.session){
+      await window.stjSupabase.auth.signOut({scope:"local"});
+      window.location.replace("login.html");return false;
     }
-
-    const { data: refreshData, error: refreshError } =
-      await window.stjSupabase.auth.refreshSession();
-
-    if (refreshError || !refreshData.session) {
-      await window.stjSupabase.auth.signOut({ scope: "local" });
-      window.location.replace("login.html");
-      return false;
+    const {data:userData,error:userError}=await window.stjSupabase.auth.getUser();
+    if(userError || !userData.user){
+      await window.stjSupabase.auth.signOut({scope:"local"});
+      window.location.replace("login.html");return false;
     }
-
-    const { data: userData, error: userError } =
-      await window.stjSupabase.auth.getUser();
-
-    if (userError || !userData.user) {
-      await window.stjSupabase.auth.signOut({ scope: "local" });
-      window.location.replace("login.html");
-      return false;
-    }
-
     document.documentElement.classList.remove("auth-checking");
     return true;
-  } catch (err) {
-    try {
-      await window.stjSupabase.auth.signOut({ scope: "local" });
-    } catch (e) {}
-    window.location.replace("login.html");
-    return false;
+  }catch(e){
+    try{await window.stjSupabase.auth.signOut({scope:"local"});}catch(_){}
+    window.location.replace("login.html");return false;
   }
 })();
 </script>
@@ -653,46 +550,42 @@ window.stjAuthReady = (async () => {
 
 <aside class="sidebar">
 
-  <div class="logo">
-    <div class="logo-box">ST</div>
-    Smart Trade <span>Journal</span>
-  </div>
+<div class="logo">
+  <div class="logo-box">ST</div>
+  Smart Trade <span>Journal</span>
+</div>
 
-  <nav class="nav">
-    <a href="dashboard.html">▦ Dashboard</a>
+<nav class="nav">
+  <a href="dashboard.html">▦ Dashboard</a>
+  <a href="analytics.html" class="active">▥ Analytics</a>
+</nav>
 
-    <div class="analytics-menu open" id="analyticsMenu">
-      <button class="analytics-toggle active" id="analyticsToggle" type="button">
-        <span>▥ Analytics</span>
-        <span class="analytics-arrow">⌄</span>
-      </button>
+<div class="subnav">
+  <a href="analytics.html">▥ Performance</a>
+  <a href="reports.html">⇩ Reports</a>
+  <a href="strategies.html">▤ Strategies</a>
+  <a href="trade-replay.html">▷ Trade Replay</a>
+  <a href="share-cards.html" class="active">⌘ Share Cards</a>
+</div>
 
-      <div class="analytics-submenu">
-          <a href="analytics.html">▥ Performance</a>
-          <a href="reports.html">⇩ Reports</a>
-          <a href="strategies.html">▤ Strategies</a>
-          <a href="trade-replay.html">▷ Trade Replay</a>
-          <a href="share-cards.html" class="active">⌘ Share Cards</a>
-      </div>
-    </div>
+<nav class="nav">
+  <a href="trade-history.html">↗ Trade History</a>
+  <a href="journal.html">✎ Journal</a>
+  <a href="#">✦ Smart Journal AI</a>
+  <a href="#">♨ Hot Topics</a>
+  <a href="#">♕ Leaderboard</a>
+</nav>
 
-    <a href="trade-history.html">↗ Trade History</a>
-    <a href="journal.html">✎ Journal</a>
-    <a href="#">✦ Smart Journal AI</a>
-    <a href="#">♨ Hot Topics</a>
-    <a href="#">♕ Leaderboard</a>
-  </nav>
+<div class="giveaway">
+  🎁 <strong>Giveaway</strong><br>
+  Win rewards every month
+</div>
 
-  <div class="giveaway">
-    🎁 <strong>Giveaway</strong><br>
-    Win rewards every month
-  </div>
-
-  <div class="bottom">
-    <a href="broker-hub.html">▣ Broker Hub</a>
-    <a href="settings.html">⚙ Settings</a>
-    <a href="logout.html">↪ Logout</a>
-  </div>
+<div class="bottom">
+  <a href="broker-hub.html">▣ Broker Hub</a>
+  <a href="settings.html">⚙ Settings</a>
+  <a href="logout.html">↪ Logout</a>
+</div>
 
 </aside>
 
@@ -701,15 +594,12 @@ window.stjAuthReady = (async () => {
 
 <header class="topbar">
 
-<div class="account">
-  ● XM #430381517
-  <span class="connected">Connected</span>
-</div>
+<div class="account" id="shareAccount">● MT5 <span class="connected">Checking...</span></div>
 
 <div>☼</div>
 
 <div class="profile">
-  <strong>Rahul Kumawat</strong>
+  <strong id="shareProfileName">Trader</strong>
   <small>Trader</small>
 </div>
 
@@ -743,9 +633,7 @@ window.stjAuthReady = (async () => {
     </div>
   </div>
 
-  <div class="type-value">
-    No trades
-  </div>
+  <div class="type-value" id="dailyValue">Loading...</div>
 
 </div>
 
@@ -761,10 +649,7 @@ window.stjAuthReady = (async () => {
     </div>
   </div>
 
-  <div class="type-value">
-    <strong>+$30</strong>
-    8 trades
-  </div>
+  <div class="type-value" id="monthlyValue">Loading...</div>
 
 </div>
 
@@ -780,10 +665,7 @@ window.stjAuthReady = (async () => {
     </div>
   </div>
 
-  <div class="type-value">
-    <strong>+$119</strong>
-    136 trades
-  </div>
+  <div class="type-value" id="yearlyValue">Loading...</div>
 
 </div>
 
@@ -806,9 +688,7 @@ window.stjAuthReady = (async () => {
   ›
 </button>
 
-<span class="today">
-  Today
-</span>
+<span class="today" id="todayBtn">Today</span>
 
 </div>
 
@@ -895,275 +775,223 @@ October 2, 2026
 </div>
 
 
-<script>
+<script id="stj-live-share-cards">
+(async()=>{
+  if(window.stjAuthReady){const ok=await window.stjAuthReady;if(!ok)return;}
+  if(!window.stjSupabase)return;
 
-const cards =
-document.querySelectorAll(".type-card");
+  const $=id=>document.getElementById(id);
+  const cards=[...document.querySelectorAll(".type-card")];
+  const generateBtn=$("generateBtn");
+  const preview=$("preview");
+  const emptyPanel=$("emptyPanel");
+  const previewType=$("previewType");
+  const previewHeading=$("previewHeading");
+  const previewPnl=$("previewPnl");
+  const previewTrades=$("previewTrades");
+  const previewWinrate=$("previewWinrate");
+  const previewBest=$("previewBest");
+  const dateText=$("dateText");
+  const emptyTitle=$("emptyTitle");
 
-const generateBtn =
-document.getElementById("generateBtn");
+  let selectedType="daily";
+  let currentDate=new Date();
+  let activeCtx=null;
+  let closedTrades=[];
+  let currency="USD";
+  let refreshing=false;
 
-const preview =
-document.getElementById("preview");
+  function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  function money(v,c="USD",signed=true){
+    const n=Number(v||0);
+    const abs=new Intl.NumberFormat("en-US",{style:"currency",currency:c,minimumFractionDigits:2,maximumFractionDigits:2}).format(Math.abs(n));
+    return (signed?(n>0?"+":n<0?"-":""):(n<0?"-":""))+abs;
+  }
+  function localDayKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+  function mt5DayKey(v){const m=String(v||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[1]}-${m[2]}-${m[3]}`:"";}
+  function monthKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;}
+  function yearKey(d){return String(d.getFullYear());}
 
-const emptyPanel =
-document.getElementById("emptyPanel");
+  async function getCtx(){
+    const {data:userData,error:userError}=await window.stjSupabase.auth.getUser();
+    if(userError||!userData.user) throw userError||new Error("User not signed in.");
+    const user=userData.user;
+    const storageKey=`stj_active_mt5_device_${user.id}`;
+    const {data:devices,error}=await window.stjSupabase
+      .from("ea_devices")
+      .select("id,account_id,server,broker_name,is_active,last_seen_at,created_at,updated_at")
+      .order("created_at",{ascending:false});
+    if(error)throw error;
+    const list=devices||[];
+    let activeId=localStorage.getItem(storageKey)||"";
+    let device=list.find(d=>d.id===activeId)||list[0]||null;
+    if(device&&device.id!==activeId)localStorage.setItem(storageKey,device.id);
+    if(!device)localStorage.removeItem(storageKey);
+    return {user,storageKey,devices:list,device};
+  }
 
-const previewType =
-document.getElementById("previewType");
+  async function fetchDeals(deviceId){
+    const all=[];let from=0;const size=1000;
+    while(true){
+      const {data,error}=await window.stjSupabase
+        .from("mt5_deals")
+        .select("deal_ticket,position_id,deal_time,time_msc,symbol,deal_type,entry_type,side,volume,price,profit,commission,swap,fee")
+        .eq("device_id",deviceId)
+        .order("time_msc",{ascending:true})
+        .range(from,from+size-1);
+      if(error)throw error;
+      all.push(...(data||[]));
+      if(!data||data.length<size)break;
+      from+=size;if(from>=10000)break;
+    }
+    return all;
+  }
 
-const previewHeading =
-document.getElementById("previewHeading");
+  function groupClosed(deals){
+    const map=new Map();
+    for(const d of deals){
+      if(!d.symbol||![0,1].includes(Number(d.deal_type)))continue;
+      const key=d.position_id||`deal-${d.deal_ticket}`;
+      if(!map.has(key))map.set(key,{positionId:key,symbol:d.symbol,entries:[],exits:[],net:0,entryVol:0,exitVol:0});
+      const t=map.get(key);
+      t.net+=Number(d.profit||0)+Number(d.commission||0)+Number(d.swap||0)+Number(d.fee||0);
+      const et=Number(d.entry_type),vol=Number(d.volume||0);
+      if(et===0){t.entries.push(d);t.entryVol+=vol;}
+      if([1,2,3].includes(et)){t.exits.push(d);t.exitVol+=vol;}
+    }
+    return [...map.values()].filter(t=>t.exits.length&&(t.entryVol===0||t.exitVol+1e-8>=t.entryVol)).map(t=>{
+      const last=t.exits[t.exits.length-1];
+      return {...t,closedKey:mt5DayKey(last.deal_time),closedAt:new Date(last.deal_time)};
+    }).sort((a,b)=>a.closedAt-b.closedAt);
+  }
 
-const previewPnl =
-document.getElementById("previewPnl");
+  function stats(rows){
+    const pnl=rows.reduce((s,t)=>s+t.net,0);
+    const wins=rows.filter(t=>t.net>0).length;
+    const best=rows.length?Math.max(...rows.map(t=>t.net)):0;
+    return {pnl,trades:rows.length,wins,winRate:rows.length?wins/rows.length*100:0,best};
+  }
+  function rowsFor(type,d=currentDate){
+    if(type==="daily"){const k=localDayKey(d);return closedTrades.filter(t=>t.closedKey===k);}
+    if(type==="monthly"){const k=monthKey(d);return closedTrades.filter(t=>t.closedKey.startsWith(k));}
+    const k=yearKey(d);return closedTrades.filter(t=>t.closedKey.startsWith(k+"-"));
+  }
+  function labelFor(type,d=currentDate){
+    if(type==="daily")return d.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
+    if(type==="monthly")return d.toLocaleDateString("en-US",{month:"long",year:"numeric"});
+    return String(d.getFullYear());
+  }
+  function navLabel(){
+    if(selectedType==="daily")return currentDate.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+    if(selectedType==="monthly")return currentDate.toLocaleDateString("en-US",{month:"long",year:"numeric"});
+    return String(currentDate.getFullYear());
+  }
+  function summaryHtml(s){
+    if(!activeCtx?.device)return "No account";
+    if(!s.trades)return "No trades";
+    return `<strong class="${s.pnl>=0?"connected":""}" style="${s.pnl<0?"color:var(--red)":""}">${money(s.pnl,currency,true)}</strong><br>${s.trades} trade${s.trades===1?"":"s"}`;
+  }
 
-const previewTrades =
-document.getElementById("previewTrades");
+  function renderTypeSummaries(){
+    $("dailyValue").innerHTML=summaryHtml(stats(rowsFor("daily")));
+    $("monthlyValue").innerHTML=summaryHtml(stats(rowsFor("monthly")));
+    $("yearlyValue").innerHTML=summaryHtml(stats(rowsFor("yearly")));
+  }
 
-const previewWinrate =
-document.getElementById("previewWinrate");
-
-const previewBest =
-document.getElementById("previewBest");
-
-const dateText =
-document.getElementById("dateText");
-
-const emptyTitle =
-document.getElementById("emptyTitle");
-
-let selectedType = "daily";
-
-let currentDate =
-new Date(2026,9,4);
-
-
-cards.forEach(card => {
-
-  card.addEventListener("click", () => {
-
-    cards.forEach(c =>
-      c.classList.remove("active")
-    );
-
-    card.classList.add("active");
-
-    selectedType =
-      card.dataset.type;
-
+  function renderSelection(){
+    dateText.textContent=navLabel();
+    renderTypeSummaries();
     preview.classList.remove("show");
+    emptyPanel.style.display="flex";
+    if(!activeCtx?.device){
+      emptyTitle.textContent="No active MT5 account";
+      emptyPanel.querySelector("p").textContent="Connect or select an account in Broker Hub to create share cards.";
+      generateBtn.disabled=true;
+      return;
+    }
+    generateBtn.disabled=false;
+    const s=stats(rowsFor(selectedType));
+    const period=labelFor(selectedType);
+    emptyTitle.textContent=s.trades?`${s.trades} closed trade${s.trades===1?"":"s"} in ${period}`:`No trades in ${period}`;
+    emptyPanel.querySelector("p").textContent=s.trades?"Generate a card from the latest synced MT5 data.":"Use the arrows to navigate to a period with closed trades.";
+  }
 
-    emptyPanel.style.display =
-      "flex";
+  function setAccountUi(ctx){
+    const profileName=ctx.user?.user_metadata?.full_name||ctx.user?.email?.split("@")[0]||"Trader";
+    $("shareProfileName").textContent=profileName;
+    if(!ctx.device){
+      $("shareAccount").innerHTML='● MT5 <span style="color:var(--muted)">No account</span>';
+      return;
+    }
+    const account=String(ctx.device.account_id||"");
+    const masked=account?`••••${account.slice(-4)}`:"";
+    $("shareAccount").innerHTML=`● ${esc(ctx.device.broker_name||"MT5")} ${masked} <span class="connected">ACTIVE</span>`;
+  }
 
+  async function loadData(){
+    if(refreshing)return;refreshing=true;
+    try{
+      const ctx=await getCtx();activeCtx=ctx;setAccountUi(ctx);
+      if(!ctx.device){closedTrades=[];currency=ctx.user?.user_metadata?.default_currency||"USD";renderSelection();return;}
+      const [deals,snap]=await Promise.all([
+        fetchDeals(ctx.device.id),
+        window.stjSupabase.from("mt5_account_snapshots").select("currency,updated_at").eq("device_id",ctx.device.id).order("updated_at",{ascending:false}).limit(1)
+      ]);
+      currency=snap.data?.[0]?.currency||ctx.user?.user_metadata?.default_currency||"USD";
+      closedTrades=groupClosed(deals);
+      renderSelection();
+    }catch(e){
+      console.error("Share Cards load failed",e);
+      emptyPanel.style.display="flex";preview.classList.remove("show");
+      emptyTitle.textContent="Could not load Share Cards";
+      emptyPanel.querySelector("p").textContent=e.message||"Unknown error";
+      generateBtn.disabled=true;
+    }finally{refreshing=false;}
+  }
+
+  cards.forEach(card=>card.addEventListener("click",()=>{
+    cards.forEach(c=>c.classList.remove("active"));card.classList.add("active");
+    selectedType=card.dataset.type;renderSelection();
+  }));
+
+  $("prevDay").addEventListener("click",()=>{
+    if(selectedType==="daily")currentDate.setDate(currentDate.getDate()-1);
+    else if(selectedType==="monthly")currentDate.setMonth(currentDate.getMonth()-1);
+    else currentDate.setFullYear(currentDate.getFullYear()-1);
+    renderSelection();
+  });
+  $("nextDay").addEventListener("click",()=>{
+    if(selectedType==="daily")currentDate.setDate(currentDate.getDate()+1);
+    else if(selectedType==="monthly")currentDate.setMonth(currentDate.getMonth()+1);
+    else currentDate.setFullYear(currentDate.getFullYear()+1);
+    renderSelection();
+  });
+  $("todayBtn").addEventListener("click",()=>{currentDate=new Date();renderSelection();});
+
+  generateBtn.addEventListener("click",()=>{
+    if(!activeCtx?.device)return;
+    const s=stats(rowsFor(selectedType));
+    if(!s.trades){renderSelection();return;}
+    const names={daily:"Daily Performance",monthly:"Monthly Performance",yearly:"Yearly Performance"};
+    previewType.textContent=names[selectedType];
+    previewHeading.textContent=labelFor(selectedType);
+    previewPnl.textContent=money(s.pnl,currency,true);
+    previewPnl.style.color=s.pnl>=0?"var(--green)":"var(--red)";
+    previewTrades.textContent=String(s.trades);
+    previewWinrate.textContent=`${s.winRate.toFixed(1)}%`;
+    previewBest.textContent=money(s.best,currency,true);
+    previewBest.style.color=s.best>=0?"var(--green)":"var(--red)";
+    emptyPanel.style.display="none";
+    preview.classList.add("show");
   });
 
-});
-
-
-function updateDate(){
-
-  const options = {
-    weekday:"short",
-    month:"short",
-    day:"numeric",
-    year:"numeric"
-  };
-
-  const text =
-    currentDate.toLocaleDateString(
-      "en-US",
-      options
-    );
-
-  dateText.textContent =
-    text;
-
-  emptyTitle.textContent =
-    "No trades on " + text;
-
-}
-
-
-document
-.getElementById("prevDay")
-.addEventListener("click", () => {
-
-  currentDate.setDate(
-    currentDate.getDate() - 1
-  );
-
-  updateDate();
-
-});
-
-
-document
-.getElementById("nextDay")
-.addEventListener("click", () => {
-
-  currentDate.setDate(
-    currentDate.getDate() + 1
-  );
-
-  updateDate();
-
-});
-
-
-generateBtn.addEventListener(
-"click",
-() => {
-
-  preview.classList.add("show");
-
-  emptyPanel.style.display =
-    "none";
-
-
-  if(selectedType === "daily"){
-
-    previewType.textContent =
-      "Daily Performance";
-
-    previewHeading.textContent =
-      "October 2, 2026";
-
-    previewPnl.textContent =
-      "+$20.07";
-
-    previewTrades.textContent =
-      "5";
-
-    previewWinrate.textContent =
-      "60%";
-
-    previewBest.textContent =
-      "+$43.33";
-
-  }
-
-
-  if(selectedType === "monthly"){
-
-    previewType.textContent =
-      "Monthly Performance";
-
-    previewHeading.textContent =
-      "October 2026";
-
-    previewPnl.textContent =
-      "+$30.22";
-
-    previewTrades.textContent =
-      "8";
-
-    previewWinrate.textContent =
-      "62.5%";
-
-    previewBest.textContent =
-      "+$43.33";
-
-  }
-
-
-  if(selectedType === "yearly"){
-
-    previewType.textContent =
-      "2026 Performance";
-
-    previewHeading.textContent =
-      "Year in Review";
-
-    previewPnl.textContent =
-      "+$118.72";
-
-    previewTrades.textContent =
-      "136";
-
-    previewWinrate.textContent =
-      "55.9%";
-
-    previewBest.textContent =
-      "+$43.33";
-
-  }
-
-});
-
-</script>
-
-
-<script id="global-sidebar-nav-script">
-(function(){
-  const analyticsMenu = document.getElementById("analyticsMenu");
-  const analyticsToggle = document.getElementById("analyticsToggle");
-  if (!analyticsMenu || !analyticsToggle) return;
-
-  /* Avoid adding a second click listener on pages that already have one. */
-  if (!analyticsToggle.dataset.navReady) {
-    analyticsToggle.dataset.navReady = "1";
-    analyticsToggle.addEventListener("click", function(){
-      analyticsMenu.classList.toggle("open");
-      analyticsToggle.classList.toggle("active", analyticsMenu.classList.contains("open"));
-    });
-  }
+  await loadData();
+  const timer=setInterval(()=>{if(!document.hidden)loadData();},15000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)loadData();});
+  window.addEventListener("beforeunload",()=>clearInterval(timer));
 })();
 </script>
 
-<script id="stj-user-profile">
-(async () => {
-  try {
-    if (window.stjAuthReady) {
-      const ok = await window.stjAuthReady;
-      if (!ok) return;
-    }
-
-    if (!window.stjSupabase) return;
-
-    const { data, error } = await window.stjSupabase.auth.getUser();
-    if (error || !data.user) return;
-
-    const user = data.user;
-    const fullName =
-      user.user_metadata?.full_name ||
-      user.user_metadata?.name ||
-      (user.email ? user.email.split("@")[0] : "Trader");
-
-    const email = user.email || "";
-
-    // Update common top-right profile cards.
-    document.querySelectorAll(".profile strong, .profile-box strong").forEach(el => {
-      el.textContent = fullName;
-    });
-
-    document.querySelectorAll(".profile small, .profile-box small").forEach(el => {
-      if (email) el.textContent = email;
-    });
-
-    // Update Settings page fields/card when present.
-    const fullNameInput = document.querySelector('input[type="text"][value="Smart Trader"], input[type="text"][value="Rahul Kumawat"]');
-    if (fullNameInput) fullNameInput.value = fullName;
-
-    const emailInput = document.querySelector('input[type="email"]');
-    if (emailInput) emailInput.value = email;
-
-    const userMetaStrong = document.querySelector(".user-meta strong");
-    if (userMetaStrong) userMetaStrong.textContent = email || fullName;
-
-    const avatar = document.querySelector(".avatar");
-    if (avatar) {
-      avatar.textContent = (fullName || "T").trim().charAt(0).toUpperCase();
-    }
-
-    // Expose for later features.
-    window.stjCurrentUser = user;
-  } catch (err) {
-    console.error("Could not load user profile:", err);
-  }
-})();
-</script>
-
+<!-- Smart Trade Journal live Share Cards + account isolation v1.36 -->
 </body>
 </html>

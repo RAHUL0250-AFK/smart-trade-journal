@@ -2560,6 +2560,68 @@ async function stjUseMt5Account(deviceId) {
     }catch(e){console.error(e);}
   }
 
+
+  function renderNoAccountState(ctx){
+    try{
+      if (ctx?.storageKey) localStorage.removeItem(ctx.storageKey);
+    }catch(e){}
+
+    const setText=(id,text,cls)=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      el.textContent=text;
+      if(cls!==undefined) el.className=cls;
+    };
+
+    setText("liveWinRate","—","value");
+    setText("liveWinLossCount","No active MT5 account");
+    setText("liveProfitFactor","—","value");
+    setText("liveProfitFactorNote","No active MT5 account");
+    setText("liveExpectancy","—","value");
+    setText("liveExpectancyNote","Connect an account in Broker Hub");
+    setText("liveTotalPnl","—","value");
+    setText("liveTotalTrades","No active MT5 account");
+
+    const emptyHtml = '<div class="real-empty">No active MT5 account. Connect or select an account in Broker Hub to load this section.</div>';
+    const replaceCard=(findName,icon,bg,displayName=findName,sub="")=>{
+      const c=findCard(findName);
+      if(!c)return;
+      c.innerHTML=title(icon,bg,displayName,sub)+emptyHtml;
+    };
+
+    replaceCard("P&L","▥","purple-bg","P&L");
+    replaceCard("Win/Loss","◎","green-bg","Win/Loss");
+    replaceCard("Asset Class Performance","◫","purple-bg","Asset Class Performance");
+    replaceCard("Time of Day Performance","◔","cyan-bg","Time of Day Performance");
+    replaceCard("Drawdown Analysis","⌁","red-bg","Drawdown Analysis");
+    replaceCard("Streak Tracking","◔","orange-bg","Streak Tracking");
+    replaceCard("Symbol Performance","◎","purple-bg","Symbol Performance");
+    replaceCard("Trading Heatmap (Day x Hour)","▦","red-bg","Trading Heatmap (Day x Hour)");
+    replaceCard("Avg Hold Time: Winners vs Losers","◔","cyan-bg","Avg Hold Time: Winners vs Losers");
+    replaceCard("P&L Distribution","▥","orange-bg","P&L Distribution");
+    replaceCard("Rolling Performance","∿","purple-bg","Rolling Performance");
+
+    const riskTitle=findTitle("Risk-Adjusted Performance");
+    const riskSection=riskTitle?.closest("section");
+    if(riskSection){
+      riskSection.innerHTML=`
+        <div class="card-title" style="margin-bottom:14px">
+          <div class="icon-badge purple-bg">⚖</div>
+          <div><h3>Risk-Adjusted Performance</h3></div>
+        </div>
+        <div class="card">${emptyHtml}</div>`;
+    }
+
+    const pill=document.querySelector(".account-pill");
+    if(pill) pill.innerHTML='● MT5 <span style="color:var(--muted)">No account</span>';
+
+    const pageTitle=document.querySelector(".page-title p");
+    if(pageTitle) pageTitle.textContent="No MT5 account connected • Connect or select an account in Broker Hub to view Performance.";
+
+    const liveText=document.getElementById("stjAnalyticsLiveText");
+    if(liveText) liveText.textContent="No active MT5 account";
+  }
+
   let stjAnalyticsRefreshing = false;
 
   async function run(){
@@ -2577,7 +2639,10 @@ async function stjUseMt5Account(deviceId) {
 
     try{
       const ctx = await stjGetActiveMt5Context();
-      if (!ctx.device) throw new Error("No active MT5 account selected.");
+      if (!ctx.device) {
+        renderNoAccountState(ctx);
+        return;
+      }
 
       const [deals,snapRes]=await Promise.all([
         fetchAllDeals(ctx.device.id),
@@ -2656,6 +2721,6 @@ async function stjUseMt5Account(deviceId) {
 })();
 </script>
 
-<!-- Smart Trade Journal multi-account persistence fix v1.31 -->
+<!-- Smart Trade Journal Performance no-account stale-data fix v1.36 -->
 </body>
 </html>
