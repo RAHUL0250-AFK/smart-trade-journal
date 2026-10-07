@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+Disallow: /dashboard.html
+Disallow: /analytics.html
+Disallow: /reports.html
+Disallow: /strategies.html
+Disallow: /trade-replay.html
+Disallow: /share-cards.html
+Disallow: /trade-history.html
+Disallow: /journal.html
+Disallow: /broker-hub.html
+Disallow: /settings.html
+Disallow: /logout.html
+Disallow: /reset-password.html
+Disallow: /support.html
+
+Sitemap: https://rahul0250-afk.github.io/smart-trade-journal/sitemap.xml
