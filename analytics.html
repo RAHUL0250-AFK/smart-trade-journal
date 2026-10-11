@@ -2722,5 +2722,61 @@ async function stjUseMt5Account(deviceId) {
 </script>
 
 <!-- Smart Trade Journal Performance no-account stale-data fix v1.36 -->
+
+<!-- Smart Trade Journal floating Help & Support v1.40 -->
+<style id="stj-floating-help-style">
+  .stj-help-widget{position:fixed;right:24px;bottom:24px;z-index:99999;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  .stj-help-fab{width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:linear-gradient(135deg,#7758ff,#9b4dff);color:#fff;font-size:24px;font-weight:800;line-height:1;cursor:pointer;display:grid;place-items:center;box-shadow:0 14px 34px rgba(0,0,0,.42),0 0 0 4px rgba(123,92,255,.08);transition:transform .18s ease,box-shadow .18s ease}
+  .stj-help-fab:hover,.stj-help-fab:focus-visible{transform:translateY(-2px);box-shadow:0 16px 38px rgba(0,0,0,.5),0 0 0 5px rgba(123,92,255,.12);outline:none}
+  .stj-help-popover{position:absolute;right:0;bottom:60px;width:min(320px,calc(100vw - 32px));background:#111319;border:1px solid #2b2f39;border-radius:16px;padding:16px;box-shadow:0 22px 60px rgba(0,0,0,.52);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(8px) scale(.98);transform-origin:bottom right;transition:opacity .16s ease,transform .16s ease,visibility .16s ease;color:#f4f5f8}
+  .stj-help-widget:hover .stj-help-popover,.stj-help-widget:focus-within .stj-help-popover,.stj-help-widget.stj-help-open .stj-help-popover{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0) scale(1)}
+  .stj-help-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .stj-help-icon{width:34px;height:34px;border-radius:10px;background:#1c1733;color:#b9a9ff;display:grid;place-items:center;font-weight:900;font-size:17px}
+  .stj-help-head strong{display:block;font-size:14px;line-height:1.2}.stj-help-head span{display:block;color:#8e94a0;font-size:10px;margin-top:3px}
+  .stj-help-copy{font-size:11px;line-height:1.55;color:#a7acb7;margin:10px 0 12px}
+  .stj-help-actions{display:grid;gap:8px}
+  .stj-help-action{display:flex;align-items:center;justify-content:space-between;gap:12px;text-decoration:none;border-radius:10px;padding:10px 11px;font-size:11px;font-weight:750;border:1px solid #2c303a;color:#f5f6f8;background:#171a20;transition:background .15s ease,border-color .15s ease}
+  .stj-help-action:hover{background:#1d2028;border-color:#454b59}.stj-help-action.primary{background:#6f54e8;border-color:#8068eb;color:white}.stj-help-action.primary:hover{background:#7a61ee}
+  .stj-help-email{margin-top:11px;padding-top:11px;border-top:1px solid #272b34;color:#858b98;font-size:9px;line-height:1.5;word-break:break-all}.stj-help-email b{color:#d8dbe2;font-weight:700}
+  @media(max-width:600px){.stj-help-widget{right:16px;bottom:16px}.stj-help-fab{width:46px;height:46px}.stj-help-popover{bottom:58px}}
+</style>
+<div class="stj-help-widget" id="stjHelpWidget">
+  <div class="stj-help-popover" id="stjHelpPopover" role="dialog" aria-label="Help and Support">
+    <div class="stj-help-head"><div class="stj-help-icon">?</div><div><strong>Help &amp; Support</strong><span>Smart Trade Journal Support</span></div></div>
+    <div class="stj-help-copy">Need help with your account, broker connection, MT5 Service, data sync, or the website?</div>
+    <div class="stj-help-actions">
+      <a class="stj-help-action primary" href="support.html"><span>Open Support Center</span><span>→</span></a>
+      <a class="stj-help-action" href="mailto:smarttradejournal123@gmail.com?subject=Smart%20Trade%20Journal%20Support"><span>Email Support</span><span>✉</span></a>
+    </div>
+    <div class="stj-help-email">Official support email<br><b>smarttradejournal123@gmail.com</b></div>
+  </div>
+  <button class="stj-help-fab" id="stjHelpFab" type="button" aria-label="Help and Support" aria-expanded="false">?</button>
+</div>
+<script id="stj-floating-help-script">
+(()=>{
+  const widget=document.getElementById('stjHelpWidget');
+  const btn=document.getElementById('stjHelpFab');
+  if(!widget||!btn)return;
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const open=widget.classList.toggle('stj-help-open');
+    btn.setAttribute('aria-expanded',String(open));
+  });
+  document.addEventListener('click',e=>{
+    if(!widget.contains(e.target)){
+      widget.classList.remove('stj-help-open');
+      btn.setAttribute('aria-expanded','false');
+    }
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      widget.classList.remove('stj-help-open');
+      btn.setAttribute('aria-expanded','false');
+      btn.blur();
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
