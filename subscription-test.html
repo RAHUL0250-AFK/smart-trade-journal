@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Trade Journal - ₹1 Subscription Test</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+body{font-family:Arial,sans-serif;background:#080a0e;color:#fff;margin:0;min-height:100vh;display:grid;place-items:center}
+.card{width:min(520px,90vw);background:#11141a;border:1px solid #242934;border-radius:18px;padding:28px}
+h1{margin:0 0 8px}.muted{color:#9098a7;line-height:1.6}.price{font-size:42px;font-weight:800;margin:24px 0}.price small{font-size:16px;color:#9ca3af}
+button{width:100%;padding:14px;border:0;border-radius:12px;background:#7b5cff;color:#fff;font-weight:800;font-size:16px;cursor:pointer}
+button:disabled{opacity:.5}.status{margin-top:18px;padding:12px;background:#0b0e13;border-radius:10px;color:#b8c0cf;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Smart Trade Journal</h1>
+  <p class="muted">Live Razorpay recurring subscription test. ₹1/month for 2 billing cycles.</p>
+  <div class="price">₹1 <small>/ month</small></div>
+  <button id="subscribeBtn">Subscribe ₹1/month</button>
+  <div class="status" id="status">Sign in to Smart Trade Journal first, then open this page.</div>
+</div>
+<script>
+const SUPABASE_URL="https://vboelobxtkgewkwxllsq.supabase.co";
+const SUPABASE_KEY="sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const statusEl=document.getElementById("status"),btn=document.getElementById("subscribeBtn");
+
+async function session(){const {data}=await sb.auth.getSession();return data.session;}
+async function callFunction(name,body){
+  const s=await session(); if(!s) throw new Error("Please sign in first.");
+  const r=await fetch(`${SUPABASE_URL}/functions/v1/${name}`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":`Bearer ${s.access_token}`,"apikey":SUPABASE_KEY},
+    body:JSON.stringify(body||{})
+  });
+  const j=await r.json(); if(!r.ok) throw new Error(j.error||JSON.stringify(j)); return j;
+}
+btn.onclick=async()=>{
+  btn.disabled=true; statusEl.textContent="Creating Razorpay subscription…";
+  try{
+    const created=await callFunction("create-razorpay-subscription",{});
+    if(created.already_active){statusEl.textContent=`Already active ✅\nStatus: ${created.status}`;return;}
+    const s=await session();
+    const rz=new Razorpay({
+      key:created.key_id,subscription_id:created.subscription_id,
+      name:"Smart Trade Journal",description:"₹1/month subscription test",
+      prefill:{email:s?.user?.email||created.user_email||""},
+      handler:async function(response){
+        statusEl.textContent="Authorised. Verifying…";
+        try{
+          const v=await callFunction("verify-razorpay-subscription",response);
+          statusEl.textContent=`Verified ✅\nSubscription: ${v.subscription_id}\nStatus: ${v.status}`;
+        }catch(e){statusEl.textContent=`Checkout succeeded, verification issue:\n${e.message}`;}
+      },
+      modal:{ondismiss:function(){statusEl.textContent="Checkout closed.";}}
+    });
+    rz.on("payment.failed",function(resp){statusEl.textContent=`Payment failed:\n${resp.error?.description||"Unknown error"}`;});
+    rz.open();
+  }catch(e){statusEl.textContent=e.message;}finally{btn.disabled=false;}
+};
+</script>
+</body>
+</html>
