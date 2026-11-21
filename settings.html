@@ -463,6 +463,10 @@ tabs.forEach(tab => {
   });
 });
 
+if(location.hash === "#subscription"){
+  document.querySelector('.settings-tab[data-tab="subscription"]')?.click();
+}
+
 const toast = document.getElementById("toast");
 function showToast(message){
   toast.textContent = message;
@@ -498,10 +502,14 @@ function maskAccount(id){
 function normalizeStatus(sub){
   if(!sub) return "inactive";
   const raw = String(sub.status || "inactive").toLowerCase();
-  if(["active","authenticated"].includes(raw) && sub.current_end){
-    const end = new Date(sub.current_end);
-    if(!Number.isNaN(end.getTime()) && end.getTime() < Date.now()) return "expired";
+
+  // Access is active only when Razorpay status is active AND current_end is in the future.
+  if(raw === "active"){
+    const endTime = sub.current_end ? new Date(sub.current_end).getTime() : NaN;
+    if(!Number.isFinite(endTime) || endTime <= Date.now()) return "expired";
+    return "active";
   }
+
   return raw;
 }
 
@@ -514,9 +522,9 @@ function paintSubscription(sub){
   const continueBtn = document.getElementById("continueAuthBtn");
 
   badge.className = "status-badge";
-  if(["active","authenticated"].includes(status)) badge.classList.add("active");
-  else if(["created","pending"].includes(status)) badge.classList.add("pending");
-  else if(["halted","cancelled","completed","expired"].includes(status)) badge.classList.add("failed");
+  if(status === "active") badge.classList.add("active");
+  else if(["created","pending","authenticated"].includes(status)) badge.classList.add("pending");
+  else if(["halted","cancelled","completed","expired","inactive"].includes(status)) badge.classList.add("failed");
 
   badge.textContent = status === "inactive" ? "No plan" : status;
   document.getElementById("paidCycles").textContent =
@@ -528,26 +536,38 @@ function paintSubscription(sub){
   document.getElementById("subscriptionIdText").textContent =
     sub?.razorpay_subscription_id || "—";
 
-  if(["active","authenticated"].includes(status)){
-    desc.textContent = "Your recurring subscription is verified and active.";
+  if(status === "active"){
+    desc.textContent = "Your recurring subscription is verified and active. MT5 syncing is enabled.";
     subscribeBtn.style.display = "none";
     continueBtn.style.display = "none";
     document.getElementById("profilePlanText").textContent = "Active Subscriber";
     document.getElementById("topPlanLabel").textContent = "Subscription Active";
   } else if(["created","pending"].includes(status) && sub?.short_url){
-    desc.textContent = "Subscription created. Complete Razorpay authorization to activate it.";
+    desc.textContent = "Subscription created. Complete Razorpay authorization to activate MT5 syncing.";
     subscribeBtn.style.display = "none";
     continueBtn.style.display = "inline-block";
     document.getElementById("profilePlanText").textContent = "Authorization Pending";
     document.getElementById("topPlanLabel").textContent = "Payment Pending";
+  } else if(status === "authenticated"){
+    desc.textContent = "Razorpay authorization is complete. Waiting for the first successful payment and active subscription status. MT5 syncing is not enabled yet.";
+    subscribeBtn.style.display = "none";
+    continueBtn.style.display = "none";
+    document.getElementById("profilePlanText").textContent = "Activation Pending";
+    document.getElementById("topPlanLabel").textContent = "Payment Pending";
   } else {
-    desc.textContent = status === "inactive"
-      ? "No active subscription found for this account."
-      : `Your last subscription is ${status}. Start a new subscription to continue billing.`;
+    const expired = status === "expired";
+    desc.textContent = expired
+      ? "Your subscription has expired. You can still log in and view saved trade history. New MT5 syncing is paused until you renew."
+      : status === "inactive"
+        ? "No active subscription found for this account. Start a subscription to enable MT5 syncing."
+        : `Your last subscription is ${status}. Start a new subscription to enable MT5 syncing.`;
+    subscribeBtn.textContent = expired ? "Renew ₹1/month (test plan)" : "Subscribe ₹1/month (test plan)";
     subscribeBtn.style.display = "inline-block";
     continueBtn.style.display = "none";
-    document.getElementById("profilePlanText").textContent = "No Active Subscription";
-    document.getElementById("topPlanLabel").textContent = "No Active Plan";
+    document.getElementById("profilePlanText").textContent =
+      expired ? "Expired — Renewal Required" : "No Active Subscription";
+    document.getElementById("topPlanLabel").textContent =
+      expired ? "Renewal Required" : "No Active Plan";
   }
 }
 
