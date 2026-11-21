@@ -844,6 +844,32 @@ html.auth-checking body{visibility:hidden}
   text-align:center;
 }
 
+/* Subscription access banner */
+.stj-sub-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin:0 0 15px;padding:15px 17px;border:1px solid #294336;
+  border-radius:12px;background:linear-gradient(110deg,#10251d,#11151a);
+}
+.stj-sub-banner[hidden]{display:none}
+.stj-sub-banner-copy{display:grid;gap:5px;min-width:0}
+.stj-sub-banner-copy strong{font-size:13px;color:#e9fff3}
+.stj-sub-banner-copy span{font-size:11px;line-height:1.5;color:#a5b8ad}
+.stj-sub-banner a{
+  flex:0 0 auto;text-decoration:none;border-radius:9px;padding:10px 13px;
+  background:#7655ee;color:#fff;font-size:11px;font-weight:800
+}
+.stj-sub-banner[data-state="pending"]{border-color:#5a4820;background:linear-gradient(110deg,#28200e,#14151a)}
+.stj-sub-banner[data-state="pending"] .stj-sub-banner-copy strong{color:#ffe5a3}
+.stj-sub-banner[data-state="pending"] .stj-sub-banner-copy span{color:#c7b98f}
+.stj-sub-banner[data-state="inactive"]{border-color:#59282d;background:linear-gradient(110deg,#281216,#14151a)}
+.stj-sub-banner[data-state="inactive"] .stj-sub-banner-copy strong{color:#ffdadd}
+.stj-sub-banner[data-state="inactive"] .stj-sub-banner-copy span{color:#c9a5a8}
+.stj-sub-banner[data-state="unknown"]{border-color:#3b3d48;background:#14151a}
+@media(max-width:650px){
+  .stj-sub-banner{align-items:flex-start;flex-direction:column}
+  .stj-sub-banner a{width:100%;text-align:center}
+}
+
 </style>
 
 
@@ -957,6 +983,14 @@ window.stjAuthReady = (async () => {
 </header>
 
 <div class="content">
+
+<section class="stj-sub-banner" id="stjSubscriptionBanner" hidden aria-live="polite">
+  <div class="stj-sub-banner-copy">
+    <strong id="stjSubscriptionTitle">Checking subscription…</strong>
+    <span id="stjSubscriptionMessage">Checking your account access.</span>
+  </div>
+  <a id="stjSubscriptionAction" href="settings.html#subscription">Manage Subscription</a>
+</section>
 
 <section class="hero">
 
@@ -2673,6 +2707,70 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.blur();
     }
   });
+})();
+</script>
+
+
+<script id="stj-subscription-banner">
+(async function(){
+  const banner = document.getElementById("stjSubscriptionBanner");
+  const title = document.getElementById("stjSubscriptionTitle");
+  const message = document.getElementById("stjSubscriptionMessage");
+  const action = document.getElementById("stjSubscriptionAction");
+  if (!banner || !window.stjSupabase) return;
+
+  try {
+    const authReady = await window.stjAuthReady;
+    if (!authReady) return;
+
+    const { data: userData, error: userError } = await window.stjSupabase.auth.getUser();
+    if (userError || !userData.user) return;
+
+    const { data: sub, error } = await window.stjSupabase
+      .from("user_subscriptions")
+      .select("status,current_end,created_at")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    const status = String(sub?.status || "inactive").toLowerCase();
+    const endTime = sub?.current_end ? new Date(sub.current_end).getTime() : NaN;
+    const active = status === "active" && Number.isFinite(endTime) && endTime > Date.now();
+
+    banner.hidden = false;
+
+    if (active) {
+      const endLabel = new Intl.DateTimeFormat("en-IN", {
+        day:"2-digit", month:"short", year:"numeric",
+        hour:"2-digit", minute:"2-digit"
+      }).format(new Date(endTime));
+      banner.dataset.state = "active";
+      title.textContent = "Subscription active";
+      message.textContent = `MT5 syncing is enabled until ${endLabel}.`;
+      action.textContent = "Manage Subscription";
+    } else if (["created","pending","authenticated"].includes(status)) {
+      banner.dataset.state = "pending";
+      title.textContent = "Subscription activation pending";
+      message.textContent = "Complete or refresh your Razorpay authorization in Settings. MT5 syncing resumes after the subscription becomes active.";
+      action.textContent = "Check Payment Status";
+    } else {
+      banner.dataset.state = "inactive";
+      title.textContent = status === "expired" || status === "active"
+        ? "Subscription expired"
+        : "Subscription inactive";
+      message.textContent = "You can still log in and view saved trade history. New MT5 syncing is paused until you renew.";
+      action.textContent = "Renew Subscription";
+    }
+  } catch (error) {
+    console.error("Subscription banner could not load:", error);
+    banner.hidden = false;
+    banner.dataset.state = "unknown";
+    title.textContent = "Subscription status unavailable";
+    message.textContent = "Your saved data remains available. Open Settings to refresh your subscription status.";
+    action.textContent = "Open Settings";
+  }
 })();
 </script>
 
