@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT5 Connection | Smart Trade Journal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#0b0d13;color:#f4f5f8;font-family:Inter,system-ui,Arial,sans-serif;display:grid;place-items:center;padding:22px}.wrap{width:min(620px,100%);background:#141722;border:1px solid #292e3b;border-radius:22px;padding:30px;box-shadow:0 24px 80px #0008}.brand{font-size:13px;letter-spacing:.12em;color:#a99aff;font-weight:800;text-transform:uppercase}.step{display:flex;gap:14px;align-items:flex-start;margin:20px 0;padding:16px;background:#1b2030;border:1px solid #2b3244;border-radius:14px}.num{flex:0 0 30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#7656ff;font-weight:800}.step p{margin:4px 0 0;color:#aeb5c5;line-height:1.55;font-size:14px}.step strong{font-size:15px}.status{margin:24px 0 12px;padding:18px;border-radius:14px;background:#241d2a;border:1px solid #654b76}.status strong{display:block;font-size:20px;letter-spacing:.06em}.status span{display:block;margin-top:7px;color:#c0bfd0;font-size:13px;line-height:1.5}.status.connected{background:#14291f;border-color:#276b49}.status.error{background:#301c21;border-color:#71404b}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}a,button{border:0;border-radius:10px;padding:12px 16px;font-weight:750;font-size:14px;text-decoration:none;cursor:pointer}.primary{background:linear-gradient(90deg,#7654ff,#a34ef0);color:white}.secondary{background:#252b3a;color:#eef0f6}.hint{font-size:12px;color:#818a9d;line-height:1.55;margin-top:18px}@media(max-width:480px){.wrap{padding:22px}.actions a{width:100%;text-align:center}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand">Smart Trade Journal</div>
+  <h1 style="margin:10px 0 4px;font-size:27px">Connect your MT5 account</h1>
+  <p style="margin:0;color:#aeb5c5;line-height:1.55">Dashboard access starts after your MT5 Service is live and your subscription is active.</p>
+  <div class="step"><div class="num">1</div><div><strong>Open Broker Hub</strong><p>Generate your connection code there and pair your MT5 Service with this account.</p></div></div>
+  <div class="step"><div class="num">2</div><div><strong>Run the SmartTradeJournal Service in MT5</strong><p>Use your SmartTradeJournalService v1.34 file in MQL5/Services, start the service, and keep MT5 running.</p></div></div>
+  <div class="step"><div class="num">3</div><div><strong>Wait for live data</strong><p>We check for a fresh account snapshot. A saved account record alone does not count as connected.</p></div></div>
+  <section class="status" id="connectionStatus" aria-live="polite">
+    <strong id="connectionTitle">NOT CONNECTED</strong>
+    <span id="connectionMessage">Checking your MT5 connection…</span>
+  </section>
+  <div class="actions">
+    <a class="primary" href="broker-hub.html">Open Broker Hub</a>
+    <button class="secondary" id="checkAgain" type="button">Check Again</button>
+  </div>
+  <p class="hint">Connection is confirmed only when the latest MT5 account snapshot is no more than 90 seconds old. If you have not received the EA file or installation guide, contact smarttradejournal123@gmail.com.</p>
+</main>
+<script>
+const SUPABASE_URL="https://vboelobxtkgewkwxllsq.supabase.co";
+const SUPABASE_KEY="sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const title=document.getElementById("connectionTitle");
+const message=document.getElementById("connectionMessage");
+const panel=document.getElementById("connectionStatus");
+let checking=false;
+async function checkConnection(){
+  if(checking)return;checking=true;
+  title.textContent="NOT CONNECTED";message.textContent="Checking your MT5 connection…";panel.className="status";
+  try{
+    const {data:sessionData,error:sessionError}=await sb.auth.getSession();
+    if(sessionError||!sessionData.session){location.replace("login.html");return;}
+    const {data:userData,error:userError}=await sb.auth.getUser();
+    if(userError||!userData.user){location.replace("login.html");return;}
+    const key=`stj_active_mt5_device_${userData.user.id}`;
+    const preferred=localStorage.getItem(key)||"";
+    const {data:devices,error:deviceError}=await sb.from("ea_devices").select("id,account_id,broker_name,server,created_at").order("created_at",{ascending:false});
+    if(deviceError)throw deviceError;
+    const list=devices||[];
+    const device=list.find(x=>x.id===preferred)||list[0]||null;
+    if(!device){message.textContent="MT5 account has not been paired yet. Open Broker Hub and generate your connection code.";return;}
+    if(device.id!==preferred)localStorage.setItem(key,device.id);
+    const {data:snapshots,error:snapshotError}=await sb.from("mt5_account_snapshots").select("updated_at").eq("device_id",device.id).order("updated_at",{ascending:false}).limit(1);
+    if(snapshotError)throw snapshotError;
+    const updated=snapshots?.[0]?.updated_at?new Date(snapshots[0].updated_at).getTime():0;
+    const live=updated>0&&Number.isFinite(updated)&&(Date.now()-updated)<=90000;
+    if(!live){message.textContent="Account is paired, but no fresh MT5 data has arrived in the last 90 seconds. Keep MT5 Service running, then check again.";return;}
+    panel.className="status connected";title.textContent="CONNECTED";message.textContent=`${device.broker_name||device.server||"MT5"} is sending live data. Checking your subscription…`;
+    const {data:subs,error:subError}=await sb.from("user_subscriptions").select("status,current_end,created_at").order("created_at",{ascending:false}).limit(1);
+    if(subError)throw subError;
+    const sub=subs?.[0]||null;const end=sub?.current_end?new Date(sub.current_end).getTime():0;
+    const active=String(sub?.status||"").toLowerCase()==="active"&&Number.isFinite(end)&&end>Date.now();
+    if(active){message.textContent="MT5 is connected and your subscription is active. Opening Dashboard…";setTimeout(()=>location.replace("dashboard.html"),1100);}
+    else{message.textContent="MT5 is connected. Opening Subscription page so you can activate access…";setTimeout(()=>location.replace("settings.html#subscription"),1100);}
+  }catch(error){panel.className="status error";title.textContent="CHECK FAILED";message.textContent=error.message||"Could not verify your connection. Please try again.";}
+  finally{checking=false;}
+}
+document.getElementById("checkAgain").addEventListener("click",checkConnection);
+checkConnection();setInterval(()=>{if(!document.hidden)checkConnection();},10000);
+</script>
+</body>
+</html>

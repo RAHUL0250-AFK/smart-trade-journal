@@ -356,6 +356,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--tex
             <div class="sub-actions">
               <button class="sub-primary" id="subscribeBtn" type="button">Subscribe ₹1/month</button>
               <button class="sub-secondary" id="continueAuthBtn" type="button" style="display:none">Continue Authorization</button>
+              <a class="sub-secondary" id="openDashboardBtn" href="dashboard.html" style="display:none;text-decoration:none">Open Dashboard</a>
               <button class="sub-secondary" id="refreshSubscriptionBtn" type="button">↻ Refresh Status</button>
             </div>
 
@@ -520,6 +521,7 @@ function paintSubscription(sub){
   const desc = document.getElementById("subDescription");
   const subscribeBtn = document.getElementById("subscribeBtn");
   const continueBtn = document.getElementById("continueAuthBtn");
+  document.getElementById("openDashboardBtn").style.display = "none";
 
   badge.className = "status-badge";
   if(status === "active") badge.classList.add("active");
@@ -540,9 +542,11 @@ function paintSubscription(sub){
     desc.textContent = "Your recurring subscription is verified and active. MT5 syncing is enabled.";
     subscribeBtn.style.display = "none";
     continueBtn.style.display = "none";
+    document.getElementById("openDashboardBtn").style.display = "inline-block";
     document.getElementById("profilePlanText").textContent = "Active Subscriber";
     document.getElementById("topPlanLabel").textContent = "Subscription Active";
   } else if(["created","pending"].includes(status) && sub?.short_url){
+    document.getElementById("openDashboardBtn").style.display = "none";
     desc.textContent = "Subscription created. Complete Razorpay authorization to activate MT5 syncing.";
     subscribeBtn.style.display = "none";
     continueBtn.style.display = "inline-block";
@@ -623,9 +627,21 @@ async function loadBrokerStatus(){
     if(error) throw error;
     const list = data || [];
     const d = list.find(x => x.id === preferred) || list[0] || null;
-    document.getElementById("topBrokerStatus").innerHTML = d
-      ? `● ${d.broker_name || d.server || "MT5"} ${maskAccount(d.account_id)} <span class="connected">Connected</span>`
-      : "● MT5 Not paired";
+    if (!d) {
+      document.getElementById("topBrokerStatus").textContent = "● MT5 Not paired";
+      return;
+    }
+    const {data: snapshots, error: snapshotError} = await stjSupabase
+      .from("mt5_account_snapshots")
+      .select("updated_at")
+      .eq("device_id", d.id)
+      .order("updated_at", {ascending:false})
+      .limit(1);
+    if(snapshotError) throw snapshotError;
+    const updatedAt = snapshots?.[0]?.updated_at ? new Date(snapshots[0].updated_at).getTime() : 0;
+    const live = updatedAt > 0 && Number.isFinite(updatedAt) && (Date.now() - updatedAt) <= 90000;
+    document.getElementById("topBrokerStatus").innerHTML =
+      `● ${d.broker_name || d.server || "MT5"} ${maskAccount(d.account_id)} <span class="connected">${live ? "EA Live" : "Not Connected"}</span>`;
   }catch(e){
     document.getElementById("topBrokerStatus").textContent = "● MT5 status unavailable";
   }
