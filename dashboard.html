@@ -911,6 +911,53 @@ window.stjAuthReady = (async () => {
       return false;
     }
 
+    // Access gate: dashboard opens only with a fresh MT5 snapshot and an active subscription.
+    const user = userData.user;
+    const preferredKey = `stj_active_mt5_device_${user.id}`;
+    const preferredId = localStorage.getItem(preferredKey) || "";
+    const { data: devices, error: devicesError } = await window.stjSupabase
+      .from("ea_devices")
+      .select("id,account_id,broker_name,server,created_at")
+      .order("created_at", { ascending: false });
+    if (devicesError) throw devicesError;
+
+    const deviceList = devices || [];
+    const device = deviceList.find(item => item.id === preferredId) || deviceList[0] || null;
+    if (!device) {
+      window.location.replace("connection-check.html");
+      return false;
+    }
+    if (device.id !== preferredId) localStorage.setItem(preferredKey, device.id);
+
+    const { data: snapshots, error: snapshotError } = await window.stjSupabase
+      .from("mt5_account_snapshots")
+      .select("updated_at")
+      .eq("device_id", device.id)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    if (snapshotError) throw snapshotError;
+    const snapshotTime = snapshots?.[0]?.updated_at ? new Date(snapshots[0].updated_at).getTime() : 0;
+    const mt5Connected = snapshotTime > 0 && Number.isFinite(snapshotTime) && (Date.now() - snapshotTime) <= 90000;
+    if (!mt5Connected) {
+      window.location.replace("connection-check.html");
+      return false;
+    }
+
+    const { data: subscriptions, error: subscriptionError } = await window.stjSupabase
+      .from("user_subscriptions")
+      .select("status,current_end,created_at")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (subscriptionError) throw subscriptionError;
+    const subscription = subscriptions?.[0] || null;
+    const endTime = subscription?.current_end ? new Date(subscription.current_end).getTime() : 0;
+    const subscriptionActive = String(subscription?.status || "").toLowerCase() === "active"
+      && Number.isFinite(endTime) && endTime > Date.now();
+    if (!subscriptionActive) {
+      window.location.replace("settings.html#subscription");
+      return false;
+    }
+
     document.documentElement.classList.remove("auth-checking");
     return true;
   } catch (err) {
