@@ -521,6 +521,7 @@ function paintSubscription(sub){
   const desc = document.getElementById("subDescription");
   const subscribeBtn = document.getElementById("subscribeBtn");
   const continueBtn = document.getElementById("continueAuthBtn");
+  document.getElementById("openDashboardBtn").style.display = "none";
 
   badge.className = "status-badge";
   if(status === "active") badge.classList.add("active");
@@ -544,7 +545,6 @@ function paintSubscription(sub){
     document.getElementById("openDashboardBtn").style.display = "inline-block";
     document.getElementById("profilePlanText").textContent = "Active Subscriber";
     document.getElementById("topPlanLabel").textContent = "Subscription Active";
-    document.getElementById("openDashboardBtn").style.display = "none";
   } else if(["created","pending"].includes(status) && sub?.short_url){
     document.getElementById("openDashboardBtn").style.display = "none";
     desc.textContent = "Subscription created. Complete Razorpay authorization to activate MT5 syncing.";
