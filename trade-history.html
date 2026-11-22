@@ -629,6 +629,74 @@ window.stjAuthReady = (async () => {
 })();
 </script>
 
+
+<style id="stj-access-gate-style">html.auth-checking body{visibility:hidden}</style>
+<script id="stj-page-access-gate">
+(function(){
+  const SB_URL = "https://vboelobxtkgewkwxllsq.supabase.co";
+  const SB_KEY = "sb_publishable_SKqSLtBziCxy7JRe4PdUeA_nZKRoO4i";
+  const isSettingsPage = location.pathname.toLowerCase().endsWith("/settings.html") || location.pathname.toLowerCase() === "settings.html";
+  window.stjPageAccessGateReady = (async function(){
+    try {
+      const client = window.supabase.createClient(SB_URL, SB_KEY);
+      const { data: sessionData, error: sessionError } = await client.auth.getSession();
+      if (sessionError || !sessionData.session) {
+        location.replace("login.html");
+        return false;
+      }
+      const { data: userData, error: userError } = await client.auth.getUser();
+      if (userError || !userData.user) {
+        location.replace("login.html");
+        return false;
+      }
+      const user = userData.user;
+      const preferredKey = "stj_active_mt5_device_" + user.id;
+      const preferredId = localStorage.getItem(preferredKey) || "";
+      const { data: devices, error: devicesError } = await client
+        .from("ea_devices").select("id,created_at").order("created_at", { ascending: false });
+      if (devicesError) throw devicesError;
+      const list = devices || [];
+      const device = list.find(item => item.id === preferredId) || list[0] || null;
+      if (!device) {
+        location.replace("connection-check.html");
+        return false;
+      }
+      if (device.id !== preferredId) localStorage.setItem(preferredKey, device.id);
+      const { data: snapshots, error: snapshotError } = await client
+        .from("mt5_account_snapshots").select("updated_at").eq("device_id", device.id)
+        .order("updated_at", { ascending: false }).limit(1);
+      if (snapshotError) throw snapshotError;
+      const updatedAt = snapshots && snapshots[0] && snapshots[0].updated_at
+        ? new Date(snapshots[0].updated_at).getTime() : 0;
+      const connected = updatedAt > 0 && Number.isFinite(updatedAt) && Date.now() - updatedAt <= 90000;
+      if (!connected) {
+        location.replace("connection-check.html");
+        return false;
+      }
+      const { data: subscriptions, error: subscriptionError } = await client
+        .from("user_subscriptions").select("status,current_end,created_at")
+        .order("created_at", { ascending: false }).limit(1);
+      if (subscriptionError) throw subscriptionError;
+      const subscription = subscriptions && subscriptions[0] ? subscriptions[0] : null;
+      const endAt = subscription && subscription.current_end
+        ? new Date(subscription.current_end).getTime() : 0;
+      const active = String(subscription && subscription.status || "").toLowerCase() === "active"
+        && Number.isFinite(endAt) && endAt > Date.now();
+      if (!active && !isSettingsPage) {
+        location.replace("settings.html#subscription");
+        return false;
+      }
+      document.documentElement.classList.remove("auth-checking");
+      return true;
+    } catch (error) {
+      console.error("Smart Trade Journal access check failed:", error);
+      location.replace("connection-check.html");
+      return false;
+    }
+  })();
+})();
+</script>
+
 </head>
 
 <body>
