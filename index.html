@@ -56,6 +56,40 @@
   ]
 }
 </script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Smart Trade Journal?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Smart Trade Journal is an MT5 trading journal that helps traders review trade history, profit and loss, performance analytics, trading activity, and journal notes in one workspace." }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I connect my MetaTrader 5 account?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Create an account on Smart Trade Journal, pair your MT5 terminal using the connection flow in Broker Hub, and run the Smart Trade Journal Service so account and trade data can sync." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Smart Trade Journal require manual CSV uploads?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The journal is designed to sync trading information through its MT5 Service connection, so manual CSV import is not the primary workflow." }
+    },
+    {
+      "@type": "Question",
+      "name": "What trading analytics can I review?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The workspace includes metrics such as win rate, profit factor, expectancy, total P&L, drawdown, performance by time, symbol analysis, trading calendar, reports, and trade replay." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I track more than one MT5 account?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Smart Trade Journal supports linking multiple MT5 accounts and reviewing account data separately." }
+    }
+  ]
+}
+</script>
 <style>
 :root{
   --bg:#07090d;
@@ -270,6 +304,14 @@ h1{
   .bottom-cta{align-items:flex-start;flex-direction:column}
   .footer{flex-direction:column}
 }
+
+.stj-faq .faq-list{display:grid;gap:10px}
+.stj-faq details{background:#0e1117;border:1px solid #232833;border-radius:13px;padding:15px 18px}
+.stj-faq summary{cursor:pointer;font-weight:700;font-size:13px;color:#f2f4f8;list-style:none}
+.stj-faq summary::-webkit-details-marker{display:none}
+.stj-faq summary:after{content:"+";float:right;color:#a997ff;font-size:18px;line-height:1}
+.stj-faq details[open] summary:after{content:"−"}
+.stj-faq details p{margin:12px 0 0;color:#929cad;font-size:12px;line-height:1.7}
 </style>
 </head>
 <body>
@@ -410,6 +452,17 @@ h1{
       </div>
     </section>
 
+
+    <section class="section stj-faq" id="faq">
+      <div class="section-head"><div><h2>MT5 Trading Journal FAQs.</h2><p>Quick answers about connecting MetaTrader 5 and reviewing your trading performance.</p></div></div>
+      <div class="faq-list">
+        <details><summary>What is Smart Trade Journal?</summary><p>Smart Trade Journal is an MT5 trading journal that helps you review trade history, profit and loss, performance analytics, trading activity and journal notes in one workspace.</p></details>
+        <details><summary>How do I connect my MetaTrader 5 account?</summary><p>Create an account, open Broker Hub to pair your MT5 account, and run the Smart Trade Journal Service in your MT5 terminal to sync your account and trade information.</p></details>
+        <details><summary>Do I need to upload trade CSV files manually?</summary><p>The journal is designed to sync trading information through its MT5 Service connection. Manual CSV uploads are not the primary workflow.</p></details>
+        <details><summary>What performance analytics can I see?</summary><p>Review win rate, profit factor, expectancy, total P&amp;L, drawdown, performance by time, symbol analysis, trading calendar, reports and trade replay.</p></details>
+        <details><summary>Can I connect multiple MT5 accounts?</summary><p>Yes. You can link multiple MT5 accounts and keep each account’s trading data and analytics separate.</p></details>
+      </div>
+    </section>
     <section class="bottom-cta">
       <div>
         <h2>Ready to build a better trading process?</h2>
